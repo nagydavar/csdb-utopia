@@ -452,4 +452,8 @@ $RECYCLE.BIN/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-/CSDB_UtopiaView.Desktop/CSDB_UtopiaView.Desktop.csproj
+
+
+/.vs
+/CSDB_UtopiaModel/obj
+
