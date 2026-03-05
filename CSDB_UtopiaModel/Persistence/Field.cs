@@ -1,5 +1,7 @@
+using CSDB_UtopiaModel.Model;
+
 namespace CSDB_UtopiaModel.Persistence;
-    abstract class Field {
+class Field {
         protected Resource resource;
         protected int depletionLevel;
         protected Town? town;
@@ -7,13 +9,13 @@ namespace CSDB_UtopiaModel.Persistence;
         protected int mood;
         protected int _x;
         protected int _y;
-        ;
+
         public int X;
         public int Y;
         public bool HasBuildable;
         public bool IsPartOfTown;
         public int MoodLevel;
-        ;
+
         public void Field(int,int);
         public bool Place(Buyable);
         public bool Demolish();
