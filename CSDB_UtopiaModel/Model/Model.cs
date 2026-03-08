@@ -1,10 +1,11 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
+
 class Model {
 
-        private TimeControl TimeControl;
-        private Persistence persistence;
+        private TimeControl _timeControl;
+        private readonly Persistence _persistence;
         public Model();
         public void Place(int, int, Buildable);
         public  PlaceVehicle(int, int, Vehicle);
@@ -20,7 +21,7 @@ class Model {
         public void ListBuildableRoads();
         public void ListBuyablePassengerVehicles();
         public void ListBuyableIndustrialVehicles();
-;
+        
         public EventHandler<EventArgs>? GameTicked;
         public EventHandler<FieldEventArgs>? FieldsUpdated;
         public EventHandler<EventArgs>? BudgetChanged;
