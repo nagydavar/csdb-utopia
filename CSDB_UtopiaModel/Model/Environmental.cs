@@ -2,9 +2,9 @@ namespace CSDB_UtopiaModel.Model;
 
 class Environmental : Resource
 {
-    private Environmental? _instance;
+    private static Environmental? _instance;
     
-    public Environmental Instance => _instance ??= new();
+    public static Environmental Instance => _instance ??= new();
     
     protected Environmental() {}
 };
