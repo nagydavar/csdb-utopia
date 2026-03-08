@@ -5,5 +5,5 @@ class ResourceExtractor : Producer
 {
     public ResourceExtractor(Field, int);
     public override IndustrialResource Produce();
-    public override Enviromental Require();
+    public override Environmental Require();
 };
