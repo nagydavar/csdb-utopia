@@ -1,6 +1,6 @@
 namespace CSDB_UtopiaModel.Model;
 
-public class Oil
+public class Oil : IndustrialResource
 {
     private static Oil? _instance;
     
