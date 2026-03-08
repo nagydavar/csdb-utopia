@@ -4,7 +4,7 @@ public class Coal : IndustrialResource
 {
     private static Coal? _instance;
     
-    public static  Coal Instance => _instance ??= new();
+    public static Coal Instance => _instance ??= new();
     
-    protected  Coal() {}
+    protected Coal() {}
 }
