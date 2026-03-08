@@ -1,0 +1,53 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:CSDB_UtopiaView.ViewModels"
+             xmlns:views="clr-namespace:CSDB_UtopiaView.Views"
+             x:Class="CSDB_UtopiaView.Views.GameView">
+    <Grid>
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding MapTiles}"> <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="15" Columns="25" Background="White"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <Rectangle Width="50" Height="50" Stroke="Black" StrokeThickness="0.5"/>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <Border VerticalAlignment="Top" Background="#EEEEEE" Height="50" BorderBrush="Black" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Margin="10,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,0">
+                    <Rectangle Width="20" Height="20" Fill="Gray" Margin="5"/>
+                    <TextBlock Text="pénz: 1000" VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBlock Text="nyersanyag: 50" VerticalAlignment="Center" Margin="10,0"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel VerticalAlignment="Top" HorizontalAlignment="Right" Orientation="Horizontal" Margin="10">
+            <Button Content="Idő" Margin="5"/>
+            <Button Content="+" Width="30"/>
+            <Button Content="-" Width="30"/>
+            <Button Content="▶" Width="40" Height="40" CornerRadius="20"/>
+        </StackPanel>
+
+        <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="10" Spacing="5">
+            <Border Width="150" Height="100" Background="LightGray" BorderBrush="Black" BorderThickness="1">
+                <TextBlock Text="Log" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Width="200" Height="150" Background="#F2E9E9" BorderBrush="Black" BorderThickness="1">
+                <TextBlock Text="Minimap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+        </StackPanel>
+
+        <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Background="White" BorderBrush="Black" BorderThickness="1" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal" Spacing="2">
+                <Button Width="50" Height="50" Content="X"/>
+                <Button Width="50" Height="50" Content="Járművek"/>
+                <Button Width="50" Height="50" Content="X"/>
+                </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

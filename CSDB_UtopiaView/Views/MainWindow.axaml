@@ -7,6 +7,8 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="CSDB_UtopiaView.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
-        Title="CSDB_UtopiaView">
-        <views:MainView />
+        Title="CSDB UTOPIA" WindowState="Maximized">
+    
+    <views:MainView />
+    
 </Window>

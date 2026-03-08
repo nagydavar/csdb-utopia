@@ -3,14 +3,25 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:CSDB_UtopiaView.ViewModels"
+             xmlns:views="clr-namespace:CSDB_UtopiaView.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="CSDB_UtopiaView.Views.MainView"
              x:DataType="vm:MainViewModel">
-  <Design.DataContext>
-    <!-- This only sets the DataContext for the previewer in an IDE,
-         to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-    <vm:MainViewModel />
-  </Design.DataContext>
-
-  <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+  <TransitioningContentControl Content="{Binding CurrentPage}">
+    <TransitioningContentControl.PageTransition>
+      <CrossFade Duration="0:0:0.25" />
+    </TransitioningContentControl.PageTransition>
+    
+    <TransitioningContentControl.DataTemplates>
+      <DataTemplate DataType="{x:Type vm:MainMenuViewModel}">
+        <views:MainMenuView />
+      </DataTemplate>
+      <DataTemplate DataType="{x:Type vm:CreateWorldViewModel}">
+        <views:CreateWorldView />
+      </DataTemplate>
+      <DataTemplate DataType="{x:Type vm:GameViewModel}">
+        <views:GameView />
+      </DataTemplate>
+    </TransitioningContentControl.DataTemplates>
+  </TransitioningContentControl>
 </UserControl>

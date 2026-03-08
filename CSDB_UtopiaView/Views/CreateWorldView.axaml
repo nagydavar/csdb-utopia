@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:CSDB_UtopiaView.ViewModels"
+             xmlns:views="clr-namespace:CSDB_UtopiaView.Views"
+             x:Class="CSDB_UtopiaView.Views.CreateWorldView">
+    <Grid RowDefinitions="Auto, Auto, Auto, Auto, *">
+        <TextBlock Text="Create new World" FontSize="48" HorizontalAlignment="Center" Margin="0,40"/>
+        
+        <Border Grid.Row="1" Width="400" Height="200" Background="LightGray" Margin="20">
+            <TextBlock Text="Kép" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="30"/>
+        </Border>
+
+        <TextBox Grid.Row="2" Watermark="Enter name" Width="300" HorizontalAlignment="Center" CornerRadius="15" Margin="0,10"/>
+        
+        <StackPanel Grid.Row="3" Spacing="10" Width="200" HorizontalAlignment="Center">
+            <Button Content="Create" 
+            Command="{Binding $parent[UserControl;1].((vm:MainViewModel)DataContext).GoToGameCommand}"
+            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Height="40" CornerRadius="20"/>
+    
+            <Button Content="Back" 
+            Command="{Binding $parent[UserControl;1].((vm:MainViewModel)DataContext).GoToMainMenuCommand}"
+            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Height="40" CornerRadius="20"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
