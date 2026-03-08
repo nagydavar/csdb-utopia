@@ -10,6 +10,4 @@ public struct Coordinate
         X = x;
         Y = y;
     }
-    
-    public Coordinate() : this(0, 0) {}
 }
