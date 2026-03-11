@@ -1,4 +1,6 @@
 namespace CSDB_UtopiaModel.Model;
-interface Tickable {
-        public void Tick();
-    };
+
+interface Tickable
+{ 
+    void Tick();
+}
