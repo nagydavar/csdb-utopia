@@ -7,6 +7,12 @@ public struct Coordinate
 
     public Coordinate(int x, int y)
     {
+        if (x < 0)
+            throw new ArgumentOutOfRangeException(nameof(x), "The parameter must not be non-negative.");
+        
+        if (y < 0)
+            throw new ArgumentOutOfRangeException(nameof(y), "The parameter must not be non-negative.");
+        
         X = x;
         Y = y;
     }
