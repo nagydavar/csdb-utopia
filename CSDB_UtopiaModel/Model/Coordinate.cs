@@ -1,6 +1,6 @@
 namespace CSDB_UtopiaModel.Model;
 
-public struct Coordinate
+public readonly struct Coordinate
 {
     public int X { get; init; }
     public int Y { get; init; }
