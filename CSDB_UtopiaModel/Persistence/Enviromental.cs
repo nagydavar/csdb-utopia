@@ -1,11 +1,9 @@
-using CSDB_UtopiaModel.Persistence;
-
-namespace CSDB_UtopiaModel.Model;
+namespace CSDB_UtopiaModel.Persistence;
 class Enviromental : Resource
 {
-    private Enviromental? instance;
+    private static Enviromental? instance;
     private Enviromental() { }
-    public Enviromental Instance()
+    public static Enviromental Instance()
     {
         if (instance is null)
             instance = new Enviromental();

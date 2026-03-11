@@ -1,9 +1,9 @@
 namespace CSDB_UtopiaModel.Persistence;
 class HumanResource : Resource
 {
-    private HumanResource? instance;
+    private static HumanResource? instance;
     private HumanResource() { }
-    public HumanResource Instance()
+    public static HumanResource Instance()
     {
         if (instance is null)
             instance = new HumanResource();

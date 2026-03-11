@@ -1,9 +1,9 @@
 namespace CSDB_UtopiaModel.Persistence;
 class IronOre : IndustrialResource
 {
-    private IronOre? instance;
+    private static IronOre? instance;
     private IronOre() { }
-    public IronOre Instance()
+    public static IronOre Instance()
     {
         if (instance is null)
             instance = new IronOre();
