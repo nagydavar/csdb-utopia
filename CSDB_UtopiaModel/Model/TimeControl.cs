@@ -1,9 +1,9 @@
 namespace CSDB_UtopiaModel.Model;
 class TimeControl
 {
-    private TimeControl? instance;
+    private static TimeControl? instance;
     private TimeControl() { }
-    public TimeControl Instance()
+    public static TimeControl Instance()
     {
         if (instance is null)
             instance = new TimeControl();

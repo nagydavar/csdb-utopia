@@ -1,9 +1,9 @@
 namespace CSDB_UtopiaModel.Persistence;
 class Wood : IndustrialResource
 {
-    private Wood? instance;
+    private static Wood? instance;
     private Wood() { }
-    public Wood Instance()
+    public static Wood Instance()
     {
         if (instance is null)
             instance = new Wood();
