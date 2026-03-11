@@ -1,14 +1,20 @@
 namespace CSDB_UtopiaModel.Model;
+
 class TimeControl
 {
     private static TimeControl? instance;
-    private TimeControl() { }
+
+    private TimeControl()
+    {
+    }
+
     public static TimeControl Instance()
     {
         if (instance is null)
             instance = new TimeControl();
         return instance;
     }
+
     private bool isStopped;
     private Timer timer;
     public int index;
@@ -23,4 +29,4 @@ class TimeControl
     public void Minus();
 
 
-};
+}
