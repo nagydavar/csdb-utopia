@@ -3,8 +3,8 @@ class Book : Goods
 {
 
     private Book() { }
-    private Book? instance;
-    public Book Instance()
+    private static Book? instance;
+    public static Book Instance()
     {
         if (instance is null)
             instance = new Book();

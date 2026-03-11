@@ -1,9 +1,9 @@
 namespace CSDB_UtopiaModel.Persistence;
 class Paper : Goods
 {
-    private Paper? instance;
+    private static Paper? instance;
     private Paper() { }
-    public Paper Instance()
+    public static Paper Instance()
     {
         if (instance is null)
             instance = new Paper();

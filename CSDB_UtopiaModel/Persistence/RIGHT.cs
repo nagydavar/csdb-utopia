@@ -1,9 +1,9 @@
 namespace CSDB_UtopiaModel.Persistence;
 class RIGHT : HorizontalDirection
 {
-    private RIGHT? instance;
+    private static RIGHT? instance;
     private RIGHT() { }
-    public RIGHT Instance()
+    public static RIGHT Instance()
     {
         if (instance is null)
             instance = new RIGHT();

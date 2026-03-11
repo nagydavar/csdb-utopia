@@ -1,9 +1,9 @@
 namespace CSDB_UtopiaModel.Persistence;
 class Plank : Goods
 {
-    private Plank? instance;
+    private static Plank? instance;
     private Plank() { }
-    public Plank Instance()
+    public static Plank Instance()
     {
         if (instance is null)
             instance = new Plank();
