@@ -1,32 +1,29 @@
 namespace CSDB_UtopiaModel.Model;
 
-class TimeControl
+public class TimeControl
 {
-    private static TimeControl? instance;
+    private static TimeControl? _instance;
+    
+    private System.Timers.Timer _timer;
+    private int index;
+    private int GCD;
+    private int step;
+    private Dictionary<int, ITickable> _subscriptions = new();
+    
+    public TimerSpeed Speed { get; private set; }
+    public bool IsStopped => _timer.Enabled;
 
-    private TimeControl()
+    protected TimeControl()
     {
+        
     }
 
-    public static TimeControl Instance()
-    {
-        if (instance is null)
-            instance = new TimeControl();
-        return instance;
-    }
+    public static TimeControl Instance() => _instance ??= new();
+    
+    public void Subscribe(int _, ITickable _)=> throw new NotImplementedException();
 
-    private bool isStopped;
-    private Timer timer;
-    public int index;
-    public int GCD;
-    public int step;
-    public Dictionary<int, Ticker> Subscribed;
-    public void Subscribe(int, Tickable);
-    public TimerSpeed GetSpeed;
-    public void Pause();
-    public void Resume();
-    public void Plus();
-    public void Minus();
-
-
+    public void Pause() => throw new NotImplementedException();
+    public void Resume() => throw new NotImplementedException();
+    public void Plus() => throw new NotImplementedException();
+    public void Minus() => throw new NotImplementedException();
 }
