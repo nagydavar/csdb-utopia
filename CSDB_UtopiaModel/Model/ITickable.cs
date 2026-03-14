@@ -2,5 +2,5 @@ namespace CSDB_UtopiaModel.Model;
 
 public interface ITickable
 { 
-    void Tick();
+    System.Threading.Tasks.Task Tick();
 }
