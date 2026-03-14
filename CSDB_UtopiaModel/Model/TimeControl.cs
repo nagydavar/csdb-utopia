@@ -88,6 +88,16 @@ public class TimeControl
         _ => -1 // can also be an exception
     };
 
+    public static TimeControl operator !(TimeControl timeControl)
+    {
+        if (timeControl.IsStopped)
+            timeControl.Resume();
+        else
+            timeControl.Pause();
+
+        return timeControl;
+    }
+
     /// <summary>
     /// Subscribes an ITickable class 
     /// </summary>
