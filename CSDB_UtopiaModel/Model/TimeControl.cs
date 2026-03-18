@@ -4,7 +4,7 @@ namespace CSDB_UtopiaModel.Model;
 
 public class TimeControl
 {
-    public class AlreadyAtMaxSpeedException : Exception
+    public class AlreadyAtMaxSpeedException : InvalidOperationException
     {
         public AlreadyAtMaxSpeedException() : base("The timer is already at maximum speed.")
         {
@@ -19,7 +19,7 @@ public class TimeControl
         }
     }
 
-    public class AlreadyAtMinSpeedException : Exception
+    public class AlreadyAtMinSpeedException : InvalidOperationException
     {
         public AlreadyAtMinSpeedException() : base("The timer is already at minimum speed.")
         {
