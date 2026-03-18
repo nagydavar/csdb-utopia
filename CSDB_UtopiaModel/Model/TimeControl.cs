@@ -10,11 +10,11 @@ public class TimeControl
         {
         }
 
-        public AlreadyAtMaxSpeedException(string message) : base(message)
+        public AlreadyAtMaxSpeedException(string? message) : base(message)
         {
         }
 
-        public AlreadyAtMaxSpeedException(string message, Exception inner) : base(message, inner)
+        public AlreadyAtMaxSpeedException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
     }
@@ -25,11 +25,58 @@ public class TimeControl
         {
         }
 
-        public AlreadyAtMinSpeedException(string message) : base(message)
+        public AlreadyAtMinSpeedException(string? message) : base(message)
         {
         }
 
-        public AlreadyAtMinSpeedException(string message, Exception inner) : base(message, inner)
+        public AlreadyAtMinSpeedException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+    }
+
+    public class AlreadySubscribedException : InvalidOperationException
+    {
+        public AlreadySubscribedException() : base("The class has already subscribed before.")
+        {
+        }
+
+        public AlreadySubscribedException(string? message) : base(message)
+        {
+        }
+
+        public AlreadySubscribedException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+    }
+
+    public class AlreadySubscribedWithAnotherValueException : AlreadySubscribedException
+    {
+        public AlreadySubscribedWithAnotherValueException() : base(
+            "The class has already subscribed with another value before.")
+        {
+        }
+
+        public AlreadySubscribedWithAnotherValueException(string? message) : base(message)
+        {
+        }
+
+        public AlreadySubscribedWithAnotherValueException(string? message, Exception? innerException) : base(message,
+            innerException)
+        {
+        }
+    }
+
+    public class NotSubscribedException : InvalidOperationException
+    {
+        public NotSubscribedException() : base("The class has not subscribed, therefore cannot be removed.")
+        {
+        }
+
+        public NotSubscribedException(string? message) : base(message)
+        {
+        }
+
+        public NotSubscribedException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
     }
@@ -49,7 +96,7 @@ public class TimeControl
     private Dictionary<ITickable, int> _subscriptions = new();
 
     public TimerSpeed Speed { get; private set; }
-    
+
     public bool IsStopped => _timer.Enabled;
 
     protected TimeControl()
@@ -90,12 +137,12 @@ public class TimeControl
 
     protected static TimeControl Unsubscribe(TimeControl timeControl, ITickable key, int? value)
     {
-        if (value.HasValue && timeControl._subscriptions[key] != value.Value)
-            throw new Exception();
+        if (value.HasValue && timeControl._subscriptions[key] != value.Value) // !!!!
+            throw new AlreadySubscribedWithAnotherValueException();
 
         if (!timeControl._subscriptions.Remove(key))
-            throw new Exception(); // is this necessary?
-        
+            throw new NotSubscribedException(); // is this necessary?
+
         // handle LCM
 
         return timeControl;
@@ -119,12 +166,12 @@ public class TimeControl
     public static TimeControl operator +(TimeControl timeControl, (ITickable Key, int Value) subscriber)
     {
         if (subscriber.Value <= 0)
-            throw new Exception();
+            throw new ArgumentException("The subscriber's value must be positive.", nameof(subscriber.Value));
 
         // ReferenceContains
         foreach (var subscription in (timeControl._subscriptions))
             if (ReferenceEquals(subscription.Key, subscriber.Key))
-                throw new Exception();
+                throw new AlreadySubscribedException();
 
         if (timeControl.LCM % subscriber.Value != 0)
             timeControl.LCM = LcmOf(timeControl._subscriptions.Values);
