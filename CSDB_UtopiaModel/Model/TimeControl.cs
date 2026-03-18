@@ -85,13 +85,13 @@ public class TimeControl
 
     private readonly System.Timers.Timer _timer;
 
-    private int index;
+    private int _index;
 
     // private int GCD;
     /// <summary>
     /// Least Common Multiple
     /// </summary>
-    private int LCM;
+    private int _LCM;
 
     private Dictionary<ITickable, int> _subscriptions = new();
 
@@ -106,18 +106,18 @@ public class TimeControl
         {
             AutoReset = true,
         };
-        LCM = 0;
-        index = 0;
+        _LCM = 0;
+        _index = 0;
 
         _timer.Elapsed += async (_, _) =>
         {
             List<Task> tasks = new(_subscriptions.Count);
 
-            index = ++index % LCM; // hope it works...
+            _index = ++_index % _LCM; // hope it works...
 
             foreach (var subscription in _subscriptions)
             {
-                if (subscription.Value % index == 0)
+                if (subscription.Value % _index == 0)
                     tasks.Add(subscription.Key.Tick());
             }
 
@@ -173,8 +173,8 @@ public class TimeControl
             if (ReferenceEquals(subscription.Key, subscriber.Key))
                 throw new AlreadySubscribedException();
 
-        if (timeControl.LCM % subscriber.Value != 0)
-            timeControl.LCM = LcmOf(timeControl._subscriptions.Values);
+        if (timeControl._LCM % subscriber.Value != 0)
+            timeControl._LCM = LcmOf(timeControl._subscriptions.Values);
 
         timeControl._subscriptions.Add(subscriber.Key, subscriber.Value);
 
