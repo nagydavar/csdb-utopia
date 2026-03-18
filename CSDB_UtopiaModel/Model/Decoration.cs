@@ -1,9 +1,10 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-abstractnamespace  X;
-class Decoration : Building
+
+public class Decoration : Building
 {
-        protected int giveMood;
-        protected Pair(Resource,int) costResource;
-    };
+    protected int giveMood;
+    protected (Resource resource, int cost) costResource;
+    public Decoration(int x, int y) : base(x,y) { }
+};

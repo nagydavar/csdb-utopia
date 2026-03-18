@@ -1,5 +1,5 @@
 namespace CSDB_UtopiaModel.Model;
-abstract class Building : Buildable
+public abstract class Building : Buildable
 {
-        public Building(int,int);
-    };
+    public Building(int x, int y) { }
+};
