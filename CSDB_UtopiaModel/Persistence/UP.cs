@@ -1,5 +1,5 @@
 namespace CSDB_UtopiaModel.Persistence;
-class UP : VerticalDirection
+public class UP : VerticalDirection
 {
     private UP? instance;
     private UP() { }

@@ -1,9 +1,9 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-class ResourceExtractor : Producer
+public class ResourceExtractor : Producer
 {
-    public ResourceExtractor(Field, int);
-    public override IndustrialResource Produce();
-    public override Enviromental Require();
+    public ResourceExtractor(Field field, int x): base(field.X,field.Y) { }
+    public override IndustrialResource Produce() { return IronOre.Instance(); }
+    public override Enviromental Require() { return Enviromental.Instance(); }
 };

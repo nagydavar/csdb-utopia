@@ -23,11 +23,11 @@ public readonly struct Coordinate
 
     public static Coordinate operator -(Coordinate lhs, Coordinate rhs) => new(lhs.X - rhs.X, lhs.Y - rhs.Y);
 
-    public Coordinate Step(Persistence.Up _) => new(X, Y - 1);
+    public Coordinate Step(Persistence.UP _) => new(X, Y - 1);
 
-    public Coordinate Step(Persistence.Down _) => new(X, Y + 1);
+    public Coordinate Step(Persistence.DOWN _) => new(X, Y + 1);
 
-    public Coordinate Step(Persistence.Right _) => new(X + 1, Y);
+    public Coordinate Step(Persistence.RIGHT _) => new(X + 1, Y);
 
-    public Coordinate Step(Persistence.Left _) => new(X - 1, Y);
+    public Coordinate Step(Persistence.LEFT _) => new(X - 1, Y);
 }

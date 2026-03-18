@@ -1,4 +1,4 @@
 namespace CSDB_UtopiaModel.Persistence;
-interface Resource : Goods
+public interface Resource
 {
-    };
+};
