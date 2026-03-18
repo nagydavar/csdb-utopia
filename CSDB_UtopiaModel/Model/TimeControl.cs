@@ -88,6 +88,21 @@ public class TimeControl
         _ => -1 // can also be an exception
     };
 
+    protected static TimeControl Unsubscribe(TimeControl timeControl, ITickable key, int? value)
+    {
+        if (value.HasValue && timeControl._subscriptions[key] != value.Value)
+            throw new Exception();
+
+        if (!timeControl._subscriptions.Remove(key))
+            throw new Exception(); // is this necessary?
+        
+        // handle LCM
+
+        return timeControl;
+    }
+
+    protected static int LcmOf(IEnumerable<int> _) => throw new NotImplementedException();
+
     public static TimeControl operator !(TimeControl timeControl)
     {
         if (timeControl.IsStopped)
@@ -101,19 +116,32 @@ public class TimeControl
     /// <summary>
     /// Subscribes an ITickable class 
     /// </summary>
-    public static TimeControl operator +(TimeControl timeControl, (int, ITickable) subscriber)
+    public static TimeControl operator +(TimeControl timeControl, (ITickable Key, int Value) subscriber)
     {
-        throw new NotImplementedException();
+        if (subscriber.Value <= 0)
+            throw new Exception();
+
+        // ReferenceContains
+        foreach (var subscription in (timeControl._subscriptions))
+            if (ReferenceEquals(subscription.Key, subscriber.Key))
+                throw new Exception();
+
+        if (timeControl.LCM % subscriber.Value != 0)
+            timeControl.LCM = LcmOf(timeControl._subscriptions.Values);
+
+        timeControl._subscriptions.Add(subscriber.Key, subscriber.Value);
+
+        return timeControl;
     }
-    
+
     /// <summary>
     /// Unsubscribes an ITickable class 
     /// </summary>
-    public static TimeControl operator -(TimeControl timeControl, (int, ITickable) subscriber)
-    {
-        throw new NotImplementedException();
-    }
-    
+    public static TimeControl operator -(TimeControl timeControl, (ITickable Key, int Value) unsubscriber) =>
+        Unsubscribe(timeControl, unsubscriber.Key, unsubscriber.Value);
+
+    public static TimeControl operator -(TimeControl timeControl, ITickable key) => Unsubscribe(timeControl, key, null);
+
     /// <summary>
     /// Increases the timer's speed
     /// </summary>
