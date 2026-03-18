@@ -1,5 +1,5 @@
 namespace CSDB_UtopiaModel.Persistence;
-class Enviromental : Resource
+public class Enviromental : Resource
 {
     private static Enviromental? instance;
     private Enviromental() { }

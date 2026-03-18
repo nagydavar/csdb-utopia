@@ -1,11 +1,10 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-class Factory : Producer
+public class Factory : Producer
 {
+    public Factory(Field field, int x) : base(field.X,field.Y){ }
 
-        public void Factory(Field, int);
-
-        public override Goods Produce();
-        public override Resource Require();
-    };
+    public override Goods Produce();
+    public override Resource Require();
+};

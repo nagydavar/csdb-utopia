@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSDB_UtopiaModel", "CSDB_Ut
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSDB_UtopiaView", "CSDB_UtopiaView\CSDB_UtopiaView.csproj", "{C3C71EB6-A30F-ECC1-9F9C-C21FB1144629}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSDB_UtopiaView.Android", "CSDB_UtopiaView.Android\CSDB_UtopiaView.Android.csproj", "{D1B24E41-F60B-0F8E-7B42-A53FC2EFE854}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSDB_UtopiaView.Desktop", "CSDB_UtopiaView.Desktop\CSDB_UtopiaView.Desktop.csproj", "{9ADEF255-6DA5-E004-33F7-30852BA7AC17}"
 EndProject
 Global
@@ -25,10 +23,6 @@ Global
 		{C3C71EB6-A30F-ECC1-9F9C-C21FB1144629}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C3C71EB6-A30F-ECC1-9F9C-C21FB1144629}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C3C71EB6-A30F-ECC1-9F9C-C21FB1144629}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D1B24E41-F60B-0F8E-7B42-A53FC2EFE854}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D1B24E41-F60B-0F8E-7B42-A53FC2EFE854}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D1B24E41-F60B-0F8E-7B42-A53FC2EFE854}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D1B24E41-F60B-0F8E-7B42-A53FC2EFE854}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9ADEF255-6DA5-E004-33F7-30852BA7AC17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9ADEF255-6DA5-E004-33F7-30852BA7AC17}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9ADEF255-6DA5-E004-33F7-30852BA7AC17}.Release|Any CPU.ActiveCfg = Release|Any CPU

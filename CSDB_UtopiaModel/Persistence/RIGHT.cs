@@ -1,5 +1,5 @@
 namespace CSDB_UtopiaModel.Persistence;
-class RIGHT : HorizontalDirection
+public class RIGHT : HorizontalDirection
 {
     private static RIGHT? instance;
     private RIGHT() { }
