@@ -148,16 +148,18 @@ public class TimeControl
         return timeControl;
     }
 
-    protected static int LcmOf(IEnumerable<int> ints)
+    protected static int LcmOf(IEnumerable<int> numbers)
     {
-        throw new NotImplementedException();
+        int? prev = null;
+
+        foreach (int number in numbers)
+            prev = prev.HasValue ? LcmOf(prev.Value, number) : number;
+
+        return prev ?? throw new Exception();
     }
 
-    protected static int GcdOf(IEnumerable<int> ints)
-    {
-        throw new NotImplementedException();
-    }
-
+    protected static int LcmOf(int a, int b) => a / GcdOf(a, b) * b;
+    
     protected static int GcdOf(int a, int b)
     {
         while (b != 0)
