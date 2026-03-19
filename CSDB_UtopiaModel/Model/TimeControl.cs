@@ -148,7 +148,27 @@ public class TimeControl
         return timeControl;
     }
 
-    protected static int LcmOf(IEnumerable<int> _) => throw new NotImplementedException();
+    protected static int LcmOf(IEnumerable<int> ints)
+    {
+        throw new NotImplementedException();
+    }
+
+    protected static int GcdOf(IEnumerable<int> ints)
+    {
+        throw new NotImplementedException();
+    }
+
+    protected static int GcdOf(int a, int b)
+    {
+        while (b != 0)
+        {
+            int tmp = b;
+            b = a % b;
+            a = tmp;
+        }
+
+        return a;
+    }
 
     public static TimeControl operator !(TimeControl timeControl)
     {
@@ -217,4 +237,6 @@ public class TimeControl
 
     public void Pause() => _timer.Start();
     public void Resume() => _timer.Stop();
+
+    public void ChangeValue(ITickable _) => throw new NotImplementedException();
 }
