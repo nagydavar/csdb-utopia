@@ -4,6 +4,8 @@ namespace CSDB_UtopiaModel.Model;
 
 public class TimeControl
 {
+    #region Exceptions
+
     public class AlreadyAtMaxSpeedException : InvalidOperationException
     {
         public AlreadyAtMaxSpeedException() : base("The timer is already at maximum speed.")
@@ -81,23 +83,34 @@ public class TimeControl
         }
     }
 
-    private static TimeControl? _instance;
+    #endregion
 
-    private readonly System.Timers.Timer _timer;
+    #region Fields
+
+    private static TimeControl? _instance;
 
     private int _index;
 
-    // private int GCD;
     /// <summary>
     /// Least Common Multiple
     /// </summary>
-    private int _LCM;
+    private int _lcm;
 
-    private Dictionary<ITickable, int> _subscriptions = new();
+    private readonly System.Timers.Timer _timer;
+
+    private readonly Dictionary<ITickable, int> _subscriptions = new();
+
+    #endregion
+
+    #region Properties
 
     public TimerSpeed Speed { get; private set; }
 
     public bool IsStopped => _timer.Enabled;
+
+    #endregion
+
+    #region Constructor
 
     protected TimeControl()
     {
@@ -106,14 +119,15 @@ public class TimeControl
         {
             AutoReset = true,
         };
-        _LCM = 0;
+
+        _lcm = 0;
         _index = 0;
 
         _timer.Elapsed += async (_, _) =>
         {
             List<Task> tasks = new(_subscriptions.Count);
 
-            _index = ++_index % _LCM; // hope it works...
+            _index = ++_index % _lcm; // hope it works...
 
             foreach (var subscription in _subscriptions)
             {
@@ -125,7 +139,9 @@ public class TimeControl
         };
     }
 
-    public static TimeControl Instance() => _instance ??= new();
+    #endregion
+
+    #region Non-public methods
 
     private static int IntervalFromTimerSpeed(TimerSpeed speed) => speed switch
     {
@@ -159,7 +175,7 @@ public class TimeControl
     }
 
     protected static int LcmOf(int a, int b) => a / GcdOf(a, b) * b;
-    
+
     protected static int GcdOf(int a, int b)
     {
         while (b != 0)
@@ -171,6 +187,12 @@ public class TimeControl
 
         return a;
     }
+
+    #endregion
+
+    #region Public methods
+
+    #region Operators
 
     public static TimeControl operator !(TimeControl timeControl)
     {
@@ -195,8 +217,8 @@ public class TimeControl
             if (ReferenceEquals(subscription.Key, subscriber.Key))
                 throw new AlreadySubscribedException();
 
-        if (timeControl._LCM % subscriber.Value != 0)
-            timeControl._LCM = LcmOf(timeControl._subscriptions.Values);
+        if (timeControl._lcm % subscriber.Value != 0)
+            timeControl._lcm = LcmOf(timeControl._subscriptions.Values);
 
         timeControl._subscriptions.Add(subscriber.Key, subscriber.Value);
 
@@ -237,8 +259,14 @@ public class TimeControl
         return timeControl;
     }
 
+    #endregion
+
+    public static TimeControl Instance() => _instance ??= new();
+
     public void Pause() => _timer.Start();
     public void Resume() => _timer.Stop();
 
     public void ChangeValue(ITickable _) => throw new NotImplementedException();
+
+    #endregion
 }
