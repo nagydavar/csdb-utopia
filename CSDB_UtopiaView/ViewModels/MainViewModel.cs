@@ -5,8 +5,6 @@ namespace CSDB_UtopiaView.ViewModels;
 
 public partial class MainMenuViewModel : ViewModelBase { }
 public partial class CreateWorldViewModel : ViewModelBase { }
-public partial class GameViewModel : ViewModelBase { }
-
 
 public partial class MainViewModel : ViewModelBase
 {

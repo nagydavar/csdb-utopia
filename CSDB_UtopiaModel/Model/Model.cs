@@ -3,7 +3,7 @@ using System;
 
 namespace CSDB_UtopiaModel.Model;
 
-class Model {
+public class Model {
 
     private TimeControl _timeControl;
     private readonly Persistence.Persistence _persistence;
@@ -27,6 +27,16 @@ class Model {
     }
     public void PlaceVehicle(int x , int y , Vehicle<Resource> vehicle) { }
 
+    //nyersanyag frissítése miatt
+    public int GetBudget() { return _persistence.Budget; }
+
+    public int GetMood() { return _persistence.CurrentMood; }
+
+    public int GetResourceCount(Resource resource)
+    {
+        return _persistence.Storage.ContainsKey(resource) ? _persistence.Storage[resource] : 0;
+    }
+    // idáig új
 
     public void AddVehicle(Vehicle<Resource> vehicle) { }
     public void Demolish(int x, int y) { }

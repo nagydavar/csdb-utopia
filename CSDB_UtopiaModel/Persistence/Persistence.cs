@@ -25,6 +25,7 @@ class Persistence
         Width = width;
         Height = height;
         Budget = 10000;
+        CurrentMood = 100;
 
         Fields = new List<List<Field>>();
         for (int i = 0; i < Width; i++)

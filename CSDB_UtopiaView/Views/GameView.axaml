@@ -4,15 +4,38 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:CSDB_UtopiaView.ViewModels"
              xmlns:views="clr-namespace:CSDB_UtopiaView.Views"
-             x:Class="CSDB_UtopiaView.Views.GameView">
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="CSDB_UtopiaView.Views.GameView"
+             x:DataType="vm:GameViewModel">
     <Grid>
         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding MapTiles}"> <ItemsControl.ItemsPanel>
+            <ItemsControl ItemsSource="{Binding Cells}">
+                <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <UniformGrid Rows="15" Columns="25" Background="White"/>
+                        <UniformGrid Rows="{Binding Height}" 
+                                     Columns="{Binding Width}" 
+                                     Background="White"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
-                <Rectangle Width="50" Height="50" Stroke="Black" StrokeThickness="0.5"/>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:Cell">
+                        <Button Width="50" 
+                                Height="50" 
+                                Padding="0"
+                                BorderThickness="0.5"
+                                BorderBrush="Black"
+                                Command="{Binding $parent[ItemsControl].((vm:GameViewModel)DataContext).ClickCellCommand}"
+                                CommandParameter="{Binding}">
+                            
+                            <Image Stretch="UniformToFill">
+                                <Image.Source>
+                                    <Binding Path="ImagePath" />
+                                </Image.Source>
+                            </Image>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
 
@@ -20,22 +43,28 @@
             <StackPanel Orientation="Horizontal" Margin="10,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,0">
                     <Rectangle Width="20" Height="20" Fill="Gray" Margin="5"/>
-                    <TextBlock Text="pénz: 1000" VerticalAlignment="Center"/>
+                    <TextBlock Text="Pénz: " VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Budget}" VerticalAlignment="Center" FontWeight="Bold"/>
                 </StackPanel>
-                <TextBlock Text="nyersanyag: 50" VerticalAlignment="Center" Margin="10,0"/>
-            </StackPanel>
+                
+                <TextBlock Text="Népesség: " VerticalAlignment="Center" Margin="10,0,0,0"/>
+                <TextBlock Text="{Binding Population}" VerticalAlignment="Center" FontWeight="Bold"/>
+                
+                </StackPanel>
         </Border>
 
         <StackPanel VerticalAlignment="Top" HorizontalAlignment="Right" Orientation="Horizontal" Margin="10">
-            <Button Content="Idő" Margin="5"/>
-            <Button Content="+" Width="30"/>
-            <Button Content="-" Width="30"/>
-            <Button Content="▶" Width="40" Height="40" CornerRadius="20"/>
+            <TextBlock Text="{Binding CurrentDateString}" VerticalAlignment="Center" Margin="5"/>
+            <Button Content="+" Width="30" Command="{Binding IncreaseSpeedCommand}"/>
+            <Button Content="-" Width="30" Command="{Binding DecreaseSpeedCommand}"/>
+            <Button Content="▶" Width="40" Height="40" CornerRadius="20" Command="{Binding ResumeCommand}"/>
         </StackPanel>
 
         <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="10" Spacing="5">
             <Border Width="150" Height="100" Background="LightGray" BorderBrush="Black" BorderThickness="1">
-                <TextBlock Text="Log" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <ScrollViewer>
+                     <TextBlock Text="Log üzenetek..." TextWrapping="Wrap" Margin="5"/>
+                </ScrollViewer>
             </Border>
             <Border Width="200" Height="150" Background="#F2E9E9" BorderBrush="Black" BorderThickness="1">
                 <TextBlock Text="Minimap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -43,11 +72,12 @@
         </StackPanel>
 
         <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Background="White" BorderBrush="Black" BorderThickness="1" Margin="0,0,0,10">
-            <StackPanel Orientation="Horizontal" Spacing="2">
-                <Button Width="50" Height="50" Content="X"/>
-                <Button Width="50" Height="50" Content="Járművek"/>
-                <Button Width="50" Height="50" Content="X"/>
-                </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="5" Margin="5">
+                <Button Width="80" Height="40" Content="Út" Command="{Binding ListBuildableRoadsCommand}"/>
+                <Button Width="80" Height="40" Content="Házak" Command="{Binding ListBuildableOtherBuildingsCommand}"/>
+                <Button Width="80" Height="40" Content="Dekor" Command="{Binding ListBuildableDecorationsCommand}"/>
+                <Button Width="80" Height="40" Content="Bontás" Command="{Binding DemolishCommand}"/>
+            </StackPanel>
         </Border>
     </Grid>
 </UserControl>

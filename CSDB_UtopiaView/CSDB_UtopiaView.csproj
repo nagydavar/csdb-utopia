@@ -18,4 +18,12 @@
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Assets\Roads\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CSDB_UtopiaModel\CSDB_UtopiaModel.csproj" />
+  </ItemGroup>
 </Project>
