@@ -1,4 +1,4 @@
 namespace CSDB_UtopiaModel.Persistence;
-class Water : Field
+public class Water : Field
 {
     };

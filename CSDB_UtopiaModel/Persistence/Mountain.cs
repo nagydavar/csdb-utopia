@@ -1,4 +1,4 @@
 namespace CSDB_UtopiaModel.Persistence;
-class Mountain : Field
+public class Mountain : Field
 {
     };
