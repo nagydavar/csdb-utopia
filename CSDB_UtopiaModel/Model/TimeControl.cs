@@ -153,11 +153,13 @@ public class TimeControl
 
     protected static TimeControl Unsubscribe(TimeControl timeControl, ITickable key, int? value)
     {
-        if (value.HasValue && timeControl._subscriptions[key] != value.Value) // !!!!
+        if (!timeControl._subscriptions.TryGetValue(key, out int actualValue))
+            throw new NotSubscribedException();
+
+        if (value.HasValue && value.Value != actualValue)
             throw new AlreadySubscribedWithAnotherValueException();
 
-        if (!timeControl._subscriptions.Remove(key))
-            throw new NotSubscribedException(); // is this necessary?
+        timeControl._subscriptions.Remove(key);
 
         // handle LCM
 
@@ -266,7 +268,7 @@ public class TimeControl
     public void Pause() => _timer.Start();
     public void Resume() => _timer.Stop();
 
-    public void ChangeValue(ITickable _) => throw new NotImplementedException();
+    public void ChangeValue(ITickable key, int newValue) => _subscriptions[key] = newValue;
 
     #endregion
 }
