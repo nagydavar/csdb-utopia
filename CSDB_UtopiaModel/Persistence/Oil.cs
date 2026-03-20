@@ -1,9 +1,9 @@
 namespace CSDB_UtopiaModel.Persistence;
 class Oil : IndustrialResource
 {
-    private Oil? instance;
+    private static Oil? instance;
     private Oil() { }
-    public Oil Instance()
+    public static Oil Instance()
     {
         if (instance is null)
             instance = new Oil();

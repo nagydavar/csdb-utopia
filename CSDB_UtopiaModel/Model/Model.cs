@@ -2,6 +2,7 @@ using CSDB_UtopiaModel.Persistence;
 using System;
 
 namespace CSDB_UtopiaModel.Model;
+
 class Model {
 
     private TimeControl _timeControl;

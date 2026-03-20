@@ -1,7 +1,8 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-class Vehicle<R> where R : Resource
+
+class Vehicle<R> : IVehicle where R : Resource
 {
     protected int capacity;
     protected int maintenanceCost;
@@ -9,19 +10,19 @@ class Vehicle<R> where R : Resource
     protected Navigator navi;
     protected LinkedList<Field>? PathToGarage;
 
-    public Field position;
-    public int TimeSinceBought;
-    public int TimeSpentOnCurrentRoad;
-    public int ThresholdToMove;
+    public Field Position { get; set; }
+    public int TimeSinceBought { get; set; }
+    public int TimeSpentOnCurrentRoad { get; set; }
+    public int ThresholdToMove { get; set; }
+    public GoingIntention Intention { get; }
 
-    public void Vehicle(Field, int, int, int, Navigator);
-    protected bool TimeToGoToGarage();
-    protected LinkedList<Field> CalculatePathToNearestGarage();
-    public void GoToGarage();
-    public void GoBackToPath();
-    public int Sell();
-    public override Tick();
-    public int GetPositionInField();
-    public GoingIntention GetIntention();
-
-};
+    public Vehicle(Field _, int _, int _, int _, Navigator _) => throw new NotImplementedException();
+    
+    protected bool TimeToGoToGarage() => throw new NotImplementedException();
+    protected LinkedList<Field> CalculatePathToNearestGarage() => throw new NotImplementedException();
+    public void GoToGarage() => throw new NotImplementedException();
+    public void GoBackToPath() => throw new NotImplementedException();
+    public int Sell() => throw new NotImplementedException();
+    public Task Tick() => throw new NotImplementedException();
+    public int GetPositionInField() => throw new NotImplementedException();
+}

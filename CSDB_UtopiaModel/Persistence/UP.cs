@@ -1,9 +1,9 @@
 namespace CSDB_UtopiaModel.Persistence;
 public class UP : VerticalDirection
 {
-    private UP? instance;
+    private static UP? instance;
     private UP() { }
-    public UP Instance()
+    public static UP Instance()
     {
         if (instance is null)
             instance = new UP();

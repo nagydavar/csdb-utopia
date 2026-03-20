@@ -4,128 +4,28 @@ namespace CSDB_UtopiaModel.Model;
 
 public class TimeControl
 {
-    public class AlreadyAtMaxSpeedException : InvalidOperationException
+    private TimeControl? instance;
+    private TimeControl() { }
+    public TimeControl Instance()
     {
-        public AlreadyAtMaxSpeedException() : base("The timer is already at maximum speed.")
-        {
-        }
-
-        public AlreadyAtMaxSpeedException(string? message) : base(message)
-        {
-        }
-
-        public AlreadyAtMaxSpeedException(string? message, Exception? innerException) : base(message, innerException)
-        {
-        }
+        if (instance is null)
+            instance = new TimeControl();
+        return instance;
     }
+    private bool isStopped;
+    private Timer timer;
+    public int index;
+    public int GCD;
+    public int step;
+    public Dictionary<int, Ticker> Subscribed;
+    public void Subscribe(int, Tickable);
+    public TimerSpeed GetSpeed;
+    public void Pause();
+    public void Resume();
+    public void Plus();
+    public void Minus();
 
-    public class AlreadyAtMinSpeedException : InvalidOperationException
-    {
-        public AlreadyAtMinSpeedException() : base("The timer is already at minimum speed.")
-        {
-        }
-
-        public AlreadyAtMinSpeedException(string? message) : base(message)
-        {
-        }
-
-        public AlreadyAtMinSpeedException(string? message, Exception? innerException) : base(message, innerException)
-        {
-        }
-    }
-
-    public class AlreadySubscribedException : InvalidOperationException
-    {
-        public AlreadySubscribedException() : base("The class has already subscribed before.")
-        {
-        }
-
-        public AlreadySubscribedException(string? message) : base(message)
-        {
-        }
-
-        public AlreadySubscribedException(string? message, Exception? innerException) : base(message, innerException)
-        {
-        }
-    }
-
-    public class AlreadySubscribedWithAnotherValueException : AlreadySubscribedException
-    {
-        public AlreadySubscribedWithAnotherValueException() : base(
-            "The class has already subscribed with another value before.")
-        {
-        }
-
-        public AlreadySubscribedWithAnotherValueException(string? message) : base(message)
-        {
-        }
-
-        public AlreadySubscribedWithAnotherValueException(string? message, Exception? innerException) : base(message,
-            innerException)
-        {
-        }
-    }
-
-    public class NotSubscribedException : InvalidOperationException
-    {
-        public NotSubscribedException() : base("The class has not subscribed, therefore cannot be removed.")
-        {
-        }
-
-        public NotSubscribedException(string? message) : base(message)
-        {
-        }
-
-        public NotSubscribedException(string? message, Exception? innerException) : base(message, innerException)
-        {
-        }
-    }
-
-    private static TimeControl? _instance;
-
-    private readonly System.Timers.Timer _timer;
-
-    private int _index;
-
-    // private int GCD;
-    /// <summary>
-    /// Least Common Multiple
-    /// </summary>
-    private int _LCM;
-
-    private Dictionary<ITickable, int> _subscriptions = new();
-
-    public TimerSpeed Speed { get; private set; }
-
-    public bool IsStopped => _timer.Enabled;
-
-    protected TimeControl()
-    {
-        Speed = TimerSpeed.Normal;
-        _timer = new(IntervalFromTimerSpeed(Speed))
-        {
-            AutoReset = true,
-        };
-        _LCM = 0;
-        _index = 0;
-
-        _timer.Elapsed += async (_, _) =>
-        {
-            List<Task> tasks = new(_subscriptions.Count);
-
-            _index = ++_index % _LCM; // hope it works...
-
-            foreach (var subscription in _subscriptions)
-            {
-                if (subscription.Value % _index == 0)
-                    tasks.Add(subscription.Key.Tick());
-            }
-
-            await Task.WhenAll(tasks);
-        };
-    }
-
-    public static TimeControl Instance() => _instance ??= new();
+    #region Non-public methods
 
     private static int IntervalFromTimerSpeed(TimerSpeed speed) => speed switch
     {
@@ -137,18 +37,48 @@ public class TimeControl
 
     protected static TimeControl Unsubscribe(TimeControl timeControl, ITickable key, int? value)
     {
-        if (value.HasValue && timeControl._subscriptions[key] != value.Value) // !!!!
+        if (!timeControl._subscriptions.TryGetValue(key, out int actualValue))
+            throw new NotSubscribedException();
+
+        if (value.HasValue && value.Value != actualValue)
             throw new AlreadySubscribedWithAnotherValueException();
 
-        if (!timeControl._subscriptions.Remove(key))
-            throw new NotSubscribedException(); // is this necessary?
+        timeControl._subscriptions.Remove(key);
 
         // handle LCM
 
         return timeControl;
     }
 
-    protected static int LcmOf(IEnumerable<int> _) => throw new NotImplementedException();
+    protected static int LcmOf(IEnumerable<int> numbers)
+    {
+        int? prev = null;
+
+        foreach (int number in numbers)
+            prev = prev.HasValue ? LcmOf(prev.Value, number) : number;
+
+        return prev ?? throw new Exception();
+    }
+
+    protected static int LcmOf(int a, int b) => a / GcdOf(a, b) * b;
+
+    protected static int GcdOf(int a, int b)
+    {
+        while (b != 0)
+        {
+            int tmp = b;
+            b = a % b;
+            a = tmp;
+        }
+
+        return a;
+    }
+
+    #endregion
+
+    #region Public methods
+
+    #region Operators
 
     public static TimeControl operator !(TimeControl timeControl)
     {
@@ -173,8 +103,8 @@ public class TimeControl
             if (ReferenceEquals(subscription.Key, subscriber.Key))
                 throw new AlreadySubscribedException();
 
-        if (timeControl._LCM % subscriber.Value != 0)
-            timeControl._LCM = LcmOf(timeControl._subscriptions.Values);
+        if (timeControl._lcm % subscriber.Value != 0)
+            timeControl._lcm = LcmOf(timeControl._subscriptions.Values);
 
         timeControl._subscriptions.Add(subscriber.Key, subscriber.Value);
 
@@ -215,6 +145,14 @@ public class TimeControl
         return timeControl;
     }
 
+    #endregion
+
+    public static TimeControl Instance() => _instance ??= new();
+
     public void Pause() => _timer.Start();
     public void Resume() => _timer.Stop();
+
+    public void ChangeValue(ITickable key, int newValue) => _subscriptions[key] = newValue;
+
+    #endregion
 }
