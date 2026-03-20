@@ -2,7 +2,7 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-class Vehicle<R> : IVehicle where R : Resource
+public class Vehicle<R> : IVehicle where R : Resource
 {
     protected int capacity;
     protected int maintenanceCost;

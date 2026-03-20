@@ -2,7 +2,7 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-class GoingIntention : IComparable<GoingIntention>
+public class GoingIntention : IComparable<GoingIntention>
 {
     public Direction From { get; set; }
     public Direction To { get; set; }

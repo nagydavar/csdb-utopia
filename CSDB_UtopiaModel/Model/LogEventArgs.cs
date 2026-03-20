@@ -1,6 +1,6 @@
 namespace CSDB_UtopiaModel.Model;
 
-class LogEventArgs : EventArgs
+public class LogEventArgs : EventArgs
 {
     public string Message { get; init; }
 
