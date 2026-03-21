@@ -6,5 +6,5 @@ public class Decoration : Building
 {
     protected int giveMood;
     protected (Resource resource, int cost) costResource;
-    public Decoration(int x, int y) : base(x,y) { }
+    public Decoration(Field f) : base(f) { }
 };

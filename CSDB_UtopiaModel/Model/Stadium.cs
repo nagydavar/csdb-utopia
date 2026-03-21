@@ -3,7 +3,7 @@ using CSDB_UtopiaModel.Persistence;
 namespace CSDB_UtopiaModel.Model;
 class Stadium: Decoration
 {
-    public Stadium(int x, int y) : base(x, y)
+    public Stadium(Field f) : base(f)
     {
         giveMood = 50;
         costResource = (Iron.Instance(), 500);

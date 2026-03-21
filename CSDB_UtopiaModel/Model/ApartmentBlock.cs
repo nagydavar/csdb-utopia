@@ -1,12 +1,14 @@
+using CSDB_UtopiaModel.Persistence;
+
 namespace CSDB_UtopiaModel.Model;
 class ApartmentBlock : Building, IResidentialBuilding
 {
-    public ApartmentBlock(int x, int y) : base(x, y) { }
+    public ApartmentBlock(Field f) : base(f) { }
 
     public int givePeople => 20;
 
     public int AffectMood => -10;
 
-    //valami értékek dummy
+    //valami ï¿½rtï¿½kek dummy
     public override int placementCost => 2000;
     };

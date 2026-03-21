@@ -3,8 +3,12 @@ using CSDB_UtopiaModel.Persistence;
 namespace CSDB_UtopiaModel.Model;
 class Garage : Building
 {
-        private List<Vehicle>? vehiclesInGarage;
+        private List<Vehicle<Resource>>? vehiclesInGarage;
 
-        public void Garage(Field);
-        public void RepairCar(Vehicle);
+        public Garage(Field f): base(f) {}
+
+        public void RepairCar(Vehicle<Resource> v)
+        {
+            throw new NotImplementedException();
+        }
     };

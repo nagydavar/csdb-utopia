@@ -3,11 +3,11 @@ using CSDB_UtopiaModel.Persistence;
 namespace CSDB_UtopiaModel.Model;
 class Library: Decoration
 {
-    public Library(int x, int y) : base(x, y)
+    public Library(Field f) : base(f) 
     {
-        // Példa értékek
+        // Pï¿½lda ï¿½rtï¿½kek
         giveMood = 10;
-        costResource = (Paper.Instance(), 50); // Papírba kerül
+        costResource = (Paper.Instance(), 50); // Papï¿½rba kerï¿½l
         area = (1,1);
     }
 };
