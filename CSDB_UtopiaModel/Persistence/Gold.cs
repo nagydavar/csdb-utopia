@@ -1,7 +1,7 @@
 using CSDB_UtopiaModel.Model;
 
 namespace CSDB_UtopiaModel.Persistence;
-class Gold : Treasure
+public class Gold : Treasure
 {
     private static Gold? instance;
     private Gold() { }
