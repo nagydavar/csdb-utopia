@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CSDB_UtopiaModel.Model;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 
 namespace CSDB_UtopiaView.ViewModels;
 
@@ -27,8 +29,9 @@ public partial class MainViewModel : ViewModelBase
 
     [RelayCommand]
     public void GoToGame() {
-        int w = 100;
-        int h = 100;
+        //teszthez kisebb tábla
+        int w = 10;
+        int h = 10;
 
         _model = new Model(w, h);
 
@@ -37,4 +40,14 @@ public partial class MainViewModel : ViewModelBase
 
     [RelayCommand]
     public void GoToMainMenu() => CurrentPage = new MainMenuViewModel();
+
+    [RelayCommand]
+    public void Quit()
+    {
+        // Megkeressük az aktuális alkalmazás futási környezetét
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            desktop.Shutdown();
+        }
+    }
 }
