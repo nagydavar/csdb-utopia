@@ -82,7 +82,7 @@ public partial class GameViewModel : ViewModelBase
     {
         HumanResource.Instance(),
         Wood.Instance(), IronOre.Instance(), Coal.Instance(), Oil.Instance(),
-        Gold.Instance, Diamond.Instance(),
+        Gold.Instance(), Diamond.Instance(),
         Plank.Instance(), Iron.Instance(), Gasoline.Instance(),
         Jewelry.Instance(), Paper.Instance(), Book.Instance()
     };
@@ -160,7 +160,7 @@ public partial class GameViewModel : ViewModelBase
         foreach (var field in e.Fields)
         {
             // Megkeressük a megfelelő Cell objektumot az ObservableCollection-ben
-            var cell = Cells.FirstOrDefault(c => c.X == field.X && c.Y == field.Y);
+            var cell = Cells.FirstOrDefault(c => c.X == field.Coordinates.X && c.Y == field.Coordinates.Y);
             if (cell != null)
             {
                 // Frissítjük a Cell nézetmodelljét a Field adatai alapján (pl. kép lecserélése)
