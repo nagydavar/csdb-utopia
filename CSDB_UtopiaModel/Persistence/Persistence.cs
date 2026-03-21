@@ -1,5 +1,6 @@
 using CSDB_UtopiaModel.Model;
 using System;
+using CSDB_UtopiaModel.Persistence.MapGeneration;
 
 namespace CSDB_UtopiaModel.Persistence;
 class Persistence
@@ -20,20 +21,28 @@ class Persistence
 
     public int CurrentMood { get; set; }
 
-    public Persistence(int width, int height)
+    public Persistence(int width, int height, List<List<Field>> fields)
+    {
+        Fields = fields;
+    }
+    public Persistence(int width, int height, bool generateMap)
     {
         Width = width;
         Height = height;
         Budget = 10000;
         CurrentMood = 100;
 
-        Fields = new List<List<Field>>();
-        for (int i = 0; i < Width; i++)
-        {
-
-            for (int j = 0; j < Height; j++)
+        if (generateMap)
+            GenerateMap(Width, Height);
+        else {
+            Fields = new List<List<Field>>();
+            for (int i = 0; i < Width; i++)
             {
-                Fields[i][j] = new Land(new Coordinate(i, j),0, false);
+
+                for (int j = 0; j < Height; j++)
+                {
+                    Fields[i][j] = new Land(new Coordinate(i, j), 0, false);
+                }
             }
         }
 
@@ -61,9 +70,11 @@ class Persistence
         };
     }
 
-    public Persistence GenerateMap(int width, int height)
+    private void GenerateMap(int width, int height)
     {
-        throw new NotImplementedException();
+        Generator generator = new Generator(width, height, new RuleBook());
+        Fields =  generator.Generate();
+        
     }
 
     public void Save()

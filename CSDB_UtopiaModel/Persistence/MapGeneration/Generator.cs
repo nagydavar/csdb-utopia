@@ -77,7 +77,7 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
 
 
         }
-        public void Generate()
+        public List<List<Field>> Generate()
         {
             try
             {
@@ -91,6 +91,17 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
                 if (triedTimes < MaxTriedTimes)
                     Generate();
             }
+
+            List<List<Field>> f = new List<List<Field>>();
+            
+            for (int i = 0; i < fields.Count; i++)
+            {
+                int x = i / Width;
+                int y = i % Width;
+                if (y == 0) f.Add(new List<Field>());
+                f[x].Add(fields[i].ToField());
+            }
+            return f;
         }
 
         private void PrepareSuperPositions()
