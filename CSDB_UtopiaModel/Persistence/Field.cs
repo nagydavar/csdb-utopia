@@ -12,7 +12,11 @@ abstract public class Field {
     public bool IsPartOfTown;
 
     public Field(Coordinate c) { }
-    public bool Place(Buyable buyable) { return true; }
+
+    public void Place(Buildable buildable)
+    {
+        this.buildable = buildable;
+    }
     public bool Demolish() {
         return true;
     }

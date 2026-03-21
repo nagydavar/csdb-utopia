@@ -8,26 +8,26 @@ public class Model {
     private TimeControl _timeControl;
     private readonly Persistence.Persistence _persistence;
     public Model(int width, int height) {
-        _persistence = new Persistence.Persistence(width, height);
+        _persistence = new Persistence.Persistence(width, height, true);
     }
     public void Place(int x, int y, Buildable buildable) {
         if (buildable is IResidentialBuilding residential)
         {
-            // Népesség növelése
+            // Nï¿½pessï¿½g nï¿½velï¿½se
             _persistence.Storage[HumanResource.Instance()] += residential.givePeople;
             OnResourceChanged(HumanResource.Instance(), _persistence.Storage[HumanResource.Instance()]);
 
-            // Hangulat csökkentése
+            // Hangulat csï¿½kkentï¿½se
             _persistence.CurrentMood += residential.AffectMood;
             OnMoodChanged(_persistence.CurrentMood);
 
-            // Itt jönne a mezõ frissítése a térképen most csak teszt miatt, de így is gatya
-            Console.WriteLine($"Építve: {x},{y} koordinátán. Pop: {_persistence.Storage[HumanResource.Instance()]}, Mood: {_persistence.CurrentMood}");
+            // Itt jï¿½nne a mezï¿½ frissï¿½tï¿½se a tï¿½rkï¿½pen most csak teszt miatt, de ï¿½gy is gatya
+            Console.WriteLine($"ï¿½pï¿½tve: {x},{y} koordinï¿½tï¿½n. Pop: {_persistence.Storage[HumanResource.Instance()]}, Mood: {_persistence.CurrentMood}");
         } 
     }
     public void PlaceVehicle(int x , int y , Vehicle<Resource> vehicle) { }
 
-    //nyersanyag frissítése miatt
+    //nyersanyag frissï¿½tï¿½se miatt
     public int GetBudget() { return _persistence.Budget; }
 
     public int GetMood() { return _persistence.CurrentMood; }
@@ -36,7 +36,7 @@ public class Model {
     {
         return _persistence.Storage.ContainsKey(resource) ? _persistence.Storage[resource] : 0;
     }
-    // idáig új
+    // idï¿½ig ï¿½j
 
     public void AddVehicle(Vehicle<Resource> vehicle) { }
     public void Demolish(int x, int y) { }
