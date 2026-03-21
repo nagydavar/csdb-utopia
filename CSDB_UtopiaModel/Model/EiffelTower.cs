@@ -3,6 +3,10 @@ using CSDB_UtopiaModel.Persistence;
 namespace CSDB_UtopiaModel.Model;
 class EiffelTower : Decoration
 {
-        protected int giveMood;
-        protected override Pair(Resource,int) costResource;
-    };
+    public EiffelTower(int x, int y) : base(x, y)
+    {
+        giveMood = 100;
+        costResource = (Iron.Instance(), 1000); // Vasba kerül
+        area = (2, 2);
+    }
+};

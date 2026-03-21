@@ -1,4 +1,6 @@
 namespace CSDB_UtopiaModel.Model;
-class TrafficLightSection {
-        public Set<GoingIntetion> green;
-    };
+
+class TrafficLightSection
+{
+    public HashSet<GoingIntention> Green { get; init; }
+}

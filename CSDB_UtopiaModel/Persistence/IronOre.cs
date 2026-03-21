@@ -1,5 +1,5 @@
 namespace CSDB_UtopiaModel.Persistence;
-class IronOre : IndustrialResource
+public class IronOre : IndustrialResource
 {
     private static IronOre? instance;
     private IronOre() { }

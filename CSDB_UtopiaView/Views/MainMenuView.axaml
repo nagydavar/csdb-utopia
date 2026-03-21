@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:CSDB_UtopiaView.ViewModels"
+             xmlns:views="clr-namespace:CSDB_UtopiaView.Views"
+             x:Class="CSDB_UtopiaView.Views.MainMenuView">
+    <Grid RowDefinitions="*, Auto, Auto, *">
+        <TextBlock Grid.Row="0" Text="Welcome to CSDB Utopia" 
+                   FontSize="48" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,40"/>
+        
+        <Border Grid.Row="1" Width="400" Height="200" Background="LightGray" Margin="20">
+            <TextBlock Text="Kép" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="30"/>
+        </Border>
+
+        <StackPanel Grid.Row="2" Spacing="10" Width="300" HorizontalAlignment="Center">
+            <Button Content="New Game" 
+                    Command="{Binding $parent[UserControl;1].((vm:MainViewModel)DataContext).GoToCreateWorldCommand}"
+                    HorizontalAlignment="Stretch" 
+                    HorizontalContentAlignment="Center" 
+                    Height="40" 
+                    CornerRadius="20"/>            
+            <Button Content="Load Game" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Height="40" CornerRadius="20"/>
+            <Button Content="Quit" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Height="40" CornerRadius="20"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

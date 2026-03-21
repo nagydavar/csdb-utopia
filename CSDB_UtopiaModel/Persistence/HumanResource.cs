@@ -1,5 +1,5 @@
 namespace CSDB_UtopiaModel.Persistence;
-class HumanResource : Resource
+public class HumanResource : Resource
 {
     private static HumanResource? instance;
     private HumanResource() { }

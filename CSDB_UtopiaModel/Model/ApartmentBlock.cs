@@ -1,6 +1,12 @@
 namespace CSDB_UtopiaModel.Model;
-class ApartmentBlock : ResidentialBuilding
+class ApartmentBlock : Building, IResidentialBuilding
 {
-        protected override int givePeople;
-        protected override int AffectMood;
+    public ApartmentBlock(int x, int y) : base(x, y) { }
+
+    public int givePeople => 20;
+
+    public int AffectMood => -10;
+
+    //valami értékek dummy
+    public override int placementCost => 2000;
     };

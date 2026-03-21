@@ -14,7 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CSDB_UtopiaModel\CSDB_UtopiaModel.csproj" />
     <ProjectReference Include="..\CSDB_UtopiaView\CSDB_UtopiaView.csproj" />
   </ItemGroup>
 </Project>

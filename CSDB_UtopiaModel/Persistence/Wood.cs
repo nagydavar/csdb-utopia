@@ -1,5 +1,5 @@
 namespace CSDB_UtopiaModel.Persistence;
-class Wood : IndustrialResource
+public class Wood : IndustrialResource
 {
     private static Wood? instance;
     private Wood() { }

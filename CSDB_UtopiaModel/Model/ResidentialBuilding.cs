@@ -1,6 +1,8 @@
 namespace CSDB_UtopiaModel.Model;
-interface ResidentialBuilding : Building
+public interface IResidentialBuilding
 {
-        protected int givePeople;
-        protected int AffectMood;
-    };
+    int givePeople { get; }
+    int AffectMood { get; }
+
+
+};

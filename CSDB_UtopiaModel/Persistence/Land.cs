@@ -1,5 +1,5 @@
 namespace CSDB_UtopiaModel.Persistence;
-class Land : Field
+public class Land : Field
 {
         private int forestLevel;
 

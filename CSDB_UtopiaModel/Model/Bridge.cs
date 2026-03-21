@@ -1,5 +1,6 @@
 namespace CSDB_UtopiaModel.Model;
-class Bridge : Road
+
+abstract class Bridge : Road
 {
-        public int maxSpeed;
-    };
+    protected Bridge() : base(default, default, default!) => throw new NotImplementedException();
+}
