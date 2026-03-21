@@ -7,4 +7,8 @@ public abstract class Buildable : Buyable
     protected (int, int) area;
     protected Field owner;
     protected Coordinate field;
+    public Buildable(Field f)
+    {
+        owner = f;
+    }
 }

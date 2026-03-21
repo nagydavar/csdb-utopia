@@ -6,8 +6,12 @@ public class GoingIntention : IComparable<GoingIntention>
 {
     public Direction From { get; set; }
     public Direction To { get; set; }
-    
-    public GoingIntention(Direction _, Direction _) => throw new NotImplementedException();
+
+    public GoingIntention(Direction from, Direction to)
+    {
+        From = from;
+        To = to;
+    }
 
     public HashSet<IntersectionSegment> TouchedSegments() => throw new NotImplementedException();
     public bool Crosses(GoingIntention _) => throw new NotImplementedException();

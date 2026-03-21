@@ -1,15 +1,17 @@
+using CSDB_UtopiaModel.Persistence;
+
 namespace CSDB_UtopiaModel.Model;
 public class DetachedHouse : Building, IResidentialBuilding
 {
-    public DetachedHouse(int x, int y) : base(x, y) { }
+    public DetachedHouse(Field f) : base(f) { }
 
-    // 1. Publikusnak kell lennie az interfész miatt
-    // 2. Property-ként kell megvalósítani (get)
-    // 3. Csak akkor override, ha a Building-ben is benne van virtual-ként
+    // 1. Publikusnak kell lennie az interfï¿½sz miatt
+    // 2. Property-kï¿½nt kell megvalï¿½sï¿½tani (get)
+    // 3. Csak akkor override, ha a Building-ben is benne van virtual-kï¿½nt
     public int givePeople => 5;
 
     public int AffectMood => -2;
 
-    // A Buildable-bõl örökölt kötelezõ elem
+    // A Buildable-bï¿½l ï¿½rï¿½kï¿½lt kï¿½telezï¿½ elem
     public override int placementCost => 500;
 };

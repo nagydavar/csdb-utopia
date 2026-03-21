@@ -33,7 +33,7 @@ class Persistence
 
             for (int j = 0; j < Height; j++)
             {
-                Fields[i][j] = new Land();
+                Fields[i][j] = new Land(new Coordinate(i, j),0, false);
             }
         }
 
@@ -51,7 +51,7 @@ class Persistence
             { Gold.Instance(), 0 },
             { Diamond.Instance(), 0 },
 
-            // Késztermékek / Goods
+            // Kï¿½sztermï¿½kek / Goods
             { Plank.Instance(), 0 },
             { Iron.Instance(), 0 },
             { Gasoline.Instance(), 0 },

@@ -3,5 +3,6 @@ using CSDB_UtopiaModel.Persistence;
 namespace CSDB_UtopiaModel.Model;
 class DiamondMine : ResourceExtractor
 {
-        public Diamond Produce();
-    };
+        public override Diamond Produce() => Diamond.Instance();
+        public DiamondMine(Field f, int yield) : base(f, yield) {}
+};

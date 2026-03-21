@@ -2,7 +2,7 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-public class Road : Buildable, Navigable
+class Road : Buildable, Navigable
 {
     public int MaxSpeed { get; set; }
 
@@ -12,11 +12,15 @@ public class Road : Buildable, Navigable
 
     public HashSet<Section> Sections { get; set; }
 
-    public Directions Direction { get; set; }
+    public Direction Direction { get; set; }
 
     public EventHandler<DirectionEventArgs>? Freed;
 
-    public Road(Coordinate _, int maxSpeed, Direction _) => throw new NotImplementedException();
+    public Road(Field f, int maxSpeed, Direction d) : base(f)
+    {
+        MaxSpeed = maxSpeed;
+        Direction = d;
+    }
 
     public bool IsFree(Direction _) => throw new NotImplementedException();
 

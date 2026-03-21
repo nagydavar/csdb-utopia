@@ -3,10 +3,10 @@ using CSDB_UtopiaModel.Persistence;
 namespace CSDB_UtopiaModel.Model;
 class Funfair: Decoration
 {
-    public Funfair(int x, int y) : base(x, y)
+    public Funfair(Field f) : base(f)
     {
         giveMood = 10;
-        costResource = (Iron.Instance(), 100); // Vasba kerül
+        costResource = (Iron.Instance(), 100); // Vasba kerï¿½l
         area = (2, 2);
     }
 };

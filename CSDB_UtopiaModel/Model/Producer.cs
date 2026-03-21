@@ -4,13 +4,14 @@ namespace CSDB_UtopiaModel.Model;
 public abstract class Producer : Building, Tickable
 {
         protected int capacity;
+        protected int yield;
         protected bool finished;
         protected bool isEmpty;
         protected bool gotResource;
-    public Producer(Field field, int x): base(field.X,field.Y) { }
-
-    public Producer(int x, int y) : base(x, y)
+    
+    public Producer(Field f, int yield) : base(f)
     {
+        this.yield = yield;
     }
 
     public abstract Resource Produce();

@@ -1,10 +1,10 @@
 namespace CSDB_UtopiaModel.Model;
 class Section{
-        public Coords start;
-        public Coords end;
-        public Section calculateNew();
-        public List<Coords> coordinates;
-        public bool in(Coordinate);
+        public Coordinate start;
+        public Coordinate end;
+        public Section calculateNew() => throw new NotImplementedException();
+        public List<Coordinate> coordinates;
+        public bool Contains(Coordinate c) => coordinates.Contains(c);
 
-        public void alert();
-    };
+        public void Alert() => throw new NotImplementedException();
+};

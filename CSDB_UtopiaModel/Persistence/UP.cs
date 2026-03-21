@@ -1,6 +1,8 @@
 namespace CSDB_UtopiaModel.Persistence;
-public class UP : VerticalDirection
+class UP : VerticalDirection
 {
+    public (int, int) Diff() => (0, 1);
+    public Direction Opposite() => DOWN.Instance();
     private static UP? instance;
     private UP() { }
     public static UP Instance()
