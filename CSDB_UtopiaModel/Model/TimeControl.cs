@@ -4,26 +4,142 @@ namespace CSDB_UtopiaModel.Model;
 
 public class TimeControl
 {
-    private static TimeControl? instance;
-    private TimeControl() { }
-    public static TimeControl Instance()
+    #region Exceptions
+
+    public class AlreadyAtMaxSpeedException : InvalidOperationException
     {
-        if (instance is null)
-            instance = new TimeControl();
-        return instance;
+        public AlreadyAtMaxSpeedException() : base("The timer is already at maximum speed.")
+        {
+        }
+
+        public AlreadyAtMaxSpeedException(string? message) : base(message)
+        {
+        }
+
+        public AlreadyAtMaxSpeedException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
     }
-    private bool isStopped;
-    private Timer timer;
-    public int index;
-    public int GCD;
-    public int step;
-    public Dictionary<int, Ticker> Subscribed;
-    public void Subscribe(int, Tickable);
-    public TimerSpeed GetSpeed;
-    public void Pause();
-    public void Resume();
-    public void Plus();
-    public void Minus();
+
+    public class AlreadyAtMinSpeedException : InvalidOperationException
+    {
+        public AlreadyAtMinSpeedException() : base("The timer is already at minimum speed.")
+        {
+        }
+
+        public AlreadyAtMinSpeedException(string? message) : base(message)
+        {
+        }
+
+        public AlreadyAtMinSpeedException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+    }
+
+    public class AlreadySubscribedException : InvalidOperationException
+    {
+        public AlreadySubscribedException() : base("The class has already subscribed before.")
+        {
+        }
+
+        public AlreadySubscribedException(string? message) : base(message)
+        {
+        }
+
+        public AlreadySubscribedException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+    }
+
+    public class AlreadySubscribedWithAnotherValueException : AlreadySubscribedException
+    {
+        public AlreadySubscribedWithAnotherValueException() : base(
+            "The class has already subscribed with another value before.")
+        {
+        }
+
+        public AlreadySubscribedWithAnotherValueException(string? message) : base(message)
+        {
+        }
+
+        public AlreadySubscribedWithAnotherValueException(string? message, Exception? innerException) : base(message,
+            innerException)
+        {
+        }
+    }
+
+    public class NotSubscribedException : InvalidOperationException
+    {
+        public NotSubscribedException() : base("The class has not subscribed, therefore cannot be removed.")
+        {
+        }
+
+        public NotSubscribedException(string? message) : base(message)
+        {
+        }
+
+        public NotSubscribedException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+    }
+
+    #endregion
+
+    #region Fields
+
+    private static TimeControl? _instance;
+
+    private int _index;
+
+    /// <summary>
+    /// Least Common Multiple
+    /// </summary>
+    private int _lcm;
+
+    private readonly System.Timers.Timer _timer;
+
+    private readonly Dictionary<ITickable, int> _subscriptions = new();
+
+    #endregion
+
+    #region Properties
+
+    public TimerSpeed Speed { get; private set; }
+
+    public bool IsStopped => _timer.Enabled;
+
+    #endregion
+
+    #region Constructor
+
+    protected TimeControl()
+    {
+        Speed = TimerSpeed.Normal;
+        _timer = new(IntervalFromTimerSpeed(Speed))
+        {
+            AutoReset = true,
+        };
+
+        _lcm = 0;
+        _index = 0;
+
+        _timer.Elapsed += async (_, _) =>
+        {
+            List<Task> tasks = new(_subscriptions.Count);
+
+            _index = ++_index % _lcm; // hope it works...
+
+            foreach (var subscription in _subscriptions)
+            {
+                if (subscription.Value % _index == 0)
+                    tasks.Add(subscription.Key.Tick());
+            }
+
+            await Task.WhenAll(tasks);
+        };
+    }
+
+    #endregion
 
     #region Non-public methods
 
