@@ -1,3 +1,6 @@
 namespace CSDB_UtopiaModel.Persistence;
-interface Direction {
+public interface Direction {
+    
+    public abstract (int, int) Diff();
+    public abstract Direction Opposite();
     };

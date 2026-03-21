@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace CSDB_UtopiaModel.Model;
@@ -23,11 +24,10 @@ public readonly struct Coordinate
 
     public static Coordinate operator -(Coordinate lhs, Coordinate rhs) => new(lhs.X - rhs.X, lhs.Y - rhs.Y);
 
-    public Coordinate Step(Persistence.Up _) => new(X, Y - 1);
-
-    public Coordinate Step(Persistence.Down _) => new(X, Y + 1);
-
-    public Coordinate Step(Persistence.Right _) => new(X + 1, Y);
-
-    public Coordinate Step(Persistence.Left _) => new(X - 1, Y);
+    public Coordinate Step(Persistence.Direction d)
+    {
+        (int dx, int dy) = d.Diff();
+        Coordinate c = new Coordinate(X + dx, Y+dy);
+        return c;
+    }
 }
