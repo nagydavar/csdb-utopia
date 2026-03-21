@@ -1,8 +1,9 @@
-    namespace CSDB_UtopiaModel.Model;
+namespace CSDB_UtopiaModel.Model;
 
-    enum IntersectionSegment {
-        UpperLeft;
-        UpperRight;
-        LowerLeft;
-        LowerRight;
-    };
+public enum IntersectionSegment
+{
+    UpperLeft,
+    UpperRight,
+    LowerLeft,
+    LowerRight,
+}

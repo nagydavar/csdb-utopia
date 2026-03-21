@@ -1,8 +1,8 @@
 namespace CSDB_UtopiaModel.Model;
 
-class ArmoredCar : GoodsVehicle<Treasure>
+class ArmoredCar<TTreasure> : GoodsVehicle<TTreasure> where TTreasure : Persistence.Treasure
 {
-    private override int capacity;
-    private override int maintenanceCost;
-    private override int speed;
+    // private override int capacity;
+    // private override int maintenanceCost;
+    // private override int speed;
 }

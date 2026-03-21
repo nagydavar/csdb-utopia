@@ -1,9 +1,11 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-class DumpTruck<R> where R : Resource
+
+public class DumpTruck<TIndustrialResource> : GoodsVehicle<TIndustrialResource>
+    where TIndustrialResource : IndustrialResource
 {
-    private override int capacity;
-    private override int maintenanceCost;
-    private override int speed;
-};
+    // private override int capacity;
+    // private override int maintenanceCost;
+    // private override int speed;
+}

@@ -1,6 +1,6 @@
 namespace CSDB_UtopiaModel.Model;
 
-interface Navigable
+public interface Navigable
 {
     void MoveTo();
 }

@@ -1,5 +1,10 @@
 namespace CSDB_UtopiaModel.Model;
-class Navigator: IEnumerator<Navigable>
-{
 
-    };
+public class Navigator : IEnumerator<Navigable>
+{
+    public Navigable Current => throw new NotImplementedException();
+    object System.Collections.IEnumerator.Current => Current; // explicit interface implementation, not to be modified
+    public bool MoveNext() => throw new NotImplementedException();
+    public void Reset() => throw new NotImplementedException();
+    public void Dispose() => throw new NotImplementedException();
+}
