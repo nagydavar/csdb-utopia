@@ -1,6 +1,9 @@
+using CSDB_UtopiaModel.Persistence;
+
 namespace CSDB_UtopiaModel.Model;
 
 abstract class Bridge : Road
 {
-    protected Bridge() : base(default, default, default!) => throw new NotImplementedException();
+    protected Bridge(Field f, int maxSpeed, Direction d) : base(f, maxSpeed, d) {}
+    
 }

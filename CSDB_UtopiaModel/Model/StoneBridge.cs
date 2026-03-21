@@ -1,5 +1,8 @@
+using CSDB_UtopiaModel.Persistence;
+
 namespace CSDB_UtopiaModel.Model;
 class StoneBridge: Bridge
 {
-        public override int maxSpeed;
-    };
+    //kitalalt ertek a 30
+    public StoneBridge(Field f, Direction d) : base(f, 20, d) {}
+};
