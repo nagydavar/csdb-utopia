@@ -8,7 +8,7 @@ class TrafficLightControl : ITickable
     public Intersection Intersection { get; set; }
     public TrafficLightSchedule Schedule { get; set; }
 
-    public TrafficLightControl(Intersection _, TrafficLightSchedule _, Dictionary<Direction, TrafficLight> _) =>
+    public TrafficLightControl(Intersection _, TrafficLightSchedule b, Dictionary<Direction, TrafficLight> a) =>
         throw new NotImplementedException();
 
     public TrafficLight TrafficLight(Direction _) => throw new NotImplementedException();

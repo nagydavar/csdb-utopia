@@ -3,6 +3,7 @@ using System;
 using CSDB_UtopiaModel.Persistence.MapGeneration;
 
 namespace CSDB_UtopiaModel.Persistence;
+
 class Persistence
 {
     public List<List<Field>> Fields { get; private set; }
@@ -17,7 +18,7 @@ class Persistence
     public DateTime Date { get; private set; }
     public int Width { get; private set; }
     public int Height { get; private set; }
-    public int Budget { get; private set; }
+    public int Budget { get; internal set; }
 
     public int CurrentMood { get; set; }
 
@@ -25,6 +26,7 @@ class Persistence
     {
         Fields = fields;
     }
+
     public Persistence(int width, int height, bool generateMap)
     {
         Width = width;
@@ -34,7 +36,8 @@ class Persistence
 
         if (generateMap)
             GenerateMap(Width, Height);
-        else {
+        else
+        {
             Fields = new List<List<Field>>();
             for (int i = 0; i < Width; i++)
             {
@@ -49,7 +52,7 @@ class Persistence
         Storage = new Dictionary<Resource, int>
         {
             { HumanResource.Instance(), 0 },
-          
+
             // Ipari nyersanyagok
             { Wood.Instance(), 0 },
             { IronOre.Instance(), 0 },
@@ -81,9 +84,10 @@ class Persistence
     {
         throw new NotImplementedException();
     }
+
     public void Load()
     {
         throw new NotImplementedException();
     }
 
-};
+}

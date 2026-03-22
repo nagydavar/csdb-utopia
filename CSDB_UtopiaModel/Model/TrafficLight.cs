@@ -7,5 +7,5 @@ class TrafficLight
     public EventHandler<GoingIntentionEventArgs> TurnedGreen;
 
     public bool IsGreen(GoingIntention _) => throw new NotImplementedException();
-    public void Turn(TrafficLightState _, GoingIntention _) => throw new NotImplementedException();
+    public void Turn(TrafficLightState _, GoingIntention a) => throw new NotImplementedException();
 }

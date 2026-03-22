@@ -16,7 +16,7 @@ public class Vehicle<R> : IVehicle where R : Resource
     public int ThresholdToMove { get; set; }
     public GoingIntention Intention { get; }
 
-    public Vehicle(Field _, int _, int _, int _, Navigator _) => throw new NotImplementedException();
+    public Vehicle(Field _, int a, int b, int c, Navigator d) => throw new NotImplementedException();
     
     protected bool TimeToGoToGarage() => throw new NotImplementedException();
     protected LinkedList<Field> CalculatePathToNearestGarage() => throw new NotImplementedException();

@@ -1,16 +1,20 @@
 using CSDB_UtopiaModel.Persistence;
-using System;
 
 namespace CSDB_UtopiaModel.Model;
 
-public class Model {
+public class Model
+{
 
     private TimeControl _timeControl;
     private readonly Persistence.Persistence _persistence;
-    public Model(int width, int height) {
+
+    public Model(int width, int height)
+    {
         _persistence = new Persistence.Persistence(width, height, true);
     }
-    public void Place(int x, int y, Buildable buildable) {
+
+    public void Place(Coordinate coord, Buildable buildable)
+    {
         if (buildable is IResidentialBuilding residential)
         {
             // N�pess�g n�vel�se
@@ -22,15 +26,31 @@ public class Model {
             OnMoodChanged(_persistence.CurrentMood);
 
             // Itt j�nne a mez� friss�t�se a t�rk�pen most csak teszt miatt, de �gy is gatya
-            Console.WriteLine($"�p�tve: {x},{y} koordin�t�n. Pop: {_persistence.Storage[HumanResource.Instance()]}, Mood: {_persistence.CurrentMood}");
-        } 
+            // Console.WriteLine(
+            //     $"�p�tve: {x},{y} koordin�t�n. Pop: {_persistence.Storage[HumanResource.Instance()]}, Mood: {_persistence.CurrentMood}");
+        }
+        _persistence.Fields[coord.X][coord.Y].Place(buildable);
+        _persistence.Budget -= buildable.placementCost;
     }
-    public void PlaceVehicle(int x , int y , Vehicle<Resource> vehicle) { }
+
+    public void PlaceVehicle(Coordinate coord, Vehicle<Resource> vehicle)
+    {
+        if (_persistence.Fields[coord.X][coord.Y].Buildable is not Road road)
+            throw new InvalidOperationException("You can only place a vehicle to a road");
+
+        throw new NotImplementedException();
+    }
 
     //nyersanyag friss�t�se miatt
-    public int GetBudget() { return _persistence.Budget; }
+    public int GetBudget() // should be a property
+    {
+        return _persistence.Budget;
+    }
 
-    public int GetMood() { return _persistence.CurrentMood; }
+    public int GetMood() // should be a property
+    {
+        return _persistence.CurrentMood;
+    }
 
     public int GetResourceCount(Resource resource)
     {
@@ -38,16 +58,44 @@ public class Model {
     }
     // id�ig �j
 
-    public void AddVehicle(Vehicle<Resource> vehicle) { }
-    public void Demolish(int x, int y) { }
+    public void AddVehicle(Vehicle<Resource> vehicle)
+    {
+    }
 
-    public void ListBuildableFactories() { }
-    public void ListBuildableProducers() { }
-    public void ListBuildableDecorations() { }
-    public void ListBuildableOtherBuildings() { }
-    public void ListBuildableRoads() { }
-    public void ListBuyablePassengerVehicles() { }
-    public void ListBuyableIndustrialVehicles() { }
+    public void Demolish(Coordinate coord)
+    {
+        // if (/*undemolishable*/)
+        //     throw new Exception("ejnye-bejnye!");
+        _persistence.Fields[coord.X][coord.Y].Buildable = null;
+    }
+
+    public void ListBuildableFactories()
+    {
+    }
+
+    public void ListBuildableProducers()
+    {
+    }
+
+    public void ListBuildableDecorations()
+    {
+    }
+
+    public void ListBuildableOtherBuildings()
+    {
+    }
+
+    public void ListBuildableRoads()
+    {
+    }
+
+    public void ListBuyablePassengerVehicles()
+    {
+    }
+
+    public void ListBuyableIndustrialVehicles()
+    {
+    }
 
     public EventHandler<EventArgs>? GameTicked;
     public EventHandler<FieldEventArgs>? FieldsUpdated;
@@ -63,9 +111,9 @@ public class Model {
     {
         ResourceChanged?.Invoke(this, new ResourceChangedEventArgs(resource, newValue));
     }
-    protected virtual void OnMoodChanged( int newValue)
+
+    protected virtual void OnMoodChanged(int newValue)
     {
         MoodChanged?.Invoke(this, new MoodChangedEventArgs(newValue));
     }
-
-};
+}
