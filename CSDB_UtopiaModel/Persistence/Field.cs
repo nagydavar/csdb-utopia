@@ -1,23 +1,32 @@
 using CSDB_UtopiaModel.Model;
 
 namespace CSDB_UtopiaModel.Persistence;
-abstract public class Field {
+
+abstract public class Field
+{
     protected Resource resource;
     protected int depletionLevel;
     protected Town? town;
-    protected Buildable? buildable;
+    public Buildable? Buildable { get; protected set; }
     protected int mood;
     public Coordinate Coordinates { get; private set; }
-    public bool HasBuildable;
-    public bool IsPartOfTown;
+    
+    public bool HasBuildable => Buildable is not null;
+    public bool IsPartOfTown=> town is not null;
 
-    public Field(Coordinate c) { }
+    public Field(Coordinate c)
+    {
+    }
 
     public void Place(Buildable buildable)
     {
-        this.buildable = buildable;
+        if (Buildable is not null)
+            throw new InvalidOperationException("Can't place it here.");
+        Buildable = buildable;
     }
-    public bool Demolish() {
+
+    public bool Demolish()
+    {
         return true;
     }
-};
+}

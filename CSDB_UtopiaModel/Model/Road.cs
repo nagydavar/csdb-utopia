@@ -2,14 +2,16 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-class Road : Buildable, Navigable
+public class Road : Buildable, Navigable
 {
     public int MaxSpeed { get; set; }
 
     public IVehicle? LeftSide { get; set; }
-
-    public IVehicle? RightSide { get; set; }
-
+    public Vehicle<Resource>? RightSide { get; set; }
+    
+    // public IVehicle? LeftSide => new Bus();
+    // public Vehicle<Resource>? RightSide => new Bus();
+    
     public HashSet<Section> Sections { get; set; }
 
     public Direction Direction { get; set; }
