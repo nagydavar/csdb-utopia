@@ -64,6 +64,9 @@ public class Model
 
     public void Demolish(Coordinate coord)
     {
+        // if (/*undemolishable*/)
+        //     throw new Exception("ejnye-bejnye!");
+        _persistence.Fields[coord.X][coord.Y].Buildable = null;
     }
 
     public void ListBuildableFactories()

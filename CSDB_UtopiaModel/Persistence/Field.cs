@@ -7,7 +7,7 @@ abstract public class Field
     protected Resource resource;
     protected int depletionLevel;
     protected Town? town;
-    public Buildable? Buildable { get; protected set; }
+    public Buildable? Buildable { get; internal set; } // model requires setter
     protected int mood;
     public Coordinate Coordinates { get; private set; }
     
