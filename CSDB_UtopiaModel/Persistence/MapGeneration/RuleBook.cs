@@ -10,10 +10,10 @@ internal class RuleBook
     
     public RuleBook()
     { 
-        Rule allRoad = new([FieldTypes.ROAD_HOR, FieldTypes.ROAD_VER, FieldTypes.FOUR_INTER, FieldTypes.THREE_INTER_HOR_UP, FieldTypes.THREE_INTER_HOR_DOWN,
-            FieldTypes.THREE_INTER_VER_RIGHT, FieldTypes.THREE_INTER_VER_LEFT]);
-        Rule allInter = new Rule([FieldTypes.FOUR_INTER, FieldTypes.THREE_INTER_HOR_UP, FieldTypes.THREE_INTER_HOR_DOWN,
-            FieldTypes.THREE_INTER_VER_RIGHT, FieldTypes.THREE_INTER_VER_LEFT]);  
+        Rule allRoad = new([FieldTypes.RoadHor, FieldTypes.RoadVer, FieldTypes.FourInter, FieldTypes.ThreeInterHorUp, FieldTypes.ThreeInterHorDown,
+            FieldTypes.ThreeInterVerRight, FieldTypes.ThreeInterVerLeft]);
+        Rule allInter = new Rule([FieldTypes.FourInter, FieldTypes.ThreeInterHorUp, FieldTypes.ThreeInterHorDown,
+            FieldTypes.ThreeInterVerRight, FieldTypes.ThreeInterVerLeft]);  
         foreach (var field in Enum.GetValues<FieldTypes>())
         {
             
@@ -21,78 +21,78 @@ internal class RuleBook
             Rule d = Rule.All();
             Rule l = Rule.All();
             Rule r = Rule.All();
-            if (field == FieldTypes.ROAD_HOR)
+            if (field == FieldTypes.RoadHor)
             {
                 u = u.Except(allRoad);
                 d = d.Except(allRoad);
-                l = allRoad.Except(new Rule([FieldTypes.ROAD_VER, FieldTypes.THREE_INTER_VER_LEFT]));
-                r = allRoad.Except(new Rule([FieldTypes.ROAD_VER, FieldTypes.THREE_INTER_VER_RIGHT]));
+                l = allRoad.Except(new Rule([FieldTypes.RoadVer, FieldTypes.ThreeInterVerLeft]));
+                r = allRoad.Except(new Rule([FieldTypes.RoadVer, FieldTypes.ThreeInterVerRight]));
                 
             }
 
-            else if (field == FieldTypes.ROAD_VER)
+            else if (field == FieldTypes.RoadVer)
             {
                 
-               u = allRoad.Except(new Rule([FieldTypes.ROAD_HOR, FieldTypes.THREE_INTER_HOR_UP]));
-               d = allRoad.Except(new Rule([FieldTypes.ROAD_HOR, FieldTypes.THREE_INTER_HOR_DOWN]));
+               u = allRoad.Except(new Rule([FieldTypes.RoadHor, FieldTypes.ThreeInterHorUp]));
+               d = allRoad.Except(new Rule([FieldTypes.RoadHor, FieldTypes.ThreeInterHorDown]));
                l = l.Except(allRoad);
                r = r.Except(allRoad);
 
-            }else if (field == FieldTypes.FOUR_INTER)
+            }else if (field == FieldTypes.FourInter)
             {
                 
-                u = new Rule(FieldTypes.ROAD_VER);
-                d = new Rule(FieldTypes.ROAD_VER);
-                l = new Rule(FieldTypes.ROAD_HOR);
-                r = new Rule(FieldTypes.ROAD_HOR);
-            }else if (field == FieldTypes.THREE_INTER_HOR_UP)
+                u = new Rule(FieldTypes.RoadVer);
+                d = new Rule(FieldTypes.RoadVer);
+                l = new Rule(FieldTypes.RoadHor);
+                r = new Rule(FieldTypes.RoadHor);
+            }else if (field == FieldTypes.ThreeInterHorUp)
             {
                 
-                u = new Rule(FieldTypes.ROAD_VER);
+                u = new Rule(FieldTypes.RoadVer);
                 d = d.Except(allRoad);
-                l = new Rule(FieldTypes.ROAD_HOR);
-                r = new Rule(FieldTypes.ROAD_HOR);
+                l = new Rule(FieldTypes.RoadHor);
+                r = new Rule(FieldTypes.RoadHor);
                 
-            }else if (field == FieldTypes.THREE_INTER_HOR_DOWN)
+            }else if (field == FieldTypes.ThreeInterHorDown)
             {
                 u = u.Except(allRoad);
-                d = new Rule(FieldTypes.ROAD_VER);
-                l = new Rule(FieldTypes.ROAD_HOR);
-                r = new Rule(FieldTypes.ROAD_HOR);
+                d = new Rule(FieldTypes.RoadVer);
+                l = new Rule(FieldTypes.RoadHor);
+                r = new Rule(FieldTypes.RoadHor);
             }
-            else if (field == FieldTypes.THREE_INTER_VER_LEFT)
+            else if (field == FieldTypes.ThreeInterVerLeft)
             {
                 
-                u = new Rule(FieldTypes.ROAD_VER);
-                d = new Rule(FieldTypes.ROAD_VER);
-                l = new Rule(FieldTypes.ROAD_HOR);
+                u = new Rule(FieldTypes.RoadVer);
+                d = new Rule(FieldTypes.RoadVer);
+                l = new Rule(FieldTypes.RoadHor);
                 r = r.Except(allRoad);
             }
-            else if (field == FieldTypes.THREE_INTER_VER_RIGHT)
+            else if (field == FieldTypes.ThreeInterVerRight)
             {
-                u = new Rule(FieldTypes.ROAD_VER);
-                d = new Rule(FieldTypes.ROAD_VER);
+                u = new Rule(FieldTypes.RoadVer);
+                d = new Rule(FieldTypes.RoadVer);
                 l = l.Except(allRoad);
-                r = new Rule(FieldTypes.ROAD_HOR);
+                r = new Rule(FieldTypes.RoadHor);
             }
             else
             {
 
                 u = new Rule([
-                    FieldTypes.LAND, FieldTypes.FOREST, FieldTypes.WATER, FieldTypes.THREE_INTER_HOR_UP,
-                    FieldTypes.ROAD_HOR
+                    FieldTypes.Land, FieldTypes.Forest, FieldTypes.Water, FieldTypes.ThreeInterHorUp,
+                    FieldTypes.RoadHor
                 ]);
                 d = new Rule([
-                    FieldTypes.LAND, FieldTypes.FOREST, FieldTypes.WATER, FieldTypes.THREE_INTER_HOR_DOWN,
-                    FieldTypes.ROAD_HOR
+                    FieldTypes.Land, FieldTypes.Forest, FieldTypes.Water, FieldTypes.ThreeInterHorDown,
+                    FieldTypes.RoadHor
                 ]);
                 l = new Rule([
-                    FieldTypes.LAND, FieldTypes.FOREST, FieldTypes.WATER, FieldTypes.THREE_INTER_VER_LEFT,
-                    FieldTypes.ROAD_VER
+                    FieldTypes.Land, FieldTypes.Forest, FieldTypes.Water, FieldTypes.ThreeInterVerLeft,
+                    FieldTypes.RoadVer
                 ]);
                 r = new Rule([
-                    FieldTypes.LAND, FieldTypes.FOREST, FieldTypes.WATER, FieldTypes.THREE_INTER_VER_RIGHT,
-                    FieldTypes.ROAD_VER
+                    FieldTypes.Land, FieldTypes.Forest, FieldTypes.Water, FieldTypes.ThreeInterVerRight,
+                    FieldTypes.RoadVer
                 ]);
             }
             RuleForCell rfc = new RuleForCell(u, d, l, r);

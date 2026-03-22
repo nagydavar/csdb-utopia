@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using CSDB_UtopiaModel.Model;
 
 namespace CSDB_UtopiaModel.Persistence.MapGeneration
@@ -19,6 +20,13 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
             ruleForCell = r;
             positions = new(Enum.GetValues<FieldTypes>());
         }
+
+        public FieldTypes ToFieldType()
+        {
+            if (!Collapsed) throw new InvalidOperationException("Not collapsed yet!"); ;
+            return positions.Last();
+        }
+        
         public Field ToField()
         {
             if (!Collapsed) throw new InvalidOperationException("Not collapsed yet!");
@@ -29,46 +37,46 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
             switch (ft)
             {
 
-                case FieldTypes.LAND:
+                case FieldTypes.Land:
                     //field = new Land(Coordinate, 0, false);
                     break;
-                case FieldTypes.FOREST:
+                case FieldTypes.Forest:
                     field = new Land(Coordinate, 3, true);
                     break;
-                case FieldTypes.WATER:
+                case FieldTypes.Water:
                     field = new Water(Coordinate);
                     break;
-                case FieldTypes.ROAD_HOR:
+                case FieldTypes.RoadHor:
                     m = new Motorway(field, 20, UP.Instance());
                     break;
-                case FieldTypes.ROAD_VER:
+                case FieldTypes.RoadVer:
                     m = new Motorway(field, 20, LEFT.Instance());
                     break;
-                case FieldTypes.FOUR_INTER:
+                case FieldTypes.FourInter:
                     m = new Motorway(field, 20, UP.Instance());
                     Intersection i4 = new FourWayIntersection(field);
                     m.AddIntersection(i4);
                     break;
 
-                case FieldTypes.THREE_INTER_HOR_UP:
+                case FieldTypes.ThreeInterHorUp:
                     m = new Motorway(field, 20, UP.Instance());
                     Intersection i30 = new ThreeWayIntersection(field, UP.Instance());
                     m.AddIntersection(i30);
                     break;
                 
-                case FieldTypes.THREE_INTER_HOR_DOWN:
+                case FieldTypes.ThreeInterHorDown:
                     m = new Motorway(field, 20, DOWN.Instance());
                     Intersection i31 = new ThreeWayIntersection(field, DOWN.Instance());
                     m.AddIntersection(i31);
                     break;
 
-                case FieldTypes.THREE_INTER_VER_LEFT:
+                case FieldTypes.ThreeInterVerLeft:
                     m = new Motorway(field, 20, LEFT.Instance());
                     Intersection i32 = new ThreeWayIntersection(field, LEFT.Instance());
                     m.AddIntersection(i32);
                     break;
                 
-                case FieldTypes.THREE_INTER_VER_RIGHT:
+                case FieldTypes.ThreeInterVerRight:
                     m = new Motorway(field, 20, RIGHT.Instance());
                     Intersection i33 = new ThreeWayIntersection(field, RIGHT.Instance());
                     m.AddIntersection(i33);
@@ -76,6 +84,7 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
             }
             return field;
         }
+        
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
@@ -90,6 +99,7 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
 
         public bool Restrict(Rule rule)
         {
+            //Console.WriteLine("Restrict " +"(" + Coordinate.X + ", " + Coordinate.Y + ")" );
             if (Collapsed) return false;
             int c = Entropy;
             positions.IntersectWith(rule);
@@ -106,10 +116,25 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
         public RuleForCell Collapse(Random r)
         {
             Collapsed = true;
-            FieldTypes f = positions.ToList()[r.Next(Entropy)];
+            FieldTypes f = ProportionalRandom(r, positions.ToList());
+            //FieldTypes f = positions.ToList()[r.Next(Entropy)];
             positions = new HashSet<FieldTypes>([f]);
             ruleForCell = ruleBook.Get(f);
             return ruleForCell.Copy();
+        }
+
+        public static FieldTypes ProportionalRandom(Random r, List<FieldTypes> weight)
+        {
+            int sum = weight.Sum(s => (int)s);
+            int rand = r.Next(sum);
+            int currentSum = 0;
+            for (int i = 0; i < weight.Count; i++)
+            {
+                currentSum += (int)weight[i];
+                if  (rand < currentSum) return weight[i];
+            }
+            Debug.Assert(false,"Proportinal random not woring properly");
+            return weight.Last();
         }
         
     }

@@ -73,7 +73,7 @@ class Persistence
     private void GenerateMap(int width, int height)
     {
         Generator generator = new Generator(width, height, new RuleBook());
-        Fields =  generator.Generate();
+        Fields = generator.Generate();
         
     }
 
