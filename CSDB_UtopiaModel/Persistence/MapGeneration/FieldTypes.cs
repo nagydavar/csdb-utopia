@@ -1,17 +1,17 @@
 ﻿namespace CSDB_UtopiaModel.Persistence.MapGeneration;
 
-    internal enum FieldTypes
+    internal enum FieldTypes: int
     {
-        LAND,
-        FOREST,
-        WATER,
-        ROAD_VER,
-        ROAD_HOR,
-        FOUR_INTER,
-        THREE_INTER_HOR_UP,
-        THREE_INTER_HOR_DOWN,
-        THREE_INTER_VER_LEFT,
-        THREE_INTER_VER_RIGHT,
+        Land = 200,
+        Forest = 170,
+        Water = 130,
+        RoadVer = 30,
+        RoadHor = 33,
+        FourInter = 18,
+        ThreeInterHorUp = 13,
+        ThreeInterHorDown = 12,
+        ThreeInterVerLeft = 14,
+        ThreeInterVerRight = 16
         /*BUILDING_UP_LEFT,
         BULIDING_UP_RIGHT,
         BUILDING_DOWN_LEFT,
