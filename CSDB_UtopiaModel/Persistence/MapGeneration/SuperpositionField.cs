@@ -119,26 +119,14 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
         public RuleForCell Collapse(Random r)
         {
             Collapsed = true;
-            FieldTypes f = ProportionalRandom(r, positions.ToList());
+            FieldTypes f = ruleBook.ProportionalRandom(r, positions.ToList());
             //FieldTypes f = positions.ToList()[r.Next(Entropy)];
             positions = new HashSet<FieldTypes>([f]);
             ruleForCell = ruleBook.Get(f);
             return ruleForCell.Copy();
         }
 
-        public static FieldTypes ProportionalRandom(Random r, List<FieldTypes> weight)
-        {
-            int sum = weight.Sum(s => (int)s);
-            int rand = r.Next(sum);
-            int currentSum = 0;
-            for (int i = 0; i < weight.Count; i++)
-            {
-                currentSum += (int)weight[i];
-                if  (rand < currentSum) return weight[i];
-            }
-            
-            return weight.Last();
-        }
+        
         
     }
 }
