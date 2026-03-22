@@ -77,7 +77,7 @@ class Persistence
     {
         Generator generator = new Generator(width, height, new RuleBook());
         Fields = generator.Generate();
-
+        
     }
 
     public void Save()
