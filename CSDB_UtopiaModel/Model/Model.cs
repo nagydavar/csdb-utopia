@@ -29,6 +29,7 @@ public class Model
             // Console.WriteLine(
             //     $"�p�tve: {x},{y} koordin�t�n. Pop: {_persistence.Storage[HumanResource.Instance()]}, Mood: {_persistence.CurrentMood}");
         }
+        
         _persistence.Fields[coord.X][coord.Y].Place(buildable);
         _persistence.Budget -= buildable.placementCost;
     }
@@ -81,9 +82,17 @@ public class Model
     {
     }
 
-    public void ListBuildableOtherBuildings()
-    {
-    }
+    // public Buildable[] ListBuildableOtherBuildings() =>
+    // [
+    //     new LumberYard(default!, default), new IronMine(default!, default), new CoalMine(default!, default),
+    //     new OilRig(default!, default), new GoldMine(default!, default), new DiamondMine(default!, default),
+    //     new IronFurnace(default!, default), new SawMill(default!, default), new Refinery(default!, default),
+    //     new Jewellery(default!, default), new PaperFactory(default!, default), new Press(default!, default),
+    //     // to be continued
+    //     new Stop(null!)
+    // ];
+
+    public Buildable[] ListBuildableOtherBuildings() => [new ApartmentBlock(default!)];
 
     public void ListBuildableRoads()
     {
