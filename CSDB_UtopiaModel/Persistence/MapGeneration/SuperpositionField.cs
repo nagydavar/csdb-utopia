@@ -46,6 +46,9 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
                 case FieldTypes.Water:
                     field = new Water(Coordinate);
                     break;
+                case FieldTypes.Mountain:
+                    field = new Mountain(Coordinate);
+                    break;
                 case FieldTypes.RoadHor:
                     m = new Motorway(field, 20, UP.Instance());
                     break;
@@ -133,7 +136,7 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
                 currentSum += (int)weight[i];
                 if  (rand < currentSum) return weight[i];
             }
-            Debug.Assert(false,"Proportinal random not woring properly");
+            
             return weight.Last();
         }
         

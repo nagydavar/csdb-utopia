@@ -79,19 +79,19 @@ internal class RuleBook
             {
 
                 u = new Rule([
-                    FieldTypes.Land, FieldTypes.Forest, FieldTypes.Water, FieldTypes.ThreeInterHorUp,
+                    FieldTypes.Land, FieldTypes.Forest, FieldTypes.Water, FieldTypes.Mountain, FieldTypes.ThreeInterHorUp,
                     FieldTypes.RoadHor
                 ]);
                 d = new Rule([
-                    FieldTypes.Land, FieldTypes.Forest, FieldTypes.Water, FieldTypes.ThreeInterHorDown,
+                    FieldTypes.Land, FieldTypes.Forest, FieldTypes.Water, FieldTypes.Mountain, FieldTypes.ThreeInterHorDown,
                     FieldTypes.RoadHor
                 ]);
                 l = new Rule([
-                    FieldTypes.Land, FieldTypes.Forest, FieldTypes.Water, FieldTypes.ThreeInterVerLeft,
+                    FieldTypes.Land, FieldTypes.Forest, FieldTypes.Water, FieldTypes.Mountain, FieldTypes.ThreeInterVerLeft,
                     FieldTypes.RoadVer
                 ]);
                 r = new Rule([
-                    FieldTypes.Land, FieldTypes.Forest, FieldTypes.Water, FieldTypes.ThreeInterVerRight,
+                    FieldTypes.Land, FieldTypes.Forest, FieldTypes.Water, FieldTypes.Mountain, FieldTypes.ThreeInterVerRight,
                     FieldTypes.RoadVer
                 ]);
             }

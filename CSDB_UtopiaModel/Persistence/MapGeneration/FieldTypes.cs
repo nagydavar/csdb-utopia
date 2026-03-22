@@ -5,6 +5,7 @@
         Land = 200,
         Forest = 170,
         Water = 130,
+        Mountain = 80,
         RoadVer = 30,
         RoadHor = 33,
         FourInter = 18,
