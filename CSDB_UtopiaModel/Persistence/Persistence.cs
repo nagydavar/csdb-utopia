@@ -18,7 +18,7 @@ class Persistence
     public DateTime Date { get; private set; }
     public int Width { get; private set; }
     public int Height { get; private set; }
-    public int Budget { get; private set; }
+    public int Budget { get; set; }
 
     public int CurrentMood { get; set; }
 

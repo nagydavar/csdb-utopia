@@ -5,6 +5,7 @@
              xmlns:vm="clr-namespace:CSDB_UtopiaView.ViewModels"
              xmlns:views="clr-namespace:CSDB_UtopiaView.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:model="clr-namespace:CSDB_UtopiaModel.Model;assembly=CSDB_UtopiaModel"
              x:Class="CSDB_UtopiaView.Views.GameView"
              x:DataType="vm:GameViewModel">
     <Grid>
@@ -14,7 +15,7 @@
                     <ItemsPanelTemplate>
                         <UniformGrid Rows="{Binding Height}" 
                                      Columns="{Binding Width}" 
-                                     Background="White"/>
+                                     Background="Red"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
 
@@ -23,21 +24,65 @@
                         <Button Width="50" 
                                 Height="50" 
                                 Padding="0"
+                                Background="Transparent"
                                 BorderThickness="0.5"
                                 BorderBrush="Black"
                                 Command="{Binding $parent[ItemsControl].((vm:GameViewModel)DataContext).ClickCellCommand}"
                                 CommandParameter="{Binding}">
                             
-                            <Image Stretch="UniformToFill">
-                                <Image.Source>
-                                    <Binding Path="ImagePath" />
-                                </Image.Source>
+                            <Image Stretch="UniformToFill" Source="{Binding ImagePath}">
+
                             </Image>
                         </Button>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
+
+            <Border HorizontalAlignment="Left" 
+            VerticalAlignment="Center" 
+            Width="150" 
+            Background="White" 
+            BorderBrush="Black" 
+            BorderThickness="2" 
+            CornerRadius="5"
+            Margin="20,0,0,0"
+            Padding="10"
+            IsVisible="{Binding IsBuildingPanelVisible}"
+            ZIndex="100">
+    
+        <StackPanel Spacing="10">
+            <TextBlock Text="Válassz épületet" 
+                       FontWeight="Bold" 
+                       HorizontalAlignment="Center" 
+                       Margin="0,0,0,5"/>
+            <Separator/>
+        
+            <ItemsControl ItemsSource="{Binding AvailableBuildables}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="model:Buildable">
+                        <Button HorizontalAlignment="Stretch"
+                                Margin="0,2"
+                                Command="{Binding $parent[UserControl].((vm:GameViewModel)DataContext).SelectBuildableCommand}"
+                                CommandParameter="{Binding}">
+                            <TextBlock Text="{Binding}" HorizontalAlignment="Center">
+                                 <TextBlock.Text>
+                                     <Binding Path="GetType().Name" />
+                                 </TextBlock.Text>
+                            </TextBlock>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        
+            <Button Content="Mégse" 
+                    HorizontalAlignment="Stretch" 
+                    HorizontalContentAlignment="Center"
+                    Background="IndianRed"
+                    Foreground="White"
+                    Command="{Binding ListBuildableOtherBuildingsCommand}"/>
+        </StackPanel>
+    </Border>
 
         <Border VerticalAlignment="Top" Background="#EEEEEE" Height="50" BorderBrush="Black" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" Margin="10,0">
@@ -61,14 +106,7 @@
         </StackPanel>
 
         <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="10" Spacing="5">
-            <Border Width="150" Height="100" Background="LightGray" BorderBrush="Black" BorderThickness="1">
-                <ScrollViewer>
-                     <TextBlock Text="Log üzenetek..." TextWrapping="Wrap" Margin="5"/>
-                </ScrollViewer>
-            </Border>
-            <Border Width="200" Height="150" Background="#F2E9E9" BorderBrush="Black" BorderThickness="1">
-                <TextBlock Text="Minimap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-            </Border>
+            
         </StackPanel>
 
         <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Background="White" BorderBrush="Black" BorderThickness="1" Margin="0,0,0,10">

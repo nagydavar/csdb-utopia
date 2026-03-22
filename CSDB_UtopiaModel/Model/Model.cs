@@ -48,6 +48,10 @@ public class Model
         return _persistence.Budget;
     }
 
+    public Field GetField(int x, int y) {
+        return _persistence.Fields[x][y];
+    }
+
     public int GetMood() // should be a property
     {
         return _persistence.CurrentMood;

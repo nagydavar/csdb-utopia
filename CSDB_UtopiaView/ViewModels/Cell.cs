@@ -9,11 +9,11 @@ public partial class Cell : ObservableObject
     private readonly int _x;
     private readonly int _y;
 
-    string baseUrl = "avares://CSDB_UtopiaView/Assets/";
+    private const string BaseUrl = "avares://CSDB_UtopiaView/Assets/";
     string fileName = "Fields/0trees.PNG";
 
     [ObservableProperty]
-    private string _imagePath = "Assets/Fields/0trees.PNG"; // Alapértelmezett kép
+    private string _imagePath;
 
     public int X => _x;
     public int Y => _y;
@@ -22,6 +22,7 @@ public partial class Cell : ObservableObject
     {
         _x = x;
         _y = y;
+        ImagePath = BaseUrl + "Fields/0trees.PNG";
     }
 
     // A Model_FieldsUpdated hívja meg a ViewModel-ben
@@ -44,7 +45,7 @@ public partial class Cell : ObservableObject
             fileName = "Fields/0trees.PNG";
         }
 
-        ImagePath = baseUrl + fileName;
+        ImagePath = BaseUrl + fileName;
         //itt folyt köv.
     }
 }

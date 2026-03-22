@@ -38,6 +38,13 @@ public partial class GameViewModel : ViewModelBase
 
     public ObservableCollection<Cell> Cells { get; }
 
+    // Építési panel láthatósága és a gombok listája
+    [ObservableProperty] private bool _isBuildingPanelVisible;
+    public ObservableCollection<Buildable> AvailableBuildables { get; } = new();
+
+    // Tároljuk, hogy a felhasználó éppen mit választott ki építésre
+    private Buildable? _selectedBuildable;
+
     // Események
     public event EventHandler? NewGame;
     public event EventHandler? GameOver;
@@ -70,7 +77,11 @@ public partial class GameViewModel : ViewModelBase
         {
             for (int j = 0; j < _height; j++)
             {
-                Cells.Add(new Cell(i, j));
+                var cell = new Cell(i, j);
+                // Lekérjük a modellből az adott mezőt és frissítjük a cellát
+                var field = _model.GetField(i, j); // Feltételezve, hogy van ilyen metódusod
+                cell.Update(field);
+                Cells.Add(cell);
             }
         }
     }
@@ -119,8 +130,48 @@ public partial class GameViewModel : ViewModelBase
     [RelayCommand]
     public void Pause() { }
 
+    //Építés
     [RelayCommand]
-    public void ClickCell(Cell cell) { }
+    public void ListBuildableOtherBuildings()
+    {
+        // Ha már látszik a panel, bezárjuk és töröljük a kijelölést
+        if (IsBuildingPanelVisible)
+        {
+            IsBuildingPanelVisible = false;
+            _selectedBuildable = null;
+        }
+        else
+        {
+            // Lekérjük a Modell-től az aktuálisan építhető dolgokat
+            AvailableBuildables.Clear();
+            var items = _model.ListBuildableOtherBuildings();
+            foreach (var item in items)
+            {
+                AvailableBuildables.Add(item);
+            }
+            IsBuildingPanelVisible = true;
+        }
+    }
+
+    [RelayCommand]
+    public void SelectBuildable(Buildable item)
+    {
+        // Eltároljuk a választott típust
+        _selectedBuildable = item;
+        // Opcionális: a panelt nyitva hagyjuk, ha többet akarunk építeni egymás után
+        // IsBuildingPanelVisible = false; 
+    }
+
+    [RelayCommand]
+    public void ClickCell(Cell cell)
+    {
+        // Ha van kiválasztott épület, meghívjuk a Modell Place metódusát
+        if (_selectedBuildable != null)
+        {
+            // Itt a Modell.Place elvégzi az ellenőrzést (pénz, hely, stb.)
+            _model.Place(new Coordinate(cell.X, cell.Y), _selectedBuildable);
+        }
+    }
 
     [RelayCommand]
     public void ClickMiniMap(Coordinate coords) { }
@@ -134,9 +185,6 @@ public partial class GameViewModel : ViewModelBase
 
     [RelayCommand]
     public void ListBuildableDecorations() { }
-
-    [RelayCommand]
-    public void ListBuildableOtherBuildings() { }
 
     [RelayCommand]
     public void ListBuildableRoads() { }
