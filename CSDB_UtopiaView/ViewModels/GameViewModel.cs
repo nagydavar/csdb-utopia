@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Security.Cryptography;
 
 namespace CSDB_UtopiaView.ViewModels;
 
@@ -40,7 +39,7 @@ public partial class GameViewModel : ViewModelBase
 
     // Építési panel láthatósága és a gombok listája
     [ObservableProperty] private bool _isBuildingPanelVisible;
-    public ObservableCollection<Buildable> AvailableBuildables { get; } = new();
+    public ObservableCollection<string> AvailableBuildables { get; } = new();
 
     // Tároljuk, hogy a felhasználó éppen mit választott ki építésre
     private Buildable? _selectedBuildable;
@@ -147,7 +146,7 @@ public partial class GameViewModel : ViewModelBase
             var items = _model.ListBuildableOtherBuildings();
             foreach (var item in items)
             {
-                AvailableBuildables.Add(item);
+                AvailableBuildables.Add(item.Name);
             }
             IsBuildingPanelVisible = true;
         }

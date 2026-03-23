@@ -1,3 +1,4 @@
+using System.Reflection;
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
@@ -96,7 +97,17 @@ public class Model
     //     new Stop(null!)
     // ];
 
-    public Buildable[] ListBuildableOtherBuildings() => [new ApartmentBlock(default!)];
+    public List<Type> ListBuildableOtherBuildings()
+    {
+        string targetNamespace = typeof(CSDB_UtopiaModel.Model.Model).Namespace;
+
+        List<Type> types = Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && t.IsAssignableTo(typeof(CSDB_UtopiaModel.Model.IResidentialBuilding)) && t.Namespace == targetNamespace)
+            .ToList();
+        
+        return types;
+    }
 
     public void ListBuildableRoads()
     {

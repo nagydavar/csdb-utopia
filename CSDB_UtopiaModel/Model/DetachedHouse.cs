@@ -1,4 +1,4 @@
-using CSDB_UtopiaModel.Persistence;
+﻿using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 public class DetachedHouse : Building, IResidentialBuilding
