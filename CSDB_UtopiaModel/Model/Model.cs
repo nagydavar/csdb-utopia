@@ -1,3 +1,4 @@
+using System.Reflection;
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
@@ -29,8 +30,13 @@ public class Model
             // Console.WriteLine(
             //     $"�p�tve: {x},{y} koordin�t�n. Pop: {_persistence.Storage[HumanResource.Instance()]}, Mood: {_persistence.CurrentMood}");
         }
+        
         _persistence.Fields[coord.X][coord.Y].Place(buildable);
         _persistence.Budget -= buildable.placementCost;
+
+        BudgetChanged?.Invoke(this, EventArgs.Empty);
+
+        OnFieldsUpdated(_persistence.Fields[coord.X][coord.Y]);
     }
 
     public void PlaceVehicle(Coordinate coord, Vehicle<Resource> vehicle)
@@ -45,6 +51,10 @@ public class Model
     public int GetBudget() // should be a property
     {
         return _persistence.Budget;
+    }
+
+    public Field GetField(int x, int y) {
+        return _persistence.Fields[x][y];
     }
 
     public int GetMood() // should be a property
@@ -67,6 +77,8 @@ public class Model
         // if (/*undemolishable*/)
         //     throw new Exception("ejnye-bejnye!");
         _persistence.Fields[coord.X][coord.Y].Buildable = null;
+
+        OnFieldsUpdated(_persistence.Fields[coord.X][coord.Y]);
     }
 
     public void ListBuildableFactories()
@@ -81,8 +93,26 @@ public class Model
     {
     }
 
-    public void ListBuildableOtherBuildings()
+    // public Buildable[] ListBuildableOtherBuildings() =>
+    // [
+    //     new LumberYard(default!, default), new IronMine(default!, default), new CoalMine(default!, default),
+    //     new OilRig(default!, default), new GoldMine(default!, default), new DiamondMine(default!, default),
+    //     new IronFurnace(default!, default), new SawMill(default!, default), new Refinery(default!, default),
+    //     new Jewellery(default!, default), new PaperFactory(default!, default), new Press(default!, default),
+    //     // to be continued
+    //     new Stop(null!)
+    // ];
+
+    public List<Type> ListBuildableOtherBuildings()
     {
+        string targetNamespace = typeof(CSDB_UtopiaModel.Model.Model).Namespace;
+
+        List<Type> types = Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && t.IsAssignableTo(typeof(CSDB_UtopiaModel.Model.IResidentialBuilding)) && t.Namespace == targetNamespace)
+            .ToList();
+        
+        return types;
     }
 
     public void ListBuildableRoads()
@@ -115,5 +145,10 @@ public class Model
     protected virtual void OnMoodChanged(int newValue)
     {
         MoodChanged?.Invoke(this, new MoodChangedEventArgs(newValue));
+    }
+
+    protected virtual void OnFieldsUpdated(Field field)
+    {
+        FieldsUpdated?.Invoke(this, new FieldEventArgs(new List<Field> { field }));
     }
 }

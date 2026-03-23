@@ -18,7 +18,7 @@ class Persistence
     public DateTime Date { get; private set; }
     public int Width { get; private set; }
     public int Height { get; private set; }
-    public int Budget { get; internal set; }
+    public int Budget { get; set; }
 
     public int CurrentMood { get; set; }
 
@@ -26,7 +26,6 @@ class Persistence
     {
         Fields = fields;
     }
-
     public Persistence(int width, int height, bool generateMap)
     {
         Width = width;
@@ -36,8 +35,7 @@ class Persistence
 
         if (generateMap)
             GenerateMap(Width, Height);
-        else
-        {
+        else {
             Fields = new List<List<Field>>();
             for (int i = 0; i < Width; i++)
             {

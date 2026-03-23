@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Security.Cryptography;
 
 namespace CSDB_UtopiaView.ViewModels;
 
@@ -37,6 +36,16 @@ public partial class GameViewModel : ViewModelBase
     public Dictionary<Resource, int> DisplayStorage { get; } = new();
 
     public ObservableCollection<Cell> Cells { get; }
+
+    // Építési panel láthatósága és a gombok listája
+    [ObservableProperty] private bool _isBuildingPanelVisible;
+    public ObservableCollection<Type> AvailableBuildables { get; } = new();
+
+    // Tároljuk, hogy a felhasználó éppen mit választott ki építésre
+    private Type? _selectedType;
+
+    [ObservableProperty]
+    private bool _isDemolishMode;
 
     // Események
     public event EventHandler? NewGame;
@@ -70,7 +79,11 @@ public partial class GameViewModel : ViewModelBase
         {
             for (int j = 0; j < _height; j++)
             {
-                Cells.Add(new Cell(i, j));
+                var cell = new Cell(i, j);
+                // Lekérjük a modellből az adott mezőt és frissítjük a cellát
+                var field = _model.GetField(i, j); // Feltételezve, hogy van ilyen metódusod
+                cell.Update(field);
+                Cells.Add(cell);
             }
         }
     }
@@ -119,8 +132,73 @@ public partial class GameViewModel : ViewModelBase
     [RelayCommand]
     public void Pause() { }
 
+    //Építés
     [RelayCommand]
-    public void ClickCell(Cell cell) { }
+    public void ListBuildableOtherBuildings()
+    {
+        // Ha már látszik a panel, bezárjuk és töröljük a kijelölést
+        if (IsBuildingPanelVisible)
+        {
+            IsBuildingPanelVisible = false;
+            _selectedType = null;
+        }
+        else
+        {
+            // Lekérjük a Modell-től az aktuálisan építhető dolgokat
+            AvailableBuildables.Clear();
+            var types = _model.ListBuildableOtherBuildings();
+            foreach (var type in types)
+            {
+                AvailableBuildables.Add(type);
+            }
+            IsBuildingPanelVisible = true;
+        }
+    }
+
+    [RelayCommand]
+    public void SelectBuildable(Type selectedType)
+    {
+        // Eltároljuk a választott típust
+        _selectedType = selectedType;
+        IsDemolishMode = false;
+        // Opcionális: a panelt nyitva hagyjuk, ha többet akarunk építeni egymás után
+        IsBuildingPanelVisible = false; 
+    }
+
+    [RelayCommand]
+    public void Demolish()
+    {
+        IsDemolishMode = !IsDemolishMode;
+
+        // Ha bekapcsoljuk a bontást, ne legyen kiválasztott épület
+        if (IsDemolishMode)
+        {
+            _selectedType = null;
+            IsBuildingPanelVisible = false;
+        }
+    }
+
+    [RelayCommand]
+    public void ClickCell(Cell cell)
+    {
+
+        // BONTÁS LOGIKA
+        if (IsDemolishMode)
+        {
+            _model.Demolish(new Coordinate(cell.X, cell.Y));
+            return;
+        }
+
+        // ÉPÍTÉS LOGIKA
+        if (_selectedType != null)
+        {
+            Field targetField = _model.GetField(cell.X, cell.Y);
+            if (Activator.CreateInstance(_selectedType, targetField) is Buildable instance)
+            {
+                _model.Place(new Coordinate(cell.X, cell.Y), instance);
+            }
+        }
+    }
 
     [RelayCommand]
     public void ClickMiniMap(Coordinate coords) { }
@@ -134,9 +212,6 @@ public partial class GameViewModel : ViewModelBase
 
     [RelayCommand]
     public void ListBuildableDecorations() { }
-
-    [RelayCommand]
-    public void ListBuildableOtherBuildings() { }
 
     [RelayCommand]
     public void ListBuildableRoads() { }
@@ -178,6 +253,11 @@ public partial class GameViewModel : ViewModelBase
     {
         // Frissítjük a belső szótárat
         DisplayStorage[e.Resource] = e.NewValue;
+
+        if (e.Resource is HumanResource)
+        {
+            Population = e.NewValue;
+        }
 
         // Jelezzük a UI-nak, hogy a szótár tartalma megváltozott
         OnPropertyChanged(nameof(DisplayStorage));

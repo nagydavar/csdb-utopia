@@ -1,7 +1,7 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-class ApartmentBlock : Building, IResidentialBuilding
+public class ApartmentBlock : Building, IResidentialBuilding
 {
     public ApartmentBlock(Field f) : base(f) { }
 

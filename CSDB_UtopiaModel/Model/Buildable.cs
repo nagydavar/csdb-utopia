@@ -10,6 +10,6 @@ public abstract class Buildable : Buyable
     public Buildable(Field f)
     {
         owner = f;
-        owner.Place(this);
+        //owner.Place(this);
     }
 }
