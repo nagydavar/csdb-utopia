@@ -113,6 +113,7 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
 
         private List<List<Field>> ToFields()
         {
+            Console.Write(ToString());
             List<List<Field>> f = new List<List<Field>>();
 
             for (int i = 0; i < fields.Count; i++)

@@ -5,8 +5,8 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration;
 
 internal class RuleBook
 {
-    private Dictionary<FieldTypes, RuleForCell> rules = new Dictionary<FieldTypes, RuleForCell>();
-    private Dictionary<FieldTypes, int> proportions = new Dictionary<FieldTypes, int>();
+    protected Dictionary<FieldTypes, RuleForCell> rules = new Dictionary<FieldTypes, RuleForCell>();
+    protected Dictionary<FieldTypes, int> proportions = new Dictionary<FieldTypes, int>();
     
     public RuleBook()
     { 
