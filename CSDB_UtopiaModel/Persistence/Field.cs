@@ -16,6 +16,14 @@ abstract public class Field
 
     public Field(Coordinate c)
     {
+        Coordinates = c;
+
+        // Alapértelmezett értékek beállítása
+        Buildable = null; // Kezdetben üres a mezõ
+        town = null;      // Nem tartozik városhoz
+        depletionLevel = 100;
+        mood = 0;
+        resource = Gold.Instance();
     }
 
     public void Place(Buildable buildable)

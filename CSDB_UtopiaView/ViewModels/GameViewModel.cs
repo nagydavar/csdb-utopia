@@ -39,10 +39,13 @@ public partial class GameViewModel : ViewModelBase
 
     // Építési panel láthatósága és a gombok listája
     [ObservableProperty] private bool _isBuildingPanelVisible;
-    public ObservableCollection<string> AvailableBuildables { get; } = new();
+    public ObservableCollection<Type> AvailableBuildables { get; } = new();
 
     // Tároljuk, hogy a felhasználó éppen mit választott ki építésre
-    private Buildable? _selectedBuildable;
+    private Type? _selectedType;
+
+    [ObservableProperty]
+    private bool _isDemolishMode;
 
     // Események
     public event EventHandler? NewGame;
@@ -137,38 +140,63 @@ public partial class GameViewModel : ViewModelBase
         if (IsBuildingPanelVisible)
         {
             IsBuildingPanelVisible = false;
-            _selectedBuildable = null;
+            _selectedType = null;
         }
         else
         {
             // Lekérjük a Modell-től az aktuálisan építhető dolgokat
             AvailableBuildables.Clear();
-            var items = _model.ListBuildableOtherBuildings();
-            foreach (var item in items)
+            var types = _model.ListBuildableOtherBuildings();
+            foreach (var type in types)
             {
-                AvailableBuildables.Add(item.Name);
+                AvailableBuildables.Add(type);
             }
             IsBuildingPanelVisible = true;
         }
     }
 
     [RelayCommand]
-    public void SelectBuildable(Buildable item)
+    public void SelectBuildable(Type selectedType)
     {
         // Eltároljuk a választott típust
-        _selectedBuildable = item;
+        _selectedType = selectedType;
+        IsDemolishMode = false;
         // Opcionális: a panelt nyitva hagyjuk, ha többet akarunk építeni egymás után
-        // IsBuildingPanelVisible = false; 
+        IsBuildingPanelVisible = false; 
+    }
+
+    [RelayCommand]
+    public void Demolish()
+    {
+        IsDemolishMode = !IsDemolishMode;
+
+        // Ha bekapcsoljuk a bontást, ne legyen kiválasztott épület
+        if (IsDemolishMode)
+        {
+            _selectedType = null;
+            IsBuildingPanelVisible = false;
+        }
     }
 
     [RelayCommand]
     public void ClickCell(Cell cell)
     {
-        // Ha van kiválasztott épület, meghívjuk a Modell Place metódusát
-        if (_selectedBuildable != null)
+
+        // BONTÁS LOGIKA
+        if (IsDemolishMode)
         {
-            // Itt a Modell.Place elvégzi az ellenőrzést (pénz, hely, stb.)
-            _model.Place(new Coordinate(cell.X, cell.Y), _selectedBuildable);
+            _model.Demolish(new Coordinate(cell.X, cell.Y));
+            return;
+        }
+
+        // ÉPÍTÉS LOGIKA
+        if (_selectedType != null)
+        {
+            Field targetField = _model.GetField(cell.X, cell.Y);
+            if (Activator.CreateInstance(_selectedType, targetField) is Buildable instance)
+            {
+                _model.Place(new Coordinate(cell.X, cell.Y), instance);
+            }
         }
     }
 
@@ -225,6 +253,11 @@ public partial class GameViewModel : ViewModelBase
     {
         // Frissítjük a belső szótárat
         DisplayStorage[e.Resource] = e.NewValue;
+
+        if (e.Resource is HumanResource)
+        {
+            Population = e.NewValue;
+        }
 
         // Jelezzük a UI-nak, hogy a szótár tartalma megváltozott
         OnPropertyChanged(nameof(DisplayStorage));

@@ -33,6 +33,10 @@ public class Model
         
         _persistence.Fields[coord.X][coord.Y].Place(buildable);
         _persistence.Budget -= buildable.placementCost;
+
+        BudgetChanged?.Invoke(this, EventArgs.Empty);
+
+        OnFieldsUpdated(_persistence.Fields[coord.X][coord.Y]);
     }
 
     public void PlaceVehicle(Coordinate coord, Vehicle<Resource> vehicle)
@@ -73,6 +77,8 @@ public class Model
         // if (/*undemolishable*/)
         //     throw new Exception("ejnye-bejnye!");
         _persistence.Fields[coord.X][coord.Y].Buildable = null;
+
+        OnFieldsUpdated(_persistence.Fields[coord.X][coord.Y]);
     }
 
     public void ListBuildableFactories()
@@ -139,5 +145,10 @@ public class Model
     protected virtual void OnMoodChanged(int newValue)
     {
         MoodChanged?.Invoke(this, new MoodChangedEventArgs(newValue));
+    }
+
+    protected virtual void OnFieldsUpdated(Field field)
+    {
+        FieldsUpdated?.Invoke(this, new FieldEventArgs(new List<Field> { field }));
     }
 }

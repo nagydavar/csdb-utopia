@@ -60,16 +60,12 @@
         
             <ItemsControl ItemsSource="{Binding AvailableBuildables}">
                 <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="model:Buildable">
+                    <DataTemplate>
                         <Button HorizontalAlignment="Stretch"
                                 Margin="0,2"
                                 Command="{Binding $parent[UserControl].((vm:GameViewModel)DataContext).SelectBuildableCommand}"
                                 CommandParameter="{Binding}">
-                            <TextBlock Text="{Binding}" HorizontalAlignment="Center">
-                                 <TextBlock.Text>
-                                     <Binding Path="GetType().Name" />
-                                 </TextBlock.Text>
-                            </TextBlock>
+                            <TextBlock Text="{Binding Name}" HorizontalAlignment="Center"/>
                         </Button>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -114,7 +110,22 @@
                 <Button Width="80" Height="40" Content="Út" Command="{Binding ListBuildableRoadsCommand}"/>
                 <Button Width="80" Height="40" Content="Házak" Command="{Binding ListBuildableOtherBuildingsCommand}"/>
                 <Button Width="80" Height="40" Content="Dekor" Command="{Binding ListBuildableDecorationsCommand}"/>
-                <Button Width="80" Height="40" Content="Bontás" Command="{Binding DemolishCommand}"/>
+                <Button Width="80" Height="40" 
+                        Content="Bontás" 
+                        Command="{Binding DemolishCommand}">
+                    <Button.Styles>
+                        <Style Selector="Button">
+                            <Setter Property="Background" Value="LightGray"/>
+                        </Style>
+                        <Style Selector="Button[Tag=True]">
+                            <Setter Property="Background" Value="Red"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Style>
+                    </Button.Styles>
+                    <Button.Tag>
+                        <Binding Path="IsDemolishMode"/>
+                    </Button.Tag>
+                </Button>
             </StackPanel>
         </Border>
     </Grid>

@@ -35,21 +35,33 @@ public partial class Cell : ObservableObject
     // A Model_FieldsUpdated hívja meg a ViewModel-ben
     public void Update(Field field)
     {
-        if (field is Land land)
+        if (field.HasBuildable)
         {
-            fileName = $"Fields/{land.LevelOfForest}trees.PNG";
-        }
-        else if (field is Mountain)
-        {
-            fileName = "Fields/Mountain.PNG";
-        }
-        else if (field is Water)
-        {
-            fileName = "Fields/Water.PNG";
+            // Itt érdemes a Buildable-nek is egy ImagePath property-t adni, 
+            // vagy típus alapján dönteni:
+            if (field.Buildable is ApartmentBlock)
+                fileName = "Buildings/ResidentialBuilding/Apartment.png";
+            else if (field.Buildable is DetachedHouse)
+                fileName = "Buildings/ResidentialBuilding/DetachedHouse.jpg";
         }
         else
         {
-            fileName = "Fields/0trees.PNG";
+            if (field is Land land)
+            {
+                fileName = $"Fields/{land.LevelOfForest}trees.PNG";
+            }
+            else if (field is Mountain)
+            {
+                fileName = "Fields/Mountain.PNG";
+            }
+            else if (field is Water)
+            {
+                fileName = "Fields/Water.PNG";
+            }
+            else
+            {
+                fileName = "Fields/0trees.PNG";
+            }
         }
         imagePath = BaseUrl + fileName;
         
