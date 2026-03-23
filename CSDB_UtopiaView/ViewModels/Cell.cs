@@ -1,4 +1,9 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System;
+using System.IO;
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CSDB_UtopiaModel.Persistence;
 using CSDB_UtopiaModel.Model;
 
@@ -12,8 +17,10 @@ public partial class Cell : ObservableObject
     private const string BaseUrl = "avares://CSDB_UtopiaView/Assets/";
     string fileName = "Fields/0trees.PNG";
 
+    private string imagePath;
+    
     [ObservableProperty]
-    private string _imagePath;
+    private IImage image;
 
     public int X => _x;
     public int Y => _y;
@@ -22,7 +29,7 @@ public partial class Cell : ObservableObject
     {
         _x = x;
         _y = y;
-        ImagePath = BaseUrl + "Fields/0trees.PNG";
+        imagePath = BaseUrl + "Fields/0trees.PNG";
     }
 
     // A Model_FieldsUpdated hívja meg a ViewModel-ben
@@ -44,8 +51,15 @@ public partial class Cell : ObservableObject
         {
             fileName = "Fields/0trees.PNG";
         }
-
-        ImagePath = BaseUrl + fileName;
+        imagePath = BaseUrl + fileName;
+        
+        // Open the stream
+        using (Stream stream = AssetLoader.Open(new Uri(imagePath)))
+        {
+                Image = new Bitmap(stream);
+            
+        }
+        
         //itt folyt köv.
     }
 }

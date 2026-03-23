@@ -30,7 +30,7 @@
                                 Command="{Binding $parent[ItemsControl].((vm:GameViewModel)DataContext).ClickCellCommand}"
                                 CommandParameter="{Binding}">
                             
-                            <Image Stretch="UniformToFill" Source="{Binding ImagePath}">
+                            <Image Stretch="UniformToFill" Source="{Binding Image}">
 
                             </Image>
                         </Button>
