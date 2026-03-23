@@ -74,9 +74,10 @@ class Persistence
 
     private void GenerateMap(int width, int height)
     {
-        Generator generator = new Generator(width, height, new TownRuleBook());
+        Generator generator = new Generator(width, height, new PlainRuleBook());
         Fields = generator.Generate();
-        Console.Write(generator.ToString());
+        Console.WriteLine("Generation Done");
+        //Console.Write(generator.ToString());
         
     }
 

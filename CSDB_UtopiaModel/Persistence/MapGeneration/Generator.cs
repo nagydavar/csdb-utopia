@@ -14,7 +14,7 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
         private Random random;
         private int triedTimes = 0;
 
-        private static int maxTriedTimes = 20;
+        private static int maxTriedTimes = 30;
         //private int collapsed = 0;
 
 
@@ -121,7 +121,7 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
                 int x = i / Width;
                 int y = i % Width;
                 if (y == 0) f.Add(new List<Field>());
-                f[x].Add(fields[i].ToField());
+                f[x].Add(fields[i].ToField(random));
             }
 
             return f;

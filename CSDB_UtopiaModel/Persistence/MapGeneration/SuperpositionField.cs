@@ -18,7 +18,7 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
             this.ruleBook = ruleBook;
             Coordinate = coord;
             ruleForCell = r;
-            positions = new(Enum.GetValues<FieldTypes>());
+            positions = new(ruleBook.possibleFields);
         }
 
         public FieldTypes ToFieldType()
@@ -27,7 +27,7 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
             return positions.Last();
         }
         
-        public Field ToField()
+        public Field ToField(Random r)
         {
             if (!Collapsed) throw new InvalidOperationException("Not collapsed yet!");
             //TODO:
@@ -41,7 +41,7 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
                     //field = new Land(Coordinate, 0, false);
                     break;
                 case FieldTypes.Forest:
-                    field = new Land(Coordinate, 3, true);
+                    field = new Land(Coordinate, r.Next(5), true);
                     break;
                 case FieldTypes.Water:
                     field = new Water(Coordinate);

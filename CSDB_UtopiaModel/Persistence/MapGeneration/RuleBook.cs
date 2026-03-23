@@ -7,13 +7,15 @@ internal class RuleBook
 {
     protected Dictionary<FieldTypes, RuleForCell> rules = new Dictionary<FieldTypes, RuleForCell>();
     protected Dictionary<FieldTypes, int> proportions = new Dictionary<FieldTypes, int>();
+    public List<FieldTypes> possibleFields { get; private set; }
+        
     
     public RuleBook()
     { 
         proportions.Add(FieldTypes.Land, 200);
         proportions.Add(FieldTypes.Forest, 170);
-        proportions.Add(FieldTypes.Water, 130);
-        proportions.Add(FieldTypes.Mountain, 80);
+        proportions.Add(FieldTypes.Water, 10);
+        proportions.Add(FieldTypes.Mountain, 10);
         proportions.Add(FieldTypes.RoadVer, 30);
         proportions.Add(FieldTypes.RoadHor, 30);
         proportions.Add(FieldTypes.FourInter, 18);
@@ -133,7 +135,7 @@ internal class RuleBook
             }
         }
 
-      
+      updatePossibleFields();
     }
     public FieldTypes ProportionalRandom(Random r, List<FieldTypes> possibleFields)
     {
@@ -154,5 +156,10 @@ internal class RuleBook
     }
 
     public int GetProportion(FieldTypes field) => proportions.ContainsKey(field) ? proportions[field] : 0;
+
+    protected void updatePossibleFields()
+    {
+        possibleFields = proportions.Where(s => s.Value > 0).Select(kvp => kvp.Key).ToList();
+    }
 
 }
