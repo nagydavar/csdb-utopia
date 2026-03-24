@@ -16,6 +16,9 @@ public class Model
 
     public void Place(Coordinate coord, Buildable buildable)
     {
+        Field target = _persistence.Fields[coord.X][coord.Y];
+        if (target is not Land land) return;
+        if (buildable.placementCost > GetBudget()) return;
         if (buildable is IResidentialBuilding residential)
         {
             // N�pess�g n�vel�se
@@ -31,12 +34,14 @@ public class Model
             //     $"�p�tve: {x},{y} koordin�t�n. Pop: {_persistence.Storage[HumanResource.Instance()]}, Mood: {_persistence.CurrentMood}");
         }
         
-        _persistence.Fields[coord.X][coord.Y].Place(buildable);
+    
+        land.Place(buildable);
         _persistence.Budget -= buildable.placementCost;
 
         BudgetChanged?.Invoke(this, EventArgs.Empty);
 
         OnFieldsUpdated(_persistence.Fields[coord.X][coord.Y]);
+    
     }
 
     public void PlaceVehicle(Coordinate coord, Vehicle<Resource> vehicle)
@@ -56,7 +61,7 @@ public class Model
     public Field GetField(int x, int y) {
         return _persistence.Fields[x][y];
     }
-
+    public Field GetField(Coordinate coords) => GetField(coords.X, coords.Y);
     public int GetMood() // should be a property
     {
         return _persistence.CurrentMood;
@@ -76,9 +81,17 @@ public class Model
     {
         // if (/*undemolishable*/)
         //     throw new Exception("ejnye-bejnye!");
+        Buildable? onField = GetField(coord).Buildable;
+        
         _persistence.Fields[coord.X][coord.Y].Buildable = null;
 
         OnFieldsUpdated(_persistence.Fields[coord.X][coord.Y]);
+
+        if (onField is IResidentialBuilding residential)
+        {
+            _persistence.Storage[HumanResource.Instance()] -= residential.givePeople;
+            OnResourceChanged(HumanResource.Instance(), _persistence.Storage[HumanResource.Instance()]);
+        }
     }
 
     public void ListBuildableFactories()
