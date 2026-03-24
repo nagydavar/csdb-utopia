@@ -1,5 +1,6 @@
 using CSDB_UtopiaModel.Model;
 using System;
+using System.Diagnostics;
 using CSDB_UtopiaModel.Persistence.MapGeneration;
 
 namespace CSDB_UtopiaModel.Persistence;
@@ -73,8 +74,10 @@ class Persistence
 
     private void GenerateMap(int width, int height)
     {
-        Generator generator = new Generator(width, height, new RuleBook());
+        Generator generator = new Generator(width, height, new PlainRuleBook());
         Fields = generator.Generate();
+        Console.WriteLine("Generation Done");
+        //Console.Write(generator.ToString());
         
     }
 

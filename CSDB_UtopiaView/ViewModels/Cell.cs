@@ -14,7 +14,7 @@ public partial class Cell : ObservableObject
     private readonly int _x;
     private readonly int _y;
 
-    private const string BaseUrl = "avares://CSDB_UtopiaView/Assets/";
+    private const string BaseUrl = "avares://CSDB_UtopiaView/AssetsSmall/";
     string fileName = "Fields/0trees.PNG";
 
     private string imagePath;
