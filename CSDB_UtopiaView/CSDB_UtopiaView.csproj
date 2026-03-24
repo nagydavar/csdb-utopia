@@ -6,24 +6,25 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="AssetsSmall\avalonia-logo.ico" />
-    <AvaloniaResource Include="AssetsSmall\Buildings\ResidentialBuilding\DetachedHouse.jpg" />
-    <AvaloniaResource Include="AssetsSmall\Fields\0trees.PNG" />
-    <AvaloniaResource Include="AssetsSmall\Fields\1trees.PNG" />
-    <AvaloniaResource Include="AssetsSmall\Fields\2trees.PNG" />
-    <AvaloniaResource Include="AssetsSmall\Fields\3trees.PNG" />
-    <AvaloniaResource Include="AssetsSmall\Fields\4trees.PNG" />
-    <AvaloniaResource Include="AssetsSmall\Fields\Mountain.PNG" />
-    <AvaloniaResource Include="AssetsSmall\Fields\Water.PNG" />
-    <AvaloniaResource Include="AssetsSmall\Icons\Coal.PNG" />
-    <AvaloniaResource Include="AssetsSmall\Icons\Diamond.PNG" />
-    <AvaloniaResource Include="AssetsSmall\Icons\Gold.PNG" />
-    <AvaloniaResource Include="AssetsSmall\Icons\Ironore.PNG" />
-    <AvaloniaResource Include="AssetsSmall\Icons\Paper.PNG" />
-    <AvaloniaResource Include="AssetsSmall\Icons\Tree.PNG" />
-    <AvaloniaResource Include="AssetsSmall\Menu\createmenu.png" />
-    <AvaloniaResource Include="AssetsSmall\Menu\CSDButopia.PNG" />
-    <AvaloniaResource Include="AssetsSmall\Menu\mainmenu.png" />
+    <AvaloniaResource Include="Assets\avalonia-logo.ico" />
+    <AvaloniaResource Include="Assets\Buildings\ResidentialBuilding\Apartment.PNG" />
+    <AvaloniaResource Include="Assets\Buildings\ResidentialBuilding\DetachedHouse.jpg" />
+    <AvaloniaResource Include="Assets\Fields\0trees.PNG" />
+    <AvaloniaResource Include="Assets\Fields\1trees.PNG" />
+    <AvaloniaResource Include="Assets\Fields\2trees.PNG" />
+    <AvaloniaResource Include="Assets\Fields\3trees.PNG" />
+    <AvaloniaResource Include="Assets\Fields\4trees.PNG" />
+    <AvaloniaResource Include="Assets\Fields\Mountain.PNG" />
+    <AvaloniaResource Include="Assets\Fields\Water.PNG" />
+    <AvaloniaResource Include="Assets\Icons\Coal.PNG" />
+    <AvaloniaResource Include="Assets\Icons\Diamond.PNG" />
+    <AvaloniaResource Include="Assets\Icons\Gold.PNG" />
+    <AvaloniaResource Include="Assets\Icons\Ironore.PNG" />
+    <AvaloniaResource Include="Assets\Icons\Paper.PNG" />
+    <AvaloniaResource Include="Assets\Icons\Tree.PNG" />
+    <AvaloniaResource Include="Assets\Menu\createmenu.png" />
+    <AvaloniaResource Include="Assets\Menu\CSDButopia.PNG" />
+    <AvaloniaResource Include="Assets\Menu\mainmenu.png" />
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 
@@ -38,7 +39,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="AssetsSmall\Roads\" />
     <Folder Include="Assets\Roads\" />
   </ItemGroup>
 

@@ -19,6 +19,13 @@ public class Model
         Field target = _persistence.Fields[coord.X][coord.Y];
         if (target is not Land land) return;
         if (buildable.placementCost > GetBudget()) return;
+        
+        land.Place(buildable);
+        _persistence.Budget -= buildable.placementCost;
+
+        BudgetChanged?.Invoke(this, EventArgs.Empty);
+
+        OnFieldsUpdated(_persistence.Fields[coord.X][coord.Y]);
         if (buildable is IResidentialBuilding residential)
         {
             // N�pess�g n�vel�se
@@ -35,12 +42,6 @@ public class Model
         }
         
     
-        land.Place(buildable);
-        _persistence.Budget -= buildable.placementCost;
-
-        BudgetChanged?.Invoke(this, EventArgs.Empty);
-
-        OnFieldsUpdated(_persistence.Fields[coord.X][coord.Y]);
     
     }
 
