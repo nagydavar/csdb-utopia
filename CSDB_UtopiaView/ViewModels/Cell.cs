@@ -40,7 +40,7 @@ public partial class Cell : ObservableObject
             // Itt érdemes a Buildable-nek is egy ImagePath property-t adni, 
             // vagy típus alapján dönteni:
             if (field.Buildable is ApartmentBlock)
-                fileName = "Buildings/ResidentialBuilding/Apartment.png";
+                fileName = "Buildings/ResidentialBuilding/Apartment.PNG";
             else if (field.Buildable is DetachedHouse)
                 fileName = "Buildings/ResidentialBuilding/DetachedHouse.jpg";
         }
