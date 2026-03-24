@@ -181,22 +181,38 @@ public partial class GameViewModel : ViewModelBase
     [RelayCommand]
     public void ClickCell(Cell cell)
     {
-
-        // BONTÁS LOGIKA
-        if (IsDemolishMode)
+        try
         {
-            _model.Demolish(new Coordinate(cell.X, cell.Y));
-            return;
-        }
-
-        // ÉPÍTÉS LOGIKA
-        if (_selectedType != null)
-        {
-            Field targetField = _model.GetField(cell.X, cell.Y);
-            if (Activator.CreateInstance(_selectedType, targetField) is Buildable instance)
+            // BONTÁS LOGIKA
+            if (IsDemolishMode)
             {
-                _model.Place(new Coordinate(cell.X, cell.Y), instance);
+                _model.Demolish(new Coordinate(cell.X, cell.Y));
+                return;
             }
+
+            // ÉPÍTÉS LOGIKA
+            if (_selectedType != null)
+            {
+                Field targetField = _model.GetField(cell.X, cell.Y);
+                if (Activator.CreateInstance(_selectedType, targetField) is Buildable instance)
+                {
+                    _model.Place(new Coordinate(cell.X, cell.Y), instance);
+                }
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Itt kapjuk el a "Can't place it here" és hasonló hibákat
+            // Ahelyett, hogy összeomlana, pl. kiírhatjuk a Debug konzolra vagy egy Log listába
+            System.Diagnostics.Debug.WriteLine($"Építési hiba: {ex.Message}");
+
+            // Ha van Log feszined, itt küldhetsz üzenetet a UI-nak:
+            // CurrentLogMessage = ex.Message; 
+        }
+        catch (Exception ex)
+        {
+            // Minden más váratlan hiba elkapása
+            System.Diagnostics.Debug.WriteLine($"Váratlan hiba: {ex.Message}");
         }
     }
 
