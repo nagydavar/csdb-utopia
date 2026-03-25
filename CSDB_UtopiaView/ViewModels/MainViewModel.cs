@@ -30,8 +30,8 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     public void GoToGame() {
         //teszthez kisebb tábla
-        int w = 10;
-        int h = 10;
+        int w = 50;
+        int h = 50;
 
         _model = new Model(w, h);
 

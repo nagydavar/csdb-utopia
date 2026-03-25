@@ -14,13 +14,12 @@ public partial class Cell : ObservableObject
     private readonly int _x;
     private readonly int _y;
 
-    private const string BaseUrl = "avares://CSDB_UtopiaView/Assets/";
-    string fileName = "Fields/0trees.PNG";
 
     private string imagePath;
     
     [ObservableProperty]
-    private IImage image;
+    private IImage? image;
+    private string _fileName;
 
     public int X => _x;
     public int Y => _y;
@@ -29,7 +28,7 @@ public partial class Cell : ObservableObject
     {
         _x = x;
         _y = y;
-        imagePath = BaseUrl + "Fields/0trees.PNG";
+        Image = ImageLoader.GetDefault();
     }
 
     // A Model_FieldsUpdated hívja meg a ViewModel-ben
@@ -40,37 +39,33 @@ public partial class Cell : ObservableObject
             // Itt érdemes a Buildable-nek is egy ImagePath property-t adni, 
             // vagy típus alapján dönteni:
             if (field.Buildable is ApartmentBlock)
-                fileName = "Buildings/ResidentialBuilding/Apartment.PNG";
+                _fileName = "Buildings/ResidentialBuilding/Apartment.PNG";
             else if (field.Buildable is DetachedHouse)
-                fileName = "Buildings/ResidentialBuilding/DetachedHouse.jpg";
+                _fileName = "Buildings/ResidentialBuilding/DetachedHouse.jpg";
         }
         else
         {
             if (field is Land land)
             {
-                fileName = $"Fields/{land.LevelOfForest}trees.PNG";
+                _fileName = $"Fields/{land.LevelOfForest}trees.PNG";
             }
             else if (field is Mountain)
             {
-                fileName = "Fields/Mountain.PNG";
+                _fileName = "Fields/Mountain.PNG";
             }
             else if (field is Water)
             {
-                fileName = "Fields/Water.PNG";
+                _fileName = "Fields/Water.PNG";
             }
             else
             {
-                fileName = "Fields/0trees.PNG";
+                _fileName = "Fields/0trees.PNG";
             }
         }
-        imagePath = BaseUrl + fileName;
+        Image = ImageLoader.Get(_fileName);
         
-        // Open the stream
-        using (Stream stream = AssetLoader.Open(new Uri(imagePath)))
-        {
-                Image = new Bitmap(stream);
-            
-        }
+        
+        
         
         //itt folyt köv.
     }
