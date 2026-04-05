@@ -68,6 +68,7 @@ public partial class GameViewModel : ViewModelBase
         _model.NewGame += Model_NewGame;
         _model.GameOver += Model_GameOver;
         _model.DateChanged += Model_DateChanged;
+        _model.MoodChanged += Model_MoodChanged;
 
         Budget = _model.GetBudget();
         CurrentMood = _model.GetMood();
@@ -132,29 +133,6 @@ public partial class GameViewModel : ViewModelBase
     [RelayCommand]
     public void Pause() { }
 
-    //Építés
-    [RelayCommand]
-    public void ListBuildableOtherBuildings()
-    {
-        // Ha már látszik a panel, bezárjuk és töröljük a kijelölést
-        if (IsBuildingPanelVisible)
-        {
-            IsBuildingPanelVisible = false;
-            _selectedType = null;
-        }
-        else
-        {
-            // Lekérjük a Modell-től az aktuálisan építhető dolgokat
-            AvailableBuildables.Clear();
-            var types = _model.ListBuildableOtherBuildings();
-            foreach (var type in types)
-            {
-                AvailableBuildables.Add(type);
-            }
-            IsBuildingPanelVisible = true;
-        }
-    }
-
     [RelayCommand]
     public void SelectBuildable(Type selectedType)
     {
@@ -194,7 +172,30 @@ public partial class GameViewModel : ViewModelBase
             if (_selectedType != null)
             {
                 Field targetField = _model.GetField(cell.X, cell.Y);
-                if (Activator.CreateInstance(_selectedType, targetField) is Buildable instance)
+                Buildable? instance = null;
+
+                // Ellenőrizzük, hogy ResourceExtractor-ról van-e szó
+                //TODO többi gyár
+                if (_selectedType.IsAssignableTo(typeof(ResourceExtractor)))
+                {
+                    // Itt meg kell adni egy alapértelmezett yield értéket (pl. 10)
+                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 10);
+                }
+                else if (_selectedType.IsAssignableTo(typeof(Factory)))
+                {
+                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 30);
+                }
+                //else if (_selectedType.IsAssignableTo(typeof(Motorway))) {
+                //    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 120, new Direction());
+                //}
+
+                else
+                {
+                    // Sima 1 paraméteres konstruktor (pl. lakóház, út)
+                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField);
+                }
+
+                if (instance != null)
                 {
                     _model.Place(new Coordinate(cell.X, cell.Y), instance);
                 }
@@ -206,7 +207,7 @@ public partial class GameViewModel : ViewModelBase
             // Ahelyett, hogy összeomlana, pl. kiírhatjuk a Debug konzolra vagy egy Log listába
             System.Diagnostics.Debug.WriteLine($"Építési hiba: {ex.Message}");
 
-            // Ha van Log feszined, itt küldhetsz üzenetet a UI-nak:
+            // Ha van Log
             // CurrentLogMessage = ex.Message; 
         }
         catch (Exception ex)
@@ -221,22 +222,67 @@ public partial class GameViewModel : ViewModelBase
 
     // Listázó parancsok
     [RelayCommand]
-    public void ListBuildableFactories() { }
+    public void ListBuildableFactories() {
+        UpdateAvailableBuildables(_model.ListBuildableFactories());
+    }
 
     [RelayCommand]
-    public void ListBuildableProducers() { }
+    public void ListBuildableResidential()
+    {
+        UpdateAvailableBuildables(_model.ListBuildableResidential());
+    }
 
     [RelayCommand]
-    public void ListBuildableDecorations() { }
+    public void ListBuildableResourceExtractors() {
+        UpdateAvailableBuildables(_model.ListBuildableResourceExtractors());
+    }
 
     [RelayCommand]
-    public void ListBuildableRoads() { }
+    public void ListBuildableDecorations() {
+        UpdateAvailableBuildables(_model.ListBuildableDecorations());
+    }
 
     [RelayCommand]
-    public void ListBuyablePassengerVehicles() { }
+    public void ListBuildableRoads() {
+        UpdateAvailableBuildables(_model.ListBuildableRoads());
+    }
+
+    [RelayCommand]
+    public void ListBuyablePassengerVehicles() {
+        UpdateAvailableBuildables(_model.ListBuyablePassengerVehicles());
+    }
 
     [RelayCommand]
     public void ListBuyableIndustrialVehicles() { }
+
+    [RelayCommand]
+    public void ListBuildableOtherBuildings()
+    {
+        UpdateAvailableBuildables(_model.ListBuildableOtherBuildings());
+    }
+
+    private void UpdateAvailableBuildables(List<Type> types)
+    {
+        // Ha ugyanazt a listát kérnénk le, ami már látszik, akkor csukjuk be a panelt
+        // Ehhez ellenőrizzük, hogy a lista első eleme megegyezik-e a már bent lévővel
+        if (IsBuildingPanelVisible && AvailableBuildables.SequenceEqual(types))
+        {
+            IsBuildingPanelVisible = false;
+            _selectedType = null;
+            return;
+        }
+
+        AvailableBuildables.Clear();
+        foreach (var type in types)
+        {
+            AvailableBuildables.Add(type);
+        }
+
+        // Mindig kikapcsoljuk a bontó módot, ha építeni akarunk
+        IsDemolishMode = false;
+        _selectedType = null;
+        IsBuildingPanelVisible = true;
+    }
 
     // Modell eseménykezelők kifejtése
     private void Model_GameTicked(object? sender, EventArgs e)

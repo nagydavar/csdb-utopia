@@ -4,7 +4,7 @@ namespace CSDB_UtopiaModel.Model;
 public abstract class Buildable : Buyable
 {
     public virtual int placementCost { get; }
-    protected (int, int) area;
+    public (int Width, int Height) area { get; protected set; }
     protected Field owner;
     protected Coordinate field;
     public Buildable(Field f)

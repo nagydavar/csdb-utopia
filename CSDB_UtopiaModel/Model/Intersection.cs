@@ -1,7 +1,7 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-abstract class Intersection {
+public abstract class Intersection {
         public bool hasTrafficLights;
         public TrafficLightControl trafficLightControl;
         public List<Vehicle<Resource>> stuckedVehicles;

@@ -88,17 +88,29 @@
                     <TextBlock Text="{Binding Budget}" VerticalAlignment="Center" FontWeight="Bold"/>
                 </StackPanel>
                 
-                <TextBlock Text="Népesség: " VerticalAlignment="Center" Margin="10,0,0,0"/>
-                <TextBlock Text="{Binding Population}" VerticalAlignment="Center" FontWeight="Bold"/>
-                
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,0">
+                    <Rectangle Width="20" Height="20" Fill="Blue" Margin="5"/> <TextBlock Text="Népesség: " VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Population}" VerticalAlignment="Center" FontWeight="Bold"/>
                 </StackPanel>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Rectangle Width="20" Height="20" Fill="Gold" Margin="5"/> <TextBlock Text="Hangulat: " VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding CurrentMood}" VerticalAlignment="Center" FontWeight="Bold"/>
+                </StackPanel>
+            </StackPanel>
         </Border>
 
         <StackPanel VerticalAlignment="Top" HorizontalAlignment="Right" Orientation="Horizontal" Margin="10">
             <TextBlock Text="{Binding CurrentDateString}" VerticalAlignment="Center" Margin="5"/>
-            <Button Content="+" Width="30" Command="{Binding IncreaseSpeedCommand}"/>
-            <Button Content="-" Width="30" Command="{Binding DecreaseSpeedCommand}"/>
-            <Button Content="▶" Width="40" Height="40" CornerRadius="20" Command="{Binding ResumeCommand}"/>
+            <Button Content="+" Width="30" Command="{Binding IncreaseSpeedCommand}"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"/>
+            <Button Content="-" Width="30" Command="{Binding DecreaseSpeedCommand}"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"/>
+            <Button Content="▶" Width="40" Height="40" CornerRadius="20" Command="{Binding ResumeCommand}" 
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"/>
         </StackPanel>
 
         <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="10" Spacing="5">
@@ -107,12 +119,32 @@
 
         <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Background="White" BorderBrush="Black" BorderThickness="1" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal" Spacing="5" Margin="5">
-                <Button Width="80" Height="40" Content="Út" Command="{Binding ListBuildableRoadsCommand}"/>
-                <Button Width="80" Height="40" Content="Házak" Command="{Binding ListBuildableOtherBuildingsCommand}"/>
-                <Button Width="80" Height="40" Content="Dekor" Command="{Binding ListBuildableDecorationsCommand}"/>
+                <Button Width="80" Height="40" Content="Út" Command="{Binding ListBuildableRoadsCommand}"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"/>
+                <Button Width="80" Height="40" Content="Autók" Command="{Binding ListBuyablePassengerVehiclesCommand}"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"/>
+                <Button Width="80" Height="40" Content="Házak" Command="{Binding ListBuildableResidentialCommand}"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"/>
+                <Button Width="80" Height="40" Content="Dekor" Command="{Binding ListBuildableDecorationsCommand}"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"/>
+                <Button Width="80" Height="40" Content="Termelők" Command="{Binding ListBuildableResourceExtractorsCommand}"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"/>
+                <Button Width="80" Height="40" Content="Gyárak" Command="{Binding ListBuildableFactoriesCommand}"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"/>
+                <Button Width="80" Height="40" Content="Egyéb" Command="{Binding ListBuildableOtherBuildingsCommand}"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"/>
                 <Button Width="80" Height="40" 
                         Content="Bontás" 
-                        Command="{Binding DemolishCommand}">
+                        Command="{Binding DemolishCommand}"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center">
                     <Button.Styles>
                         <Style Selector="Button">
                             <Setter Property="Background" Value="LightGray"/>

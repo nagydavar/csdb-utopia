@@ -16,18 +16,56 @@ public class Model
 
     public void Place(Coordinate coord, Buildable buildable)
     {
-        Field target = GetField(coord);
-        if (target is not Land land) return;
-        float forestCostFactor = 0.05f * land.LevelOfForest;
-        int cost = (int)Math.Round((1 + forestCostFactor) * buildable.placementCost, 0);
+        // 1. Épület méretének lekérése
+        int width = buildable.area.Item1;
+        int height = buildable.area.Item2;
+        List<Land> targetLands = new List<Land>();
+        float totalForestFactor = 0;
+
+        // 2. Ellenőrzés, elfér-e és minden mező Land-e?
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                // Koordináta validáció (ne lógjon ki a pályáról)
+                if (coord.X + i >= _persistence.Width || coord.Y + j >= _persistence.Height) return;
+
+                Field f = _persistence.Fields[coord.X + i][coord.Y + j];
+
+                // Csak szabad Land mezőre építhetünk
+                if (f is Land land && !land.HasBuildable)
+                {
+                    targetLands.Add(land);
+                    totalForestFactor += 0.05f * land.LevelOfForest;
+                }
+                else return; // Ha csak egyetlen mező is foglalt vagy nem Land, megállunk
+            }
+        }
+
+        //3. költség
+        int cost = (int)Math.Round((1 + totalForestFactor / (width * height)) * buildable.placementCost, 0);
         if (cost > GetBudget()) return;
-        
-        land.Place(buildable);
-        
+
+        //4. elhelyezés
+        foreach (var land in targetLands)
+        {
+            // Kiszámoljuk a relatív pozíciót a kezdőponthoz képest
+            land.RelativeX = land.Coordinates.X - coord.X;
+            land.RelativeY = land.Coordinates.Y - coord.Y;
+
+            land.Place(buildable); // Ez meghívja a Deforest()-et is az adott mezőn
+        }
+
+        //5. frissítés
         _persistence.Budget -= cost;
         BudgetChanged?.Invoke(this, EventArgs.Empty);
 
-        OnFieldsUpdated(GetField(coord));
+        // Minden megváltozott mezőt elküldünk a View-nak
+        foreach (var land in targetLands)
+        {
+            OnFieldsUpdated(land);
+        }
+
         if (buildable is IResidentialBuilding residential)
         {
             // N�pess�g n�vel�se
@@ -37,15 +75,11 @@ public class Model
             // Hangulat cs�kkent�se
             _persistence.CurrentMood += residential.AffectMood;
             OnMoodChanged(_persistence.CurrentMood);
-
-            // Itt j�nne a mez� friss�t�se a t�rk�pen most csak teszt miatt, de �gy is gatya
-            // Console.WriteLine(
-            //     $"�p�tve: {x},{y} koordin�t�n. Pop: {_persistence.Storage[HumanResource.Instance()]}, Mood: {_persistence.CurrentMood}");
         }
-        
-    
-    
+
+
     }
+
 
     public void PlaceVehicle(Coordinate coord, Vehicle<Resource> vehicle)
     {
@@ -97,50 +131,72 @@ public class Model
         }
     }
 
-    public void ListBuildableFactories()
+    public List<Type> ListBuildableFactories()
     {
+        return GetBuildableTypesInNamespace<Factory>();
     }
 
-    public void ListBuildableProducers()
+    public List<Type> ListBuildableResourceExtractors()
     {
+        return GetBuildableTypesInNamespace<ResourceExtractor>();
     }
 
-    public void ListBuildableDecorations()
+    public List<Type> ListBuildableDecorations()
     {
+        return GetBuildableTypesInNamespace<Decoration>();
     }
-
-    // public Buildable[] ListBuildableOtherBuildings() =>
-    // [
-    //     new LumberYard(default!, default), new IronMine(default!, default), new CoalMine(default!, default),
-    //     new OilRig(default!, default), new GoldMine(default!, default), new DiamondMine(default!, default),
-    //     new IronFurnace(default!, default), new SawMill(default!, default), new Refinery(default!, default),
-    //     new Jewellery(default!, default), new PaperFactory(default!, default), new Press(default!, default),
-    //     // to be continued
-    //     new Stop(null!)
-    // ];
 
     public List<Type> ListBuildableOtherBuildings()
     {
         string targetNamespace = typeof(CSDB_UtopiaModel.Model.Model).Namespace;
 
-        List<Type> types = Assembly.GetExecutingAssembly()
+        return Assembly.GetExecutingAssembly()
             .GetTypes()
-            .Where(t => t.IsClass && !t.IsAbstract && t.IsAssignableTo(typeof(CSDB_UtopiaModel.Model.IResidentialBuilding)) && t.Namespace == targetNamespace)
+            .Where(t => t.IsClass &&
+                        !t.IsAbstract &&
+                        t.IsAssignableTo(typeof(Buildable)) &&
+                        // Kizárjuk a már nevesített kategóriákat
+                        !t.IsAssignableTo(typeof(IResidentialBuilding)) &&
+                        !t.IsAssignableTo(typeof(Decoration)) &&
+                        !t.IsAssignableTo(typeof(Factory)) &&
+                        !t.IsAssignableTo(typeof(ResourceExtractor)) &&
+                        !t.IsAssignableTo(typeof(Road)) &&
+                        t.Namespace == targetNamespace)
             .ToList();
-        
-        return types;
     }
 
-    public void ListBuildableRoads()
+    public List<Type> ListBuildableResidential()
     {
+        return GetBuildableTypesInNamespace<IResidentialBuilding>();
     }
 
-    public void ListBuyablePassengerVehicles()
+    public List<Type> ListBuildableRoads()
     {
+        return GetBuildableTypesInNamespace<Road>();
     }
 
-    public void ListBuyableIndustrialVehicles()
+    public List<Type> ListBuyablePassengerVehicles()
     {
+        return GetBuildableTypesInNamespace<PassengerVehicle>();
+    }
+
+    public List<Type> ListBuyableIndustrialVehicles()
+    {
+        //TODO
+        return GetBuildableTypesInNamespace<Decoration>();
+    }
+
+    private List<Type> GetBuildableTypesInNamespace<T>()
+    {
+        string targetNamespace = typeof(CSDB_UtopiaModel.Model.Model).Namespace;
+
+        return Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(t => t.IsClass &&
+                        !t.IsAbstract &&
+                        t.IsAssignableTo(typeof(T)) &&
+                        t.Namespace == targetNamespace)
+            .ToList();
     }
 
     public EventHandler<EventArgs>? GameTicked;

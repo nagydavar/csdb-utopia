@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\avalonia-logo.ico" />
-    <AvaloniaResource Include="Assets\Buildings\ResidentialBuilding\Apartment.PNG" />
     <AvaloniaResource Include="Assets\Buildings\ResidentialBuilding\DetachedHouse.jpg" />
     <AvaloniaResource Include="Assets\Fields\0trees.PNG" />
     <AvaloniaResource Include="Assets\Fields\1trees.PNG" />
@@ -39,7 +38,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Assets\Roads\" />
+    <Folder Include="Assets\Buildings\Decorations\" />
+    <Folder Include="Assets\Buildings\Factories\" />
+    <Folder Include="Assets\Buildings\OtherBuildings\" />
   </ItemGroup>
 
   <ItemGroup>

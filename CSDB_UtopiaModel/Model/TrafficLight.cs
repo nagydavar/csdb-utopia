@@ -1,6 +1,6 @@
 namespace CSDB_UtopiaModel.Model;
 
-class TrafficLight
+public class TrafficLight
 {
     public TrafficLightState State { get; set; } // do we need this?
 

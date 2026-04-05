@@ -3,7 +3,9 @@
 namespace CSDB_UtopiaModel.Model;
 public class DetachedHouse : Building, IResidentialBuilding
 {
-    public DetachedHouse(Field f) : base(f) { }
+    public DetachedHouse(Field f) : base(f) {
+        area = (1, 1);
+    }
 
     // 1. Publikusnak kell lennie az interf�sz miatt
     // 2. Property-k�nt kell megval�s�tani (get)

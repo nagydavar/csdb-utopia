@@ -1,7 +1,7 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-class Garage : Building
+public class Garage : Building
 {
         private List<Vehicle<Resource>>? vehiclesInGarage;
 

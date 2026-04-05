@@ -14,6 +14,10 @@ abstract public class Field
     public bool HasBuildable => Buildable is not null;
     public bool IsPartOfTown=> town is not null;
 
+    //Relatív pozíció a nagyobb méretű épületekhez
+    public int RelativeX { get; set; } = 0;
+    public int RelativeY { get; set; } = 0;
+
     public Field(Coordinate c)
     {
         Coordinates = c;
