@@ -3,16 +3,63 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-public class Model
+public class Model : ITickable
 {
 
     private TimeControl _timeControl;
     private readonly Persistence.Persistence _persistence;
+    private int _totalSeconds = 0; // Az eltelt összes másodperc
 
     public Model(int width, int height)
     {
         _persistence = new Persistence.Persistence(width, height, true);
+
+        // 1. Lekérjük a példányt egy változóba
+        var timer = TimeControl.Instance();
+
+        // 2. A változón már elvégezhető az operátor-művelet
+        timer += (this, 1);
     }
+
+    #region Time
+    public Task Tick()
+    {
+        _totalSeconds++;
+
+        // Kiváltjuk az eseményt a View felé
+        DateChanged?.Invoke(this, EventArgs.Empty);
+
+        return Task.CompletedTask;
+    }
+
+    // Formázott idő lekérése a ViewModel számára
+    public string GetFormattedTime()
+    {
+        int hours = _totalSeconds / 3600;
+        int minutes = (_totalSeconds % 3600) / 60;
+        int seconds = _totalSeconds % 60;
+        return $"{hours:D2}:{minutes:D2}:{seconds:D2}";
+    }
+
+    // Vezérlő metódusok a TimeControl-hoz
+    public void TogglePause()
+    {
+        var timer = TimeControl.Instance();
+        _ = !timer; // A '!' operátor meghívása
+    }
+    public void SpeedUp()
+    {
+        var timer = TimeControl.Instance();
+        _ = ++timer;
+    }
+    public void SlowDown()
+    {
+        var timer = TimeControl.Instance();
+        _ = --timer;
+    }
+
+    public bool IsPaused() => !TimeControl.Instance().IsStopped;
+    #endregion
 
     public void Place(Coordinate coord, Buildable buildable)
     {

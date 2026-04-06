@@ -18,9 +18,8 @@
     <AvaloniaResource Include="Assets\Icons\Coal.PNG" />
     <AvaloniaResource Include="Assets\Icons\Diamond.PNG" />
     <AvaloniaResource Include="Assets\Icons\Gold.PNG" />
-    <AvaloniaResource Include="Assets\Icons\Ironore.PNG" />
+    <AvaloniaResource Include="Assets\Icons\IronOre.PNG" />
     <AvaloniaResource Include="Assets\Icons\Paper.PNG" />
-    <AvaloniaResource Include="Assets\Icons\Tree.PNG" />
     <AvaloniaResource Include="Assets\Menu\createmenu.png" />
     <AvaloniaResource Include="Assets\Menu\CSDButopia.PNG" />
     <AvaloniaResource Include="Assets\Menu\mainmenu.png" />

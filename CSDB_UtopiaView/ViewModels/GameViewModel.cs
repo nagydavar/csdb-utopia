@@ -35,6 +35,8 @@ public partial class GameViewModel : ViewModelBase
 
     public Dictionary<Resource, int> DisplayStorage { get; } = new();
 
+    public ObservableCollection<KeyValuePair<Resource, int>> StorageList { get; } = new();
+
     public ObservableCollection<Cell> Cells { get; }
 
     // Építési panel láthatósága és a gombok listája
@@ -46,6 +48,15 @@ public partial class GameViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isDemolishMode;
+
+    [ObservableProperty]
+    private string _currentTime = "00:00:00";
+
+    [ObservableProperty]
+    private bool _isPaused = true;
+
+    [ObservableProperty]
+    private int _speedLevel = 1; // Alapértelmezett: Normal (1)
 
     // Események
     public event EventHandler? NewGame;
@@ -93,13 +104,13 @@ public partial class GameViewModel : ViewModelBase
     {
         // Listába gyűjtjük az összes Singleton erőforrást
         var allResources = new List<Resource>
-    {
+        {
         HumanResource.Instance(),
         Wood.Instance(), IronOre.Instance(), Coal.Instance(), Oil.Instance(),
         Gold.Instance(), Diamond.Instance(),
         Plank.Instance(), Iron.Instance(), Gasoline.Instance(),
         Jewelry.Instance(), Paper.Instance(), Book.Instance()
-    };
+        };
 
         // Feltöltjük a szótárat a Model-ből lekért aktuális darabszámokkal
         foreach (var res in allResources)
@@ -109,6 +120,17 @@ public partial class GameViewModel : ViewModelBase
 
         // Jelezünk a UI-nak
         OnPropertyChanged(nameof(DisplayStorage));
+
+        RefreshStorageList();
+    }
+
+    private void RefreshStorageList()
+    {
+        StorageList.Clear();
+        foreach (var entry in DisplayStorage)
+        {
+            StorageList.Add(entry);
+        }
     }
 
     // Parancsok (RelayCommands)
@@ -119,16 +141,38 @@ public partial class GameViewModel : ViewModelBase
     public void LoadGame(string fileName) { /* Betöltés logika */ }
 
     [RelayCommand]
-    public void IncreaseSpeed() { }
+    public void IncreaseSpeed()
+    {
+        try
+        {
+            _model.SpeedUp();
+            // A TimerSpeed enum alapján: Normal=0, Fast=1, SpeedOfLight=2
+            // Hogy 1-től induljon a skála:
+            SpeedLevel = (int)TimeControl.Instance().Speed + 1;
+        }
+        catch (Exception) { /* Max sebesség */ }
+    }
 
     [RelayCommand]
-    public void DecreaseSpeed() { }
+    public void DecreaseSpeed()
+    {
+        try
+        {
+            _model.SlowDown();
+            SpeedLevel = (int)TimeControl.Instance().Speed + 1;
+        }
+        catch (Exception) { /* Min sebesség */ }
+    }
 
     [RelayCommand]
     public void SetSpeed(TimerSpeed speed) { }
 
     [RelayCommand]
-    public void Resume() { }
+    public void Resume()
+    {
+        _model.TogglePause();
+        IsPaused = _model.IsPaused();
+    }
 
     [RelayCommand]
     public void Pause() { }
@@ -323,6 +367,8 @@ public partial class GameViewModel : ViewModelBase
 
         // Jelezzük a UI-nak, hogy a szótár tartalma megváltozott
         OnPropertyChanged(nameof(DisplayStorage));
+
+        RefreshStorageList();
     }
 
     private void Model_MoodChanged(object? sender, MoodChangedEventArgs e)
@@ -350,8 +396,8 @@ public partial class GameViewModel : ViewModelBase
 
     private void Model_DateChanged(object? sender, EventArgs e)
     {
-        // Frissítjük a kijelzett dátumot a UI-on
-        // CurrentDate = _model.GetCurrentDate();
+        // Minden tick-nél frissül a string
+        CurrentTime = _model.GetFormattedTime();
     }
 
     // Egyéb metódusok
