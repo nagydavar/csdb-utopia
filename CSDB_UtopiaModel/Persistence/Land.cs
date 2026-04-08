@@ -13,8 +13,22 @@ public class Land : Field
             CanGrow = canGrow;
         }
 
+        public override void Place(Buildable buildable)
+        {
+            base.Place(buildable);
+            Deforest();
+        }
+
         public void ForestSpread()
         {
             throw new NotImplementedException();
         }
-    };
+
+        private void Deforest()
+        {
+            LevelOfForest = 0;
+            CanGrow = false;
+        }
+
+
+};

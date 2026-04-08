@@ -18,15 +18,15 @@ abstract public class Field
     {
         Coordinates = c;
 
-        // Alapértelmezett értékek beállítása
-        Buildable = null; // Kezdetben üres a mezõ
-        town = null;      // Nem tartozik városhoz
+        // Alapï¿½rtelmezett ï¿½rtï¿½kek beï¿½llï¿½tï¿½sa
+        Buildable = null; // Kezdetben ï¿½res a mezï¿½
+        town = null;      // Nem tartozik vï¿½roshoz
         depletionLevel = 100;
         mood = 0;
         resource = Gold.Instance();
     }
 
-    public void Place(Buildable buildable)
+    public virtual void Place(Buildable buildable)
     {
         if (Buildable is not null)
             throw new InvalidOperationException("Can't place it here.");
