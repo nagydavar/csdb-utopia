@@ -5,8 +5,10 @@ class Stadium: Decoration
 {
     public Stadium(Field f) : base(f)
     {
-        giveMood = 50;
+        giveMood = 200;
         costResource = (Iron.Instance(), 500);
-        area = (4, 4);
+        area = (3, 4);
     }
+
+    public override int placementCost => 4200;
 };

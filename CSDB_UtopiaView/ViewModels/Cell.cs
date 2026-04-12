@@ -60,7 +60,7 @@ public partial class Cell : ObservableObject
                 }
                 else if (field.Buildable is Decoration)
                 {
-                    _fileName = $"Buildings/Decorations/{typeName}_{field.RelativeX}_{field.RelativeY}.PNG";
+                    _fileName = $"Buildings/Decorations/{typeName}_{field.RelativeX}_{field.RelativeY}.png";
                 }
                 else if (field.Buildable is Factory) {
                     _fileName = $"Buildings/Factories/{ typeName}_{ field.RelativeX}_{ field.RelativeY}.PNG";
@@ -75,7 +75,7 @@ public partial class Cell : ObservableObject
                 else if (field.Buildable is DetachedHouse)
                     _fileName = $"Buildings/ResidentialBuilding/{typeName}.jpg";
                 else if (field.Buildable is Decoration)
-                    _fileName = $"Buildings/Decorations/{typeName}.PNG";
+                    _fileName = $"Buildings/Decorations/{typeName}.png";
                 else if (field.Buildable is Garage || field.Buildable is Stop)
                 {
                     _fileName = $"Buildings/OtherBuildings/{typeName}.PNG";

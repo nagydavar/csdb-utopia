@@ -62,12 +62,14 @@ public class Model : ITickable
     #endregion
 
     public void Place(Coordinate coord, Buildable buildable)
-    {
+    { 
+       
         // 1. Épület méretének lekérése
         int width = buildable.area.Item1;
         int height = buildable.area.Item2;
         List<Land> targetLands = new List<Land>();
         float totalForestFactor = 0;
+        (Resource?, int) resource = (null,0);
 
         // 2. Ellenőrzés, elfér-e és minden mező Land-e?
         for (int i = 0; i < width; i++)
@@ -91,7 +93,13 @@ public class Model : ITickable
 
         //3. költség
         int cost = (int)Math.Round((1 + totalForestFactor / (width * height)) * buildable.placementCost, 0);
+
         if (cost > GetBudget()) return;
+        if (buildable is Decoration decor)
+        {
+            resource = decor.costResource;
+            if (_persistence.Storage[decor.costResource.resource] < decor.costResource.cost) return;
+        }
 
         //4. elhelyezés
         foreach (var land in targetLands)
@@ -106,6 +114,14 @@ public class Model : ITickable
         //5. frissítés
         _persistence.Budget -= cost;
         BudgetChanged?.Invoke(this, EventArgs.Empty);
+
+        if (buildable is Decoration decoration) {
+            _persistence.Storage[resource.Item1!] -= resource.Item2;
+            OnResourceChanged(resource.Item1!, _persistence.Storage[resource.Item1!]);
+
+            _persistence.CurrentMood += decoration.giveMood;
+            OnMoodChanged(_persistence.CurrentMood);
+        }
 
         // Minden megváltozott mezőt elküldünk a View-nak
         foreach (var land in targetLands)
@@ -123,7 +139,6 @@ public class Model : ITickable
             _persistence.CurrentMood += residential.AffectMood;
             OnMoodChanged(_persistence.CurrentMood);
         }
-
 
     }
 
@@ -166,15 +181,46 @@ public class Model : ITickable
         // if (/*undemolishable*/)
         //     throw new Exception("ejnye-bejnye!");
         Buildable? onField = GetField(coord).Buildable;
-        
-        _persistence.Fields[coord.X][coord.Y].Buildable = null;
+        Field field = GetField(coord);
 
-        OnFieldsUpdated(_persistence.Fields[coord.X][coord.Y]);
-
-        if (onField is IResidentialBuilding residential)
+        Field source = GetField(new Coordinate(coord.X-field.RelativeX, coord.Y-field.RelativeY));
+        if (onField is not null)
         {
-            _persistence.Storage[HumanResource.Instance()] -= residential.givePeople;
-            OnResourceChanged(HumanResource.Instance(), _persistence.Storage[HumanResource.Instance()]);
+            for (int i = 0; i < onField.area.Width; i++)
+            {
+                for (int j = 0; j < onField.area.Height; j++)
+                {
+                    Coordinate currentCoord = new Coordinate(source.Coordinates.X + i, source.Coordinates.Y + j);
+
+                    // Biztonsági ellenőrzés, ne lógjunk ki a pályáról
+                    if (currentCoord.X < _persistence.Width && currentCoord.Y < _persistence.Height)
+                    {
+                        Field f = GetField(currentCoord);
+                        f.Buildable = null;
+                        f.RelativeX = 0;
+                        f.RelativeY = 0;
+                        OnFieldsUpdated(f);
+                    }
+                }
+            }
+
+            if (onField is IResidentialBuilding residential)
+            {
+                //népesség csökkentése
+                _persistence.Storage[HumanResource.Instance()] -= residential.givePeople;
+                OnResourceChanged(HumanResource.Instance(), _persistence.Storage[HumanResource.Instance()]);
+
+                //Hangulat visszaadása
+                _persistence.CurrentMood += (-1) * residential.AffectMood; //mert negatív
+                OnMoodChanged(_persistence.CurrentMood);
+            }
+
+            if (onField is Decoration decor)
+            {
+                //hangulat csökkentése
+                _persistence.CurrentMood -= decor.giveMood;
+                OnMoodChanged(_persistence.CurrentMood);
+            }
         }
     }
 

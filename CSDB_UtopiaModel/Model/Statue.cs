@@ -5,8 +5,10 @@ class Statue: Decoration
 {
     public Statue(Field f) : base(f)
     {
-        giveMood = 50;
+        giveMood = 150;
         costResource = (Gold.Instance(), 500);
         area = (1, 1);
     }
+
+    public override int placementCost => 3000;
 };
