@@ -4,7 +4,7 @@ namespace CSDB_UtopiaModel.Persistence;
 
 public abstract class Field
 {
-    protected IResource iResource;
+    protected IResource resource;
     protected int depletionLevel;
     protected Town? town;
     public Buildable? Buildable { get; internal set; } // model requires setter
@@ -27,7 +27,7 @@ public abstract class Field
         town = null;      // Nem tartozik v�roshoz
         depletionLevel = 100;
         mood = 0;
-        iResource = Gold.Instance();
+        resource = Gold.Instance();
     }
 
     public virtual void Place(Buildable buildable)

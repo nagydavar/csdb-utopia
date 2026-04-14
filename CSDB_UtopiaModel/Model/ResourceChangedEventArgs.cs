@@ -4,11 +4,12 @@ namespace CSDB_UtopiaModel.Model;
 
 public class ResourceChangedEventArgs: EventArgs
 {
-        public IResource resource;
-        public int NewValue;
+        public IResource Resource { get; init; }
+        public int NewValue { get; init; }
+        
         public ResourceChangedEventArgs(IResource resource, int newValue)
         {
-            this.resource = resource;
+            Resource = resource;
             NewValue = newValue;
         }
 }
