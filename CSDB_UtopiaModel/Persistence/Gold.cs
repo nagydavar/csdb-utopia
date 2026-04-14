@@ -1,14 +1,13 @@
-using CSDB_UtopiaModel.Model;
-
 namespace CSDB_UtopiaModel.Persistence;
+
 public class Gold : Treasure
 {
-    private static Gold? instance;
+    private static Gold? _instance;
     private Gold() { }
     public static Gold Instance()
     {
-        if (instance is null)
-            instance = new Gold();
-        return instance;
+        if (_instance is null)
+            _instance = new Gold();
+        return _instance;
     }
-};
+}

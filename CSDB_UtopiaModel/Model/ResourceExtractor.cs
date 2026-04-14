@@ -4,5 +4,5 @@ namespace CSDB_UtopiaModel.Model;
 abstract public class ResourceExtractor : Producer
 {
     public ResourceExtractor(Field field, int yield): base(field, yield) { }
-    public override Enviromental Require()  => Enviromental.Instance(); 
+    public override Environmental Require()  => Environmental.Instance(); 
 };

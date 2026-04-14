@@ -2,9 +2,9 @@ using CSDB_UtopiaModel.Model;
 
 namespace CSDB_UtopiaModel.Persistence;
 
-abstract public class Field
+public abstract class Field
 {
-    protected Resource resource;
+    protected IResource resource;
     protected int depletionLevel;
     protected Town? town;
     public Buildable? Buildable { get; internal set; } // model requires setter

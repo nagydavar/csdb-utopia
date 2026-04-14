@@ -1,12 +1,13 @@
 namespace CSDB_UtopiaModel.Persistence;
-public class Coal : BaseResource, IndustrialResource
+
+public class Coal : BaseResource, IIndustrialResource
 {
     private Coal() { }
-    private static Coal? instance;
+    private static Coal? _instance;
     public static Coal Instance()
     {
-        if (instance is null)
-            instance = new Coal();
-        return instance;
+        if (_instance is null)
+            _instance = new Coal();
+        return _instance;
     }
-};
+}

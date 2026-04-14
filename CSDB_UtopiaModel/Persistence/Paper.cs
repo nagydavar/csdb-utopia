@@ -1,12 +1,13 @@
 namespace CSDB_UtopiaModel.Persistence;
-public class Paper : BaseResource, Goods
+
+public class Paper : BaseResource, IGoods
 {
-    private static Paper? instance;
+    private static Paper? _instance;
     private Paper() { }
     public static Paper Instance()
     {
-        if (instance is null)
-            instance = new Paper();
-        return instance;
+        if (_instance is null)
+            _instance = new Paper();
+        return _instance;
     }
-};
+}
