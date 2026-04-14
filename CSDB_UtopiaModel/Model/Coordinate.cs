@@ -24,7 +24,7 @@ public readonly struct Coordinate
 
     public static Coordinate operator -(Coordinate lhs, Coordinate rhs) => new(lhs.X - rhs.X, lhs.Y - rhs.Y);
 
-    public Coordinate Step(Persistence.Direction d)
+    public Coordinate Step(Persistence.IDirection d)
     {
         (int dx, int dy) = d.Diff();
         Coordinate c = new Coordinate(X + dx, Y+dy);

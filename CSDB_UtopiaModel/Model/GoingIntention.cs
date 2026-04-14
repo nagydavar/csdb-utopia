@@ -4,10 +4,10 @@ namespace CSDB_UtopiaModel.Model;
 
 public class GoingIntention : IComparable<GoingIntention>
 {
-    public Direction From { get; set; }
-    public Direction To { get; set; }
+    public IDirection From { get; set; }
+    public IDirection To { get; set; }
 
-    public GoingIntention(Direction from, Direction to)
+    public GoingIntention(IDirection from, IDirection to)
     {
         From = from;
         To = to;

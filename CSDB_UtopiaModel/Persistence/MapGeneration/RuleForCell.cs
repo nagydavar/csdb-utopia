@@ -4,9 +4,9 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
     internal class RuleForCell
     {
 
-        private Dictionary<Direction, Rule> rules;
-        public Dictionary<Direction, Rule> Rules {get => DirCopy(rules);}
-        public Rule GetRule(Direction d)
+        private Dictionary<IDirection, Rule> rules;
+        public Dictionary<IDirection, Rule> Rules {get => DirCopy(rules);}
+        public Rule GetRule(IDirection d)
         {
             return rules[d].Copy();
         }
@@ -16,9 +16,9 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
             rules = DirCopy(other.rules);
         }
 
-        private static Dictionary<Direction, Rule> DirCopy(Dictionary<Direction, Rule> r)
+        private static Dictionary<IDirection, Rule> DirCopy(Dictionary<IDirection, Rule> r)
         {
-            Dictionary<Direction, Rule> a = new();
+            Dictionary<IDirection, Rule> a = new();
             foreach (var item in r)
             {
                 a.Add(item.Key, item.Value.Copy());
@@ -31,9 +31,9 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
         {
             return new RuleForCell(this);
         }
-        public RuleForCell(Dictionary<Direction, Rule> rules)
+        public RuleForCell(Dictionary<IDirection, Rule> rules)
         {
-            this.rules = rules.ToDictionary<Direction, Rule>();
+            this.rules = rules.ToDictionary<IDirection, Rule>();
         }
 
         public RuleForCell(): this(new Rule(), new Rule(),  new Rule(), new Rule()) {}
@@ -41,10 +41,10 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
         public RuleForCell(Rule rulesUp, Rule rulesDown, Rule rulesLeft, Rule rulesRight)
         {
             this.rules = new();
-            this.rules[UP.Instance()] =  rulesUp;
-            this.rules[DOWN.Instance()] =  rulesDown;
-            this.rules[LEFT.Instance()] =  rulesLeft;
-            this.rules[RIGHT.Instance()] =  rulesRight;
+            this.rules[Up.Instance()] =  rulesUp;
+            this.rules[Down.Instance()] =  rulesDown;
+            this.rules[Left.Instance()] =  rulesLeft;
+            this.rules[Right.Instance()] =  rulesRight;
         }
 
         public static RuleForCell All()
@@ -62,10 +62,10 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
 
         public RuleForCell Except(RuleForCell other)
         {
-            Dictionary<Direction, Rule> otherRules = new Dictionary<Direction, Rule>();
+            Dictionary<IDirection, Rule> otherRules = new Dictionary<IDirection, Rule>();
             foreach (var item in this.rules)
             {
-                Direction dir =  item.Key;
+                IDirection dir =  item.Key;
                 Rule rule = item.Value.Except(other.GetRule(dir));
                 otherRules.Add(dir, rule.Copy());
             }
@@ -75,7 +75,7 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
 
         public void UnionWith(RuleForCell other)
         {
-            foreach (Direction dir in this.rules.Keys)
+            foreach (IDirection dir in this.rules.Keys)
             {
                 Rule otherRule = other.rules[dir];
                 this.rules[dir].UnionWith(otherRule);
@@ -84,7 +84,7 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
         }
         public void IntersectWith(RuleForCell other)
         {
-            foreach (Direction dir in this.rules.Keys)
+            foreach (IDirection dir in this.rules.Keys)
             {
                 Rule otherRule = other.rules[dir];
                 this.rules[dir].IntersectWith(otherRule);

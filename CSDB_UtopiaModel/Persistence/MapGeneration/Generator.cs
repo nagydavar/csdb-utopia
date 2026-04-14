@@ -37,11 +37,11 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
             {
                 SuperpositionField field = fieldStack.Pop();
                 //Console.WriteLine("Propagated to (" + field.Coordinate.X + ", " + field.Coordinate.Y + ")" );
-                Dictionary<Direction, Rule> rfc = field.RuleForCell.Rules;
+                Dictionary<IDirection, Rule> rfc = field.RuleForCell.Rules;
                 Coordinate c = field.Coordinate;
                 foreach (var item in rfc)
                 {
-                  Direction dir = item.Key;
+                  IDirection dir = item.Key;
                   Rule rule = item.Value;
                   try
                   {

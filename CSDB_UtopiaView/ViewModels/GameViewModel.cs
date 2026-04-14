@@ -33,9 +33,9 @@ public partial class GameViewModel : ViewModelBase
     [ObservableProperty]
     private string _currentDateString = string.Empty;
 
-    public Dictionary<Resource, int> DisplayStorage { get; } = new();
+    public Dictionary<IResource, int> DisplayStorage { get; } = new();
 
-    public ObservableCollection<KeyValuePair<Resource, int>> StorageList { get; } = new();
+    public ObservableCollection<KeyValuePair<IResource, int>> StorageList { get; } = new();
 
     public ObservableCollection<Cell> Cells { get; }
 
@@ -103,7 +103,7 @@ public partial class GameViewModel : ViewModelBase
     private void InitializeDisplayStorage()
     {
         // Listába gyűjtjük az összes Singleton erőforrást
-        var allResources = new List<Resource>
+        var allResources = new List<IResource>
         {
         HumanResource.Instance(),
         Wood.Instance(), IronOre.Instance(), Coal.Instance(), Oil.Instance(),
@@ -358,9 +358,9 @@ public partial class GameViewModel : ViewModelBase
     private void Model_ResourceChanged(object? sender, ResourceChangedEventArgs e)
     {
         // Frissítjük a belső szótárat
-        DisplayStorage[e.Resource] = e.NewValue;
+        DisplayStorage[e.iResource] = e.NewValue;
 
-        if (e.Resource is HumanResource)
+        if (e.iResource is HumanResource)
         {
             Population = e.NewValue;
         }

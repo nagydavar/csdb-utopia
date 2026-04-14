@@ -1,4 +1,5 @@
 namespace CSDB_UtopiaModel.Persistence;
-interface VerticalDirection : Direction
+
+public interface VerticalDirection : IDirection
 {
-    };
+}

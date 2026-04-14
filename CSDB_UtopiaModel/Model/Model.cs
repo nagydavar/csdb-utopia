@@ -69,7 +69,7 @@ public class Model : ITickable
         int height = buildable.area.Item2;
         List<Land> targetLands = new List<Land>();
         float totalForestFactor = 0;
-        (Resource?, int) resource = (null,0);
+        (IResource?, int) resource = (null,0);
 
         // 2. Ellenőrzés, elfér-e és minden mező Land-e?
         for (int i = 0; i < width; i++)
@@ -143,7 +143,7 @@ public class Model : ITickable
     }
 
 
-    public void PlaceVehicle(Coordinate coord, Vehicle<Resource> vehicle)
+    public void PlaceVehicle(Coordinate coord, Vehicle<IResource> vehicle)
     {
         if (_persistence.Fields[coord.X][coord.Y].Buildable is not Road road)
             throw new InvalidOperationException("You can only place a vehicle to a road");
@@ -166,13 +166,13 @@ public class Model : ITickable
         return _persistence.CurrentMood;
     }
 
-    public int GetResourceCount(Resource resource)
+    public int GetResourceCount(IResource iResource)
     {
-        return _persistence.Storage.ContainsKey(resource) ? _persistence.Storage[resource] : 0;
+        return _persistence.Storage.ContainsKey(iResource) ? _persistence.Storage[iResource] : 0;
     }
     // id�ig �j
 
-    public void AddVehicle(Vehicle<Resource> vehicle)
+    public void AddVehicle(Vehicle<IResource> vehicle)
     {
     }
 
@@ -302,9 +302,9 @@ public class Model : ITickable
     public EventHandler<EventArgs>? GameOver;
     public EventHandler<EventArgs>? DateChanged;
 
-    protected virtual void OnResourceChanged(Resource resource, int newValue)
+    protected virtual void OnResourceChanged(IResource iResource, int newValue)
     {
-        ResourceChanged?.Invoke(this, new ResourceChangedEventArgs(resource, newValue));
+        ResourceChanged?.Invoke(this, new ResourceChangedEventArgs(iResource, newValue));
     }
 
     protected virtual void OnMoodChanged(int newValue)
