@@ -1,5 +1,5 @@
 namespace CSDB_UtopiaModel.Persistence;
-public class Paper : Goods
+public class Paper : BaseResource, Goods
 {
     private static Paper? instance;
     private Paper() { }

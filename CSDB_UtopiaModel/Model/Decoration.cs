@@ -2,9 +2,9 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-public class Decoration : Building
+public abstract class Decoration : Building
 {
-    protected int giveMood;
-    protected (Resource resource, int cost) costResource;
+    public int giveMood { get; set; }
+    public (Resource resource, int cost) costResource;
     public Decoration(Field f) : base(f) { }
 };

@@ -1,7 +1,7 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-class Motorway : Road
+public class Motorway : Road
 {
         private Intersection? intersection;
         public bool HasIntersection { get => intersection is not null; }

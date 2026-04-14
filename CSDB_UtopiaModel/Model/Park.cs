@@ -5,8 +5,10 @@ class Park: Decoration
 {
     public Park(Field f) : base(f)
     {
-        giveMood = 100;
-        costResource = (Iron.Instance(), 700);
-        area = (3, 3);
+        giveMood = 20;
+        costResource = (Wood.Instance(), 200);
+        area = (2, 2);
     }
+
+    public override int placementCost => 1500;
 };

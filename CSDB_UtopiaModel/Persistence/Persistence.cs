@@ -53,22 +53,22 @@ class Persistence
             { HumanResource.Instance(), 0 },
 
             // Ipari nyersanyagok
-            { Wood.Instance(), 0 },
-            { IronOre.Instance(), 0 },
-            { Coal.Instance(), 0 },
-            { Oil.Instance(), 0 },
+            { Wood.Instance(), 1000 },
+            { IronOre.Instance(), 1000 },
+            { Coal.Instance(), 1000 },
+            { Oil.Instance(), 1000 },
 
             // Kincsek
-            { Gold.Instance(), 0 },
-            { Diamond.Instance(), 0 },
+            { Gold.Instance(), 1000 },
+            { Diamond.Instance(), 1000 },
 
             // K�szterm�kek / Goods
-            { Plank.Instance(), 0 },
-            { Iron.Instance(), 0 },
-            { Gasoline.Instance(), 0 },
-            { Jewelry.Instance(), 0 },
-            { Paper.Instance(), 0 },
-            { Book.Instance(), 0 }
+            { Plank.Instance(), 1000 },
+            { Iron.Instance(), 1000 },
+            { Gasoline.Instance(), 1000 },
+            { Jewelry.Instance(), 1000 },
+            { Paper.Instance(), 1000 },
+            { Book.Instance(), 1000 }
         };
     }
 

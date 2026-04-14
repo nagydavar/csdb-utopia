@@ -2,7 +2,7 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-class TrafficLightControl : ITickable
+public class TrafficLightControl : ITickable
 {
     public Dictionary<Direction, TrafficLight> TrafficLights { get; set; } // !!!
     public Intersection Intersection { get; set; }

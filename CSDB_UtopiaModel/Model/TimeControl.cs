@@ -125,17 +125,29 @@ public class TimeControl
 
         _timer.Elapsed += async (_, _) =>
         {
+            //Biztonsági ellenõrzés, ha nincs feliratkozó vagy az LCM 0, ne csináljunk semmit
+            if (_lcm <= 0 || _subscriptions.Count == 0) return;
+
             List<Task> tasks = new(_subscriptions.Count);
 
-            _index = ++_index % _lcm; // hope it works...
+            //Index léptetése 1-tõl LCM-ig pörögjön (így az index sosem lesz 0)
+            // Az (index % lcm) 0-tól (lcm-1)-ig adna értéket, ezért adunk hozzá 1-et.
+            _index = (_index % _lcm) + 1;
 
             foreach (var subscription in _subscriptions)
             {
-                if (subscription.Value % _index == 0)
+                //akkor tickeljen az objektum, ha az aktuális index 
+                // osztható az objektum saját feliratkozási értékével.
+                if (_index % subscription.Value == 0)
+                {
                     tasks.Add(subscription.Key.Tick());
+                }
             }
 
-            await Task.WhenAll(tasks);
+            if (tasks.Count > 0)
+            {
+                await Task.WhenAll(tasks);
+            }
         };
     }
 
@@ -223,6 +235,9 @@ public class TimeControl
             timeControl._lcm = LcmOf(timeControl._subscriptions.Values);
 
         timeControl._subscriptions.Add(subscriber.Key, subscriber.Value);
+
+        // Újraszámoljuk az LCM-et minden feliratkozásnál
+        timeControl._lcm = LcmOf(timeControl._subscriptions.Values);
 
         return timeControl;
     }

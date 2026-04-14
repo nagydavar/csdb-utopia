@@ -3,7 +3,9 @@ using CSDB_UtopiaModel.Persistence;
 namespace CSDB_UtopiaModel.Model;
 public class ApartmentBlock : Building, IResidentialBuilding
 {
-    public ApartmentBlock(Field f) : base(f) { }
+    public ApartmentBlock(Field f) : base(f) {
+        area = (1, 1);
+    }
 
     public int givePeople => 20;
 

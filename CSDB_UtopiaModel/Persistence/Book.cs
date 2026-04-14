@@ -1,5 +1,5 @@
 namespace CSDB_UtopiaModel.Persistence;
-public class Book : Goods
+public class Book : BaseResource, Goods
 {
 
     private Book() { }

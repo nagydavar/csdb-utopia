@@ -1,5 +1,5 @@
 namespace CSDB_UtopiaModel.Persistence;
-public class Iron : Goods
+public class Iron : BaseResource, Goods
 {
     private Iron() { }
     private static Iron? instance;

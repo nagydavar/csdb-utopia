@@ -2,7 +2,7 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-public class Road : Buildable, Navigable
+public abstract class Road : Buildable, Navigable
 {
     public int MaxSpeed { get; set; }
 

@@ -35,6 +35,8 @@ public partial class GameViewModel : ViewModelBase
 
     public Dictionary<Resource, int> DisplayStorage { get; } = new();
 
+    public ObservableCollection<KeyValuePair<Resource, int>> StorageList { get; } = new();
+
     public ObservableCollection<Cell> Cells { get; }
 
     // Építési panel láthatósága és a gombok listája
@@ -46,6 +48,15 @@ public partial class GameViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isDemolishMode;
+
+    [ObservableProperty]
+    private string _currentTime = "00:00:00";
+
+    [ObservableProperty]
+    private bool _isPaused = true;
+
+    [ObservableProperty]
+    private int _speedLevel = 1; // Alapértelmezett: Normal (1)
 
     // Események
     public event EventHandler? NewGame;
@@ -68,6 +79,7 @@ public partial class GameViewModel : ViewModelBase
         _model.NewGame += Model_NewGame;
         _model.GameOver += Model_GameOver;
         _model.DateChanged += Model_DateChanged;
+        _model.MoodChanged += Model_MoodChanged;
 
         Budget = _model.GetBudget();
         CurrentMood = _model.GetMood();
@@ -92,13 +104,13 @@ public partial class GameViewModel : ViewModelBase
     {
         // Listába gyűjtjük az összes Singleton erőforrást
         var allResources = new List<Resource>
-    {
+        {
         HumanResource.Instance(),
         Wood.Instance(), IronOre.Instance(), Coal.Instance(), Oil.Instance(),
         Gold.Instance(), Diamond.Instance(),
         Plank.Instance(), Iron.Instance(), Gasoline.Instance(),
         Jewelry.Instance(), Paper.Instance(), Book.Instance()
-    };
+        };
 
         // Feltöltjük a szótárat a Model-ből lekért aktuális darabszámokkal
         foreach (var res in allResources)
@@ -108,6 +120,17 @@ public partial class GameViewModel : ViewModelBase
 
         // Jelezünk a UI-nak
         OnPropertyChanged(nameof(DisplayStorage));
+
+        RefreshStorageList();
+    }
+
+    private void RefreshStorageList()
+    {
+        StorageList.Clear();
+        foreach (var entry in DisplayStorage)
+        {
+            StorageList.Add(entry);
+        }
     }
 
     // Parancsok (RelayCommands)
@@ -118,42 +141,41 @@ public partial class GameViewModel : ViewModelBase
     public void LoadGame(string fileName) { /* Betöltés logika */ }
 
     [RelayCommand]
-    public void IncreaseSpeed() { }
+    public void IncreaseSpeed()
+    {
+        try
+        {
+            _model.SpeedUp();
+            // A TimerSpeed enum alapján: Normal=0, Fast=1, SpeedOfLight=2
+            // Hogy 1-től induljon a skála:
+            SpeedLevel = (int)TimeControl.Instance().Speed + 1;
+        }
+        catch (Exception) { /* Max sebesség */ }
+    }
 
     [RelayCommand]
-    public void DecreaseSpeed() { }
+    public void DecreaseSpeed()
+    {
+        try
+        {
+            _model.SlowDown();
+            SpeedLevel = (int)TimeControl.Instance().Speed + 1;
+        }
+        catch (Exception) { /* Min sebesség */ }
+    }
 
     [RelayCommand]
     public void SetSpeed(TimerSpeed speed) { }
 
     [RelayCommand]
-    public void Resume() { }
+    public void Resume()
+    {
+        _model.TogglePause();
+        IsPaused = _model.IsPaused();
+    }
 
     [RelayCommand]
     public void Pause() { }
-
-    //Építés
-    [RelayCommand]
-    public void ListBuildableOtherBuildings()
-    {
-        // Ha már látszik a panel, bezárjuk és töröljük a kijelölést
-        if (IsBuildingPanelVisible)
-        {
-            IsBuildingPanelVisible = false;
-            _selectedType = null;
-        }
-        else
-        {
-            // Lekérjük a Modell-től az aktuálisan építhető dolgokat
-            AvailableBuildables.Clear();
-            var types = _model.ListBuildableOtherBuildings();
-            foreach (var type in types)
-            {
-                AvailableBuildables.Add(type);
-            }
-            IsBuildingPanelVisible = true;
-        }
-    }
 
     [RelayCommand]
     public void SelectBuildable(Type selectedType)
@@ -194,7 +216,30 @@ public partial class GameViewModel : ViewModelBase
             if (_selectedType != null)
             {
                 Field targetField = _model.GetField(cell.X, cell.Y);
-                if (Activator.CreateInstance(_selectedType, targetField) is Buildable instance)
+                Buildable? instance = null;
+
+                // Ellenőrizzük, hogy ResourceExtractor-ról van-e szó
+                //TODO többi gyár
+                if (_selectedType.IsAssignableTo(typeof(ResourceExtractor)))
+                {
+                    // Itt meg kell adni egy alapértelmezett yield értéket (pl. 10)
+                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 10);
+                }
+                else if (_selectedType.IsAssignableTo(typeof(Factory)))
+                {
+                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 30);
+                }
+                //else if (_selectedType.IsAssignableTo(typeof(Motorway))) {
+                //    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 120, new Direction());
+                //}
+
+                else
+                {
+                    // Sima 1 paraméteres konstruktor (pl. lakóház, út)
+                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField);
+                }
+
+                if (instance != null)
                 {
                     _model.Place(new Coordinate(cell.X, cell.Y), instance);
                 }
@@ -206,7 +251,7 @@ public partial class GameViewModel : ViewModelBase
             // Ahelyett, hogy összeomlana, pl. kiírhatjuk a Debug konzolra vagy egy Log listába
             System.Diagnostics.Debug.WriteLine($"Építési hiba: {ex.Message}");
 
-            // Ha van Log feszined, itt küldhetsz üzenetet a UI-nak:
+            // Ha van Log
             // CurrentLogMessage = ex.Message; 
         }
         catch (Exception ex)
@@ -221,22 +266,67 @@ public partial class GameViewModel : ViewModelBase
 
     // Listázó parancsok
     [RelayCommand]
-    public void ListBuildableFactories() { }
+    public void ListBuildableFactories() {
+        UpdateAvailableBuildables(_model.ListBuildableFactories());
+    }
 
     [RelayCommand]
-    public void ListBuildableProducers() { }
+    public void ListBuildableResidential()
+    {
+        UpdateAvailableBuildables(_model.ListBuildableResidential());
+    }
 
     [RelayCommand]
-    public void ListBuildableDecorations() { }
+    public void ListBuildableResourceExtractors() {
+        UpdateAvailableBuildables(_model.ListBuildableResourceExtractors());
+    }
 
     [RelayCommand]
-    public void ListBuildableRoads() { }
+    public void ListBuildableDecorations() {
+        UpdateAvailableBuildables(_model.ListBuildableDecorations());
+    }
 
     [RelayCommand]
-    public void ListBuyablePassengerVehicles() { }
+    public void ListBuildableRoads() {
+        UpdateAvailableBuildables(_model.ListBuildableRoads());
+    }
+
+    [RelayCommand]
+    public void ListBuyablePassengerVehicles() {
+        UpdateAvailableBuildables(_model.ListBuyablePassengerVehicles());
+    }
 
     [RelayCommand]
     public void ListBuyableIndustrialVehicles() { }
+
+    [RelayCommand]
+    public void ListBuildableOtherBuildings()
+    {
+        UpdateAvailableBuildables(_model.ListBuildableOtherBuildings());
+    }
+
+    private void UpdateAvailableBuildables(List<Type> types)
+    {
+        // Ha ugyanazt a listát kérnénk le, ami már látszik, akkor csukjuk be a panelt
+        // Ehhez ellenőrizzük, hogy a lista első eleme megegyezik-e a már bent lévővel
+        if (IsBuildingPanelVisible && AvailableBuildables.SequenceEqual(types))
+        {
+            IsBuildingPanelVisible = false;
+            _selectedType = null;
+            return;
+        }
+
+        AvailableBuildables.Clear();
+        foreach (var type in types)
+        {
+            AvailableBuildables.Add(type);
+        }
+
+        // Mindig kikapcsoljuk a bontó módot, ha építeni akarunk
+        IsDemolishMode = false;
+        _selectedType = null;
+        IsBuildingPanelVisible = true;
+    }
 
     // Modell eseménykezelők kifejtése
     private void Model_GameTicked(object? sender, EventArgs e)
@@ -277,6 +367,8 @@ public partial class GameViewModel : ViewModelBase
 
         // Jelezzük a UI-nak, hogy a szótár tartalma megváltozott
         OnPropertyChanged(nameof(DisplayStorage));
+
+        RefreshStorageList();
     }
 
     private void Model_MoodChanged(object? sender, MoodChangedEventArgs e)
@@ -304,8 +396,8 @@ public partial class GameViewModel : ViewModelBase
 
     private void Model_DateChanged(object? sender, EventArgs e)
     {
-        // Frissítjük a kijelzett dátumot a UI-on
-        // CurrentDate = _model.GetCurrentDate();
+        // Minden tick-nél frissül a string
+        CurrentTime = _model.GetFormattedTime();
     }
 
     // Egyéb metódusok

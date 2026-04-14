@@ -1,7 +1,7 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-class Stop: Buildable, Navigable
+public class Stop: Buildable, Navigable
 {
         public List<Building> connectsTo;
         public List<Resource> accept;
