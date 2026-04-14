@@ -2,8 +2,10 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-class WoodenBridge : Bridge
+public class WoodenBridge : Bridge
 {
-    //kitalalt ertek a 10
-    public WoodenBridge(Field f, Direction d) : base(f, 10, d) {}
+    public WoodenBridge(Field f, Direction d) : base(f, 10, d)
+    {
+        //TODO value of maxSpeed
+    }
 }
