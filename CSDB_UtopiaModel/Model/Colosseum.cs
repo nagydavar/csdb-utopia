@@ -1,8 +1,15 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-class Colosseum : Decoration
+public class Colosseum : Decoration
 {
-        protected int giveMood;
-        protected override Pair(Resource,int) costResource;
-    };
+    
+    public Colosseum(Field f) : base(f)
+    {
+        giveMood = 300;
+        costResource = (Iron.Instance(), 700);
+        area = (3, 3);
+    }
+
+    public override int placementCost => 4000;
+};

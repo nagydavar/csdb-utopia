@@ -1,0 +1,70 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:CSDB_UtopiaView.ViewModels"
+             xmlns:views="clr-namespace:CSDB_UtopiaView.Views"
+             x:Class="CSDB_UtopiaView.Views.MainMenuView">
+    <Grid RowDefinitions="*, Auto, Auto, *">
+        <Grid.Background>
+            <ImageBrush Source="avares://CSDB_UtopiaView/Assets/Menu/mainmenu.png" 
+                        Stretch="UniformToFill"/>
+        </Grid.Background>
+        
+        <Border Grid.Row="0" Width="400" Height="200" Margin="20">
+            <Border.Background>
+                <ImageBrush Source="avares://CSDB_UtopiaView/Assets/Menu/CSDButopia.PNG" 
+                            Stretch="Uniform"/>
+            </Border.Background>
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="30"/>
+        </Border>
+
+        <StackPanel Grid.Row="2" Spacing="10" Width="200" Margin="0,250,0,0" HorizontalAlignment="Center">
+            <Button Content="New Game" 
+                    Command="{Binding $parent[UserControl;1].((vm:MainViewModel)DataContext).GoToCreateWorldCommand}"
+                    HorizontalAlignment="Stretch" 
+                    HorizontalContentAlignment="Center" 
+                    VerticalAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Black" 
+                    BorderThickness="2"
+                    Foreground="White"
+                    Height="40" 
+                    CornerRadius="20">
+                <Button.Effect>
+                    <DropShadowEffect BlurRadius="5" Color="Black" Opacity="1" OffsetX="0" OffsetY="0"/>
+                </Button.Effect>
+                
+            </Button>            
+            <Button Content="Load Game" 
+                    HorizontalAlignment="Stretch" 
+                    HorizontalContentAlignment="Center" 
+                    VerticalAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Black" 
+                    BorderThickness="2"
+                    Foreground="White"
+                    Height="40" 
+                    CornerRadius="20">
+                <Button.Effect>
+                    <DropShadowEffect BlurRadius="5" Color="Black" Opacity="1" OffsetX="0" OffsetY="0"/>
+                </Button.Effect>
+            </Button>
+            <Button Content="Quit" 
+                    Command="{Binding $parent[UserControl;1].((vm:MainViewModel)DataContext).QuitCommand}"
+                    HorizontalAlignment="Stretch" 
+                    HorizontalContentAlignment="Center" 
+                    VerticalAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Black" 
+                    BorderThickness="2"
+                    Foreground="White"
+                    Height="40" 
+                    CornerRadius="20">
+                <Button.Effect>
+                    <DropShadowEffect BlurRadius="5" Color="Black" Opacity="1" OffsetX="0" OffsetY="0"/>
+                </Button.Effect>
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

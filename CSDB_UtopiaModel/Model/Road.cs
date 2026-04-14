@@ -1,15 +1,30 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-class Road : Buildable, Navigable
+
+public abstract class Road : Buildable, Navigable
 {
-        public int maxSpeed;
-        public Vehicle? LeftSide;
-        public Vehicle? RightSide;
-        public Set<Section> sections;
-        public Directions direction;
-        public void Road(Coords, maxSpeed, Direction);
-        public bool IsFree(Direction);
-        public EventHandler<DirectionEventArgs>? Freed;
-        public override MoveTo();
-    };
+    public int MaxSpeed { get; set; }
+
+    public IVehicle? LeftSide { get; set; }
+    public Vehicle<Resource>? RightSide { get; set; }
+    
+    // public IVehicle? LeftSide => new Bus();
+    // public Vehicle<Resource>? RightSide => new Bus();
+    
+    public HashSet<Section> Sections { get; set; }
+
+    public Direction Direction { get; set; }
+
+    public EventHandler<DirectionEventArgs>? Freed;
+
+    public Road(Field f, int maxSpeed, Direction d) : base(f)
+    {
+        MaxSpeed = maxSpeed;
+        Direction = d;
+    }
+
+    public bool IsFree(Direction _) => throw new NotImplementedException();
+
+    public void MoveTo() => throw new NotImplementedException();
+}

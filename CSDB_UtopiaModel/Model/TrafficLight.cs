@@ -1,8 +1,11 @@
 namespace CSDB_UtopiaModel.Model;
-class TrafficLight {
-        public TrafficLightState state;
-        public void IsGreen(GoingIntention):bool;
-        public EventHandler<GoingIntetionEventArgs> TurnedGreen;
-        public void Turn(TrafficLightState, GoingIntention);
 
-    };
+public class TrafficLight
+{
+    public TrafficLightState State { get; set; } // do we need this?
+
+    public EventHandler<GoingIntentionEventArgs> TurnedGreen;
+
+    public bool IsGreen(GoingIntention _) => throw new NotImplementedException();
+    public void Turn(TrafficLightState _, GoingIntention a) => throw new NotImplementedException();
+}

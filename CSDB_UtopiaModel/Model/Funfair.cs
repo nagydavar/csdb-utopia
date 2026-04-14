@@ -3,6 +3,12 @@ using CSDB_UtopiaModel.Persistence;
 namespace CSDB_UtopiaModel.Model;
 class Funfair: Decoration
 {
-        protected int giveMood;
-        protected override Pair(Resource,int) costResource;
-    };
+    public Funfair(Field f) : base(f)
+    {
+        giveMood = 40;
+        costResource = (Iron.Instance(), 100); // Vasba ker�l
+        area = (2, 2);
+    }
+
+    public override int placementCost => 1300;
+};

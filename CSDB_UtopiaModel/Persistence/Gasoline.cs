@@ -1,5 +1,5 @@
 namespace CSDB_UtopiaModel.Persistence;
-class Gasoline : Goods
+public class Gasoline : BaseResource, Goods
 {
     private Gasoline() { }
     private static Gasoline? instance;

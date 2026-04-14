@@ -1,7 +1,8 @@
 namespace CSDB_UtopiaModel.Model;
-class Bus: PassangerVehicle
+
+class Bus : PassengerVehicle
 {
-        private override int capacity;
-        private override int maintenanceCost;
-        private override int speed;
-    };
+    // private override int capacity;
+    // private override int maintenanceCost;
+    // private override int speed;
+}

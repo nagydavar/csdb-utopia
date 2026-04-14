@@ -1,6 +1,19 @@
+﻿using CSDB_UtopiaModel.Persistence;
+
 namespace CSDB_UtopiaModel.Model;
-class DetachedHouse : ResidentialBuilding
+public class DetachedHouse : Building, IResidentialBuilding
 {
-        protected override int givePeople;
-        protected override int AffectMood;
-    };
+    public DetachedHouse(Field f) : base(f) {
+        area = (1, 1);
+    }
+
+    // 1. Publikusnak kell lennie az interf�sz miatt
+    // 2. Property-k�nt kell megval�s�tani (get)
+    // 3. Csak akkor override, ha a Building-ben is benne van virtual-k�nt
+    public int givePeople => 5;
+
+    public int AffectMood => -2;
+
+    // A Buildable-b�l �r�k�lt k�telez� elem
+    public override int placementCost => 500;
+};

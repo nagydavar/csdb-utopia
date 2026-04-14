@@ -1,5 +1,5 @@
 namespace CSDB_UtopiaModel.Persistence;
-class Plank : Goods
+public class Plank : BaseResource, Goods
 {
     private static Plank? instance;
     private Plank() { }

@@ -1,12 +1,15 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-abstract class Buildable : Buyable
+public abstract class Buildable : Buyable
 {
-        protected int placementCost;
-        protected Pair<int,int> area;
-        protected Field owner;
-        protected Coords field;
-;
-
-    };
+    public virtual int placementCost { get; }
+    public (int Width, int Height) area { get; protected set; }
+    protected Field owner;
+    protected Coordinate field;
+    public Buildable(Field f)
+    {
+        owner = f;
+        //owner.Place(this);
+    }
+}

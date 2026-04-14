@@ -1,0 +1,408 @@
+﻿using Avalonia.Controls;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using CSDB_UtopiaModel.Model;
+using CSDB_UtopiaModel.Persistence;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+
+namespace CSDB_UtopiaView.ViewModels;
+
+public partial class GameViewModel : ViewModelBase
+{
+    // Mezők és tulajdonságok a diagram alapján
+    private readonly Model _model;
+
+    [ObservableProperty]
+    private int _height;
+
+    [ObservableProperty]
+    private int _width;
+
+    [ObservableProperty]
+    private int _budget;
+
+    [ObservableProperty]
+    private int _currentMood;
+
+    [ObservableProperty]
+    private int _population;
+
+    [ObservableProperty]
+    private string _currentDateString = string.Empty;
+
+    public Dictionary<Resource, int> DisplayStorage { get; } = new();
+
+    public ObservableCollection<KeyValuePair<Resource, int>> StorageList { get; } = new();
+
+    public ObservableCollection<Cell> Cells { get; }
+
+    // Építési panel láthatósága és a gombok listája
+    [ObservableProperty] private bool _isBuildingPanelVisible;
+    public ObservableCollection<Type> AvailableBuildables { get; } = new();
+
+    // Tároljuk, hogy a felhasználó éppen mit választott ki építésre
+    private Type? _selectedType;
+
+    [ObservableProperty]
+    private bool _isDemolishMode;
+
+    [ObservableProperty]
+    private string _currentTime = "00:00:00";
+
+    [ObservableProperty]
+    private bool _isPaused = true;
+
+    [ObservableProperty]
+    private int _speedLevel = 1; // Alapértelmezett: Normal (1)
+
+    // Események
+    public event EventHandler? NewGame;
+    public event EventHandler? GameOver;
+
+    // Konstruktor
+    public GameViewModel(int width, int height, Model model)
+    {
+        _width = width;
+        _height = height;
+        _model = model;
+        Cells = new ObservableCollection<Cell>();
+
+        // Feliratkozás a modell eseményeire
+        _model.GameTicked += Model_GameTicked;
+        _model.FieldsUpdated += Model_FieldsUpdated;
+        _model.BudgetChanged += Model_BudgetChanged;
+        _model.ResourceChanged += Model_ResourceChanged;
+        _model.NewLog += Model_NewLog;
+        _model.NewGame += Model_NewGame;
+        _model.GameOver += Model_GameOver;
+        _model.DateChanged += Model_DateChanged;
+        _model.MoodChanged += Model_MoodChanged;
+
+        Budget = _model.GetBudget();
+        CurrentMood = _model.GetMood();
+        Population = _model.GetResourceCount(HumanResource.Instance());
+
+        InitializeDisplayStorage();
+
+        for (int i = 0; i < _width; i++)
+        {
+            for (int j = 0; j < _height; j++)
+            {
+                var cell = new Cell(i, j);
+                // Lekérjük a modellből az adott mezőt és frissítjük a cellát
+                var field = _model.GetField(i, j); // Feltételezve, hogy van ilyen metódusod
+                cell.Update(field);
+                Cells.Add(cell);
+            }
+        }
+    }
+
+    private void InitializeDisplayStorage()
+    {
+        // Listába gyűjtjük az összes Singleton erőforrást
+        var allResources = new List<Resource>
+        {
+        HumanResource.Instance(),
+        Wood.Instance(), IronOre.Instance(), Coal.Instance(), Oil.Instance(),
+        Gold.Instance(), Diamond.Instance(),
+        Plank.Instance(), Iron.Instance(), Gasoline.Instance(),
+        Jewelry.Instance(), Paper.Instance(), Book.Instance()
+        };
+
+        // Feltöltjük a szótárat a Model-ből lekért aktuális darabszámokkal
+        foreach (var res in allResources)
+        {
+            DisplayStorage[res] = _model.GetResourceCount(res);
+        }
+
+        // Jelezünk a UI-nak
+        OnPropertyChanged(nameof(DisplayStorage));
+
+        RefreshStorageList();
+    }
+
+    private void RefreshStorageList()
+    {
+        StorageList.Clear();
+        foreach (var entry in DisplayStorage)
+        {
+            StorageList.Add(entry);
+        }
+    }
+
+    // Parancsok (RelayCommands)
+    [RelayCommand]
+    public void SaveGame() { /* Mentés logika */ }
+
+    [RelayCommand]
+    public void LoadGame(string fileName) { /* Betöltés logika */ }
+
+    [RelayCommand]
+    public void IncreaseSpeed()
+    {
+        try
+        {
+            _model.SpeedUp();
+            // A TimerSpeed enum alapján: Normal=0, Fast=1, SpeedOfLight=2
+            // Hogy 1-től induljon a skála:
+            SpeedLevel = (int)TimeControl.Instance().Speed + 1;
+        }
+        catch (Exception) { /* Max sebesség */ }
+    }
+
+    [RelayCommand]
+    public void DecreaseSpeed()
+    {
+        try
+        {
+            _model.SlowDown();
+            SpeedLevel = (int)TimeControl.Instance().Speed + 1;
+        }
+        catch (Exception) { /* Min sebesség */ }
+    }
+
+    [RelayCommand]
+    public void SetSpeed(TimerSpeed speed) { }
+
+    [RelayCommand]
+    public void Resume()
+    {
+        _model.TogglePause();
+        IsPaused = _model.IsPaused();
+    }
+
+    [RelayCommand]
+    public void Pause() { }
+
+    [RelayCommand]
+    public void SelectBuildable(Type selectedType)
+    {
+        // Eltároljuk a választott típust
+        _selectedType = selectedType;
+        IsDemolishMode = false;
+        // Opcionális: a panelt nyitva hagyjuk, ha többet akarunk építeni egymás után
+        IsBuildingPanelVisible = false; 
+    }
+
+    [RelayCommand]
+    public void Demolish()
+    {
+        IsDemolishMode = !IsDemolishMode;
+
+        // Ha bekapcsoljuk a bontást, ne legyen kiválasztott épület
+        if (IsDemolishMode)
+        {
+            _selectedType = null;
+            IsBuildingPanelVisible = false;
+        }
+    }
+
+    [RelayCommand]
+    public void ClickCell(Cell cell)
+    {
+        try
+        {
+            // BONTÁS LOGIKA
+            if (IsDemolishMode)
+            {
+                _model.Demolish(new Coordinate(cell.X, cell.Y));
+                return;
+            }
+
+            // ÉPÍTÉS LOGIKA
+            if (_selectedType != null)
+            {
+                Field targetField = _model.GetField(cell.X, cell.Y);
+                Buildable? instance = null;
+
+                // Ellenőrizzük, hogy ResourceExtractor-ról van-e szó
+                //TODO többi gyár
+                if (_selectedType.IsAssignableTo(typeof(ResourceExtractor)))
+                {
+                    // Itt meg kell adni egy alapértelmezett yield értéket (pl. 10)
+                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 10);
+                }
+                else if (_selectedType.IsAssignableTo(typeof(Factory)))
+                {
+                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 30);
+                }
+                //else if (_selectedType.IsAssignableTo(typeof(Motorway))) {
+                //    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 120, new Direction());
+                //}
+
+                else
+                {
+                    // Sima 1 paraméteres konstruktor (pl. lakóház, út)
+                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField);
+                }
+
+                if (instance != null)
+                {
+                    _model.Place(new Coordinate(cell.X, cell.Y), instance);
+                }
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Itt kapjuk el a "Can't place it here" és hasonló hibákat
+            // Ahelyett, hogy összeomlana, pl. kiírhatjuk a Debug konzolra vagy egy Log listába
+            System.Diagnostics.Debug.WriteLine($"Építési hiba: {ex.Message}");
+
+            // Ha van Log
+            // CurrentLogMessage = ex.Message; 
+        }
+        catch (Exception ex)
+        {
+            // Minden más váratlan hiba elkapása
+            System.Diagnostics.Debug.WriteLine($"Váratlan hiba: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    public void ClickMiniMap(Coordinate coords) { }
+
+    // Listázó parancsok
+    [RelayCommand]
+    public void ListBuildableFactories() {
+        UpdateAvailableBuildables(_model.ListBuildableFactories());
+    }
+
+    [RelayCommand]
+    public void ListBuildableResidential()
+    {
+        UpdateAvailableBuildables(_model.ListBuildableResidential());
+    }
+
+    [RelayCommand]
+    public void ListBuildableResourceExtractors() {
+        UpdateAvailableBuildables(_model.ListBuildableResourceExtractors());
+    }
+
+    [RelayCommand]
+    public void ListBuildableDecorations() {
+        UpdateAvailableBuildables(_model.ListBuildableDecorations());
+    }
+
+    [RelayCommand]
+    public void ListBuildableRoads() {
+        UpdateAvailableBuildables(_model.ListBuildableRoads());
+    }
+
+    [RelayCommand]
+    public void ListBuyablePassengerVehicles() {
+        UpdateAvailableBuildables(_model.ListBuyablePassengerVehicles());
+    }
+
+    [RelayCommand]
+    public void ListBuyableIndustrialVehicles() { }
+
+    [RelayCommand]
+    public void ListBuildableOtherBuildings()
+    {
+        UpdateAvailableBuildables(_model.ListBuildableOtherBuildings());
+    }
+
+    private void UpdateAvailableBuildables(List<Type> types)
+    {
+        // Ha ugyanazt a listát kérnénk le, ami már látszik, akkor csukjuk be a panelt
+        // Ehhez ellenőrizzük, hogy a lista első eleme megegyezik-e a már bent lévővel
+        if (IsBuildingPanelVisible && AvailableBuildables.SequenceEqual(types))
+        {
+            IsBuildingPanelVisible = false;
+            _selectedType = null;
+            return;
+        }
+
+        AvailableBuildables.Clear();
+        foreach (var type in types)
+        {
+            AvailableBuildables.Add(type);
+        }
+
+        // Mindig kikapcsoljuk a bontó módot, ha építeni akarunk
+        IsDemolishMode = false;
+        _selectedType = null;
+        IsBuildingPanelVisible = true;
+    }
+
+    // Modell eseménykezelők kifejtése
+    private void Model_GameTicked(object? sender, EventArgs e)
+    {
+        // Időalapú frissítések a UI-on, ha szükséges
+        // A konkrét dátumváltozást a Model_DateChanged kezeli
+    }
+
+    private void Model_FieldsUpdated(object? sender, FieldEventArgs e)
+    {
+        // Amikor a Model jelzi, hogy bizonyos mezők megváltoztak (pl. építés történt)
+        foreach (var field in e.Fields)
+        {
+            // Megkeressük a megfelelő Cell objektumot az ObservableCollection-ben
+            var cell = Cells.FirstOrDefault(c => c.X == field.Coordinates.X && c.Y == field.Coordinates.Y);
+            if (cell != null)
+            {
+                // Frissítjük a Cell nézetmodelljét a Field adatai alapján (pl. kép lecserélése)
+                cell.Update(field); 
+            }
+        }
+    }
+
+    private void Model_BudgetChanged(object? sender, EventArgs e)
+    {
+         Budget = _model.GetBudget();
+    }
+
+    private void Model_ResourceChanged(object? sender, ResourceChangedEventArgs e)
+    {
+        // Frissítjük a belső szótárat
+        DisplayStorage[e.Resource] = e.NewValue;
+
+        if (e.Resource is HumanResource)
+        {
+            Population = e.NewValue;
+        }
+
+        // Jelezzük a UI-nak, hogy a szótár tartalma megváltozott
+        OnPropertyChanged(nameof(DisplayStorage));
+
+        RefreshStorageList();
+    }
+
+    private void Model_MoodChanged(object? sender, MoodChangedEventArgs e)
+    {
+        CurrentMood = e.Mood;
+    }
+
+    private void Model_NewLog(object? sender, LogEventArgs e)
+    {
+        // Új üzenet érkezésekor (pl. "Nincs elég pénz") hozzáadjuk egy napló-listához
+        // GameLogs.Add(e.Message);
+    }
+
+    private void Model_NewGame(object? sender, EventArgs e)
+    {
+        // Értesítjük a View-t, hogy új játék kezdődött (pl. ablak alaphelyzetbe állítása)
+        NewGame?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void Model_GameOver(object? sender, EventArgs e)
+    {
+        // Értesítjük a View-t a játék végéről (pl. Game Over ablak megjelenítése)
+        GameOver?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void Model_DateChanged(object? sender, EventArgs e)
+    {
+        // Minden tick-nél frissül a string
+        CurrentTime = _model.GetFormattedTime();
+    }
+
+    // Egyéb metódusok
+    public Field GetField()
+    {
+        throw new NotImplementedException();
+    }
+}

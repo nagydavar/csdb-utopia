@@ -1,5 +1,6 @@
 namespace CSDB_UtopiaModel.Model;
-abstract class TrafficLightSchedule
+
+public abstract class TrafficLightSchedule
 {
-    public List<Pair<int, TrafficLightSection>> desc;
-};
+    public List<(TrafficLightSection, int)> Desc { get; protected set; }
+}

@@ -1,6 +1,16 @@
+using CSDB_UtopiaModel.Persistence;
+
 namespace CSDB_UtopiaModel.Model;
-class ApartmentBlock : ResidentialBuilding
+public class ApartmentBlock : Building, IResidentialBuilding
 {
-        protected override int givePeople;
-        protected override int AffectMood;
+    public ApartmentBlock(Field f) : base(f) {
+        area = (1, 1);
+    }
+
+    public int givePeople => 20;
+
+    public int AffectMood => -10;
+
+    //valami �rt�kek dummy
+    public override int placementCost => 2000;
     };

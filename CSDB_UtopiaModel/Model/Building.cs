@@ -1,5 +1,7 @@
+using CSDB_UtopiaModel.Persistence;
+
 namespace CSDB_UtopiaModel.Model;
-abstract class Building : Buildable
+public abstract class Building : Buildable
 {
-        public Building(int,int);
-    };
+    public Building(Field f):base(f) { }
+};

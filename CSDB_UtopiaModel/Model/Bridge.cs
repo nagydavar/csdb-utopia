@@ -1,5 +1,9 @@
+using CSDB_UtopiaModel.Persistence;
+
 namespace CSDB_UtopiaModel.Model;
-class Bridge : Road
+
+abstract class Bridge : Road
 {
-        public int maxSpeed;
-    };
+    protected Bridge(Field f, int maxSpeed, Direction d) : base(f, maxSpeed, d) {}
+    
+}

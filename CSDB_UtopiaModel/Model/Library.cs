@@ -3,6 +3,13 @@ using CSDB_UtopiaModel.Persistence;
 namespace CSDB_UtopiaModel.Model;
 class Library: Decoration
 {
-        protected int giveMood;
-        protected override Pair(Resource,int) costResource;
-    };
+    public Library(Field f) : base(f) 
+    {
+        // P�lda �rt�kek
+        giveMood = 20;
+        costResource = (Paper.Instance(), 50); // Pap�rba ker�l
+        area = (1,1);
+    }
+
+    public override int placementCost => 1000;
+};

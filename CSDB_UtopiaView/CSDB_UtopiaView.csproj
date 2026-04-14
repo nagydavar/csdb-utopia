@@ -6,6 +6,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AvaloniaResource Include="Assets\avalonia-logo.ico" />
+    <AvaloniaResource Include="Assets\Buildings\ResidentialBuilding\DetachedHouse.jpg" />
+    <AvaloniaResource Include="Assets\Fields\0trees.PNG" />
+    <AvaloniaResource Include="Assets\Fields\1trees.PNG" />
+    <AvaloniaResource Include="Assets\Fields\2trees.PNG" />
+    <AvaloniaResource Include="Assets\Fields\3trees.PNG" />
+    <AvaloniaResource Include="Assets\Fields\4trees.PNG" />
+    <AvaloniaResource Include="Assets\Fields\Mountain.PNG" />
+    <AvaloniaResource Include="Assets\Fields\Water.PNG" />
+    <AvaloniaResource Include="Assets\Icons\Coal.PNG" />
+    <AvaloniaResource Include="Assets\Icons\Diamond.PNG" />
+    <AvaloniaResource Include="Assets\Icons\Gold.PNG" />
+    <AvaloniaResource Include="Assets\Icons\IronOre.PNG" />
+    <AvaloniaResource Include="Assets\Icons\Paper.PNG" />
+    <AvaloniaResource Include="Assets\Menu\createmenu.png" />
+    <AvaloniaResource Include="Assets\Menu\CSDButopia.PNG" />
+    <AvaloniaResource Include="Assets\Menu\mainmenu.png" />
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 
@@ -16,5 +33,15 @@
     <PackageReference Include="Avalonia.ReactiveUI" Version="$(AvaloniaVersion)" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Assets\Buildings\Factories\" />
+    <Folder Include="Assets\Buildings\OtherBuildings\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CSDB_UtopiaModel\CSDB_UtopiaModel.csproj" />
   </ItemGroup>
 </Project>

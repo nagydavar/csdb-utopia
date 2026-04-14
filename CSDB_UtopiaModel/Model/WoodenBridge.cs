@@ -1,5 +1,9 @@
+using CSDB_UtopiaModel.Persistence;
+
 namespace CSDB_UtopiaModel.Model;
-class WoodenBridge: Bridge
+
+class WoodenBridge : Bridge
 {
-        public override int maxSpeed;
-    };
+    //kitalalt ertek a 10
+    public WoodenBridge(Field f, Direction d) : base(f, 10, d) {}
+}
