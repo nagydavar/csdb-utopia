@@ -358,9 +358,9 @@ public partial class GameViewModel : ViewModelBase
     private void Model_ResourceChanged(object? sender, ResourceChangedEventArgs e)
     {
         // Frissítjük a belső szótárat
-        DisplayStorage[e.iResource] = e.NewValue;
+        DisplayStorage[e.resource] = e.NewValue;
 
-        if (e.iResource is HumanResource)
+        if (e.resource is HumanResource)
         {
             Population = e.NewValue;
         }

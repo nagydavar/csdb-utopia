@@ -166,9 +166,9 @@ public class Model : ITickable
         return _persistence.CurrentMood;
     }
 
-    public int GetResourceCount(IResource iResource)
+    public int GetResourceCount(IResource resource)
     {
-        return _persistence.Storage.ContainsKey(iResource) ? _persistence.Storage[iResource] : 0;
+        return _persistence.Storage.ContainsKey(resource) ? _persistence.Storage[resource] : 0;
     }
     // id�ig �j
 
@@ -302,9 +302,9 @@ public class Model : ITickable
     public EventHandler<EventArgs>? GameOver;
     public EventHandler<EventArgs>? DateChanged;
 
-    protected virtual void OnResourceChanged(IResource iResource, int newValue)
+    protected virtual void OnResourceChanged(IResource resource, int newValue)
     {
-        ResourceChanged?.Invoke(this, new ResourceChangedEventArgs(iResource, newValue));
+        ResourceChanged?.Invoke(this, new ResourceChangedEventArgs(resource, newValue));
     }
 
     protected virtual void OnMoodChanged(int newValue)

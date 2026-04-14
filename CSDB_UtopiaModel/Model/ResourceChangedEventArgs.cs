@@ -1,13 +1,14 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
+
 public class ResourceChangedEventArgs: EventArgs
 {
-        public IResource iResource;
+        public IResource resource;
         public int NewValue;
-        public ResourceChangedEventArgs(IResource iResource, int newValue)
+        public ResourceChangedEventArgs(IResource resource, int newValue)
         {
-            this.iResource = iResource;
+            this.resource = resource;
             NewValue = newValue;
         }
-};
+}

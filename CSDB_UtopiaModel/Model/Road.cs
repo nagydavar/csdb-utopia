@@ -14,14 +14,14 @@ public abstract class Road : Buildable, Navigable
     
     public HashSet<Section> Sections { get; set; }
 
-    public IDirection IDirection { get; set; }
+    public IDirection Direction { get; set; }
 
     public EventHandler<DirectionEventArgs>? Freed;
 
     public Road(Field f, int maxSpeed, IDirection d) : base(f)
     {
         MaxSpeed = maxSpeed;
-        IDirection = d;
+        Direction = d;
     }
 
     public bool IsFree(IDirection _) => throw new NotImplementedException();
