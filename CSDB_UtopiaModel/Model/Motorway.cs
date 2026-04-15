@@ -15,7 +15,7 @@ public class Motorway : Road
         {
         }
 
-        public Intersection? GetIntersection() => intersection; 
+        public Intersection? GetIntersection() => _intersection; 
 
         public void AddIntersection(Intersection i)
         { 
