@@ -19,7 +19,7 @@ public class Motorway : Road
 
         public void AddIntersection(Intersection i)
         {
-                if (HasIntersection)
+                if (HasIntersection && !(_intersection is ThreeWayIntersection && i is FourWayIntersection))
                         throw new InvalidOperationException("The road already has an intersection");
                 _intersection = i;
         }

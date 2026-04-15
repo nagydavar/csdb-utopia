@@ -9,7 +9,7 @@ public class Model : ITickable
     private TimeControl _timeControl;
     private Persistence.Persistence _persistence;
     private int _totalSeconds = 0; // Az eltelt összes másodperc
-    
+
     public EventHandler<EventArgs>? GameTicked;
     public EventHandler<FieldEventArgs>? FieldsUpdated;
     public EventHandler<EventArgs>? BudgetChanged;
@@ -34,6 +34,7 @@ public class Model : ITickable
     }
 
     #region Time
+
     public Task Tick()
     {
         _totalSeconds++;
@@ -59,11 +60,13 @@ public class Model : ITickable
         var timer = TimeControl.Instance();
         _ = !timer; // A '!' operátor meghívása
     }
+
     public void SpeedUp()
     {
         var timer = TimeControl.Instance();
         _ = ++timer;
     }
+
     public void SlowDown()
     {
         var timer = TimeControl.Instance();
@@ -71,6 +74,7 @@ public class Model : ITickable
     }
 
     public bool IsPaused() => !TimeControl.Instance().IsStopped;
+
     #endregion
 
     public void Reset(int width, int height)
@@ -87,21 +91,180 @@ public class Model : ITickable
 
         // Frissítjük az összes mezőt a UI-on
         for (int i = 0; i < width; i++)
-            for (int j = 0; j < height; j++)
-                OnFieldsUpdated(_persistence.Fields[i][j]);
+        for (int j = 0; j < height; j++)
+            OnFieldsUpdated(_persistence.Fields[i][j]);
 
         BudgetChanged?.Invoke(this, EventArgs.Empty);
         MoodChanged?.Invoke(this, new MoodChangedEventArgs(_persistence.CurrentMood));
     }
+
+    public void PlaceRoad(Coordinate coord)
+    {
+        int tmp;
+        Field?[] roadArray = [null, null, null, null];
+        List<Field> roads = new(4);
+
+        if ((tmp = coord.Y - 1) >= 0 && _persistence.Fields[coord.X][tmp].Buildable is Road)
+        {
+            roads.Add(roadArray[0] = _persistence.Fields[coord.X][tmp]);
+        }
+
+        if ((tmp = coord.X + 1) < _persistence.Fields.Count && _persistence.Fields[tmp][coord.Y].Buildable is Road)
+        {
+            roads.Add(roadArray[1] = _persistence.Fields[tmp][coord.Y]);
+        }
+
+        if ((tmp = coord.Y + 1) < _persistence.Fields[coord.X].Count &&
+            _persistence.Fields[coord.X][tmp].Buildable is Road)
+        {
+            roads.Add(roadArray[2] = _persistence.Fields[coord.X][tmp]);
+        }
+
+        if ((tmp = coord.X - 1) >= 0 && _persistence.Fields[tmp][coord.Y].Buildable is Road)
+        {
+            roads.Add(roadArray[3] = _persistence.Fields[tmp][coord.Y]);
+        }
+
+        bool isCurved, becomeIntersection = roads.Count is 3 or 4;
+        byte q = 0;
+        IDirection dir = Up.Instance();
+        Intersection? intersection=null;
+        Field f = _persistence.Fields[coord.X][coord.Y];
+        switch (roads.Count)
+        {
+            case 1:
+                isCurved = false;
+                q = 0;
+
+                switch (Array.IndexOf(roadArray, roads[0]))
+                {
+                    case 0:
+                        dir = Up.Instance();
+                        break;
+                    case 1:
+                        dir = Right.Instance();
+                        break;
+                    case 2:
+                        Down.Instance();
+                        break;
+                    case 3:
+                        Left.Instance();
+                        break;
+                    default:
+                        return; // error occured, road cannot be placed
+                }
+
+                break;
+            case 2:
+                if (roads[0].Coordinates.X == roads[1].Coordinates.X)
+                {
+                    isCurved = false;
+                    dir = Right.Instance();
+                    q = 0;
+                }
+                else if (roads[0].Coordinates.Y == roads[1].Coordinates.Y)
+                {
+                    isCurved = false;
+                    dir = Up.Instance();
+                    q = 0;
+                }
+                else if (coord.Y - roads[0].Coordinates.Y > 0 || coord.Y - roads[1].Coordinates.Y > 0) // Up
+                {
+                    isCurved = true;
+                    dir = Up.Instance(); // this has no meaning
+
+                    if (coord.X - roads[0].Coordinates.X > 0 || coord.X - roads[1].Coordinates.X > 0) // Left
+                    {
+                        q = 2;
+                    }
+                    else // Right
+                    {
+                        q = 1;
+                    }
+                }
+                else // Down
+                {
+                    isCurved = true;
+                    dir = Down.Instance(); // this has no meaning 
+
+                    if (coord.X - roads[0].Coordinates.X > 0 || coord.X - roads[1].Coordinates.X > 0) // Left
+                        q = 3;
+                    else // Right
+                        q = 4;
+                }
+
+                break;
+            case 3:
+                foreach (Field field in roads)
+                {
+                    if (field.Buildable is Motorway { HasIntersection: true })
+                        return; // can't place two intersections next to each other
+                }
+
+                isCurved = false;
+                q = 0;
+
+                // assume that we put the elements in the list clockwise
+                switch (Array.IndexOf(roadArray, null))
+                {
+                    case 0:
+                        dir = Down.Instance();
+                        break;
+                    case 1:
+                        dir = Left.Instance();
+                        break;
+                    case 2:
+                        dir = Up.Instance();
+                        break;
+                    case 3:
+                        dir = Right.Instance();
+                        break;
+                    default:
+                        return; // error occured, road cannot be placed
+                }
+
+                intersection = new ThreeWayIntersection(f, dir);
+
+                break;
+            case 4:
+                foreach (Field field in roads)
+                {
+                    if (field.Buildable is Motorway { HasIntersection: true })
+                        return; // can't place two intersections next to each other
+                }
+
+                isCurved = false;
+                // dummy values:
+                q = 0;
+                dir = Up.Instance();
+
+                intersection = new FourWayIntersection(f);
+                break;
+            default:
+                return;
+        }
+
+        Motorway m = new Motorway(_persistence.Fields[coord.X][coord.Y], int.MaxValue, dir)
+        {
+            IsCurved = isCurved,
+            Quadrant = q,
+        };
+
+        if ((roads.Count == 3 || roads.Count == 4) && intersection is not null)
+            m.AddIntersection(intersection);
+        
+        //TODO refresh neighbour roads' states
+    }
+
     public void Place(Coordinate coord, Buildable buildable)
-    { 
-       
+    {
+
         // 1. Épület méretének lekérése
         int width = buildable.area.Width;
         int height = buildable.area.Height;
         List<Land> targetLands = new List<Land>();
         float totalForestFactor = 0;
-        (IResource?, int) resource = (null,0);
+        (IResource?, int) resource = (null, 0);
 
         // 2. Ellenőrzés, elfér-e és minden mező Land-e?
         for (int i = 0; i < width; i++)
@@ -130,7 +293,8 @@ public class Model : ITickable
         if (buildable is Decoration decor)
         {
             resource = decor.costResource;
-            if (_persistence.Storage[decor.costResource.resource] < decor.costResource.cost) {
+            if (_persistence.Storage[decor.costResource.resource] < decor.costResource.cost)
+            {
                 // hiba dobása? nincs elég nyersanyag
                 return;
             }
@@ -149,12 +313,23 @@ public class Model : ITickable
         //5. frissítés
         _persistence.Budget -= cost;
         BudgetChanged?.Invoke(this, EventArgs.Empty);
-
-        if (buildable is Decoration decoration) {
+        
+        if (buildable is Decoration decoration)
+        {
             _persistence.Storage[resource.Item1!] -= resource.Item2;
             OnResourceChanged(resource.Item1!, _persistence.Storage[resource.Item1!]);
 
             _persistence.CurrentMood += decoration.giveMood;
+            OnMoodChanged(_persistence.CurrentMood);
+        }
+        else if (buildable is IResidentialBuilding residential)
+        {
+            // N�pess�g n�vel�se
+            _persistence.Storage[HumanResource.Instance()] += residential.givePeople;
+            OnResourceChanged(HumanResource.Instance(), _persistence.Storage[HumanResource.Instance()]);
+
+            // Hangulat csökkentése
+            _persistence.CurrentMood += residential.AffectMood;
             OnMoodChanged(_persistence.CurrentMood);
         }
 
@@ -163,18 +338,6 @@ public class Model : ITickable
         {
             OnFieldsUpdated(land);
         }
-
-        if (buildable is IResidentialBuilding residential)
-        {
-            // N�pess�g n�vel�se
-            _persistence.Storage[HumanResource.Instance()] += residential.givePeople;
-            OnResourceChanged(HumanResource.Instance(), _persistence.Storage[HumanResource.Instance()]);
-
-            // Hangulat cs�kkent�se
-            _persistence.CurrentMood += residential.AffectMood;
-            OnMoodChanged(_persistence.CurrentMood);
-        }
-
     }
 
 
@@ -192,12 +355,13 @@ public class Model : ITickable
         return _persistence.Budget;
     }
 
-    public Field GetField(int x, int y) {
+    public Field GetField(int x, int y)
+    {
         return _persistence.Fields[x][y];
     }
-    
+
     public Field GetField(Coordinate coords) => GetField(coords.X, coords.Y);
-    
+
     public int GetMood() // should be a property
     {
         return _persistence.CurrentMood;
@@ -220,7 +384,7 @@ public class Model : ITickable
         Buildable? onField = GetField(coord).Buildable;
         Field field = GetField(coord);
 
-        Field source = GetField(new Coordinate(coord.X-field.RelativeX, coord.Y-field.RelativeY));
+        Field source = GetField(new Coordinate(coord.X - field.RelativeX, coord.Y - field.RelativeY));
         if (onField is not null)
         {
             for (int i = 0; i < onField.area.Width; i++)
