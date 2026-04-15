@@ -7,7 +7,7 @@ public class Model : ITickable
 {
 
     private TimeControl _timeControl;
-    private readonly Persistence.Persistence _persistence;
+    private Persistence.Persistence _persistence;
     private int _totalSeconds = 0; // Az eltelt összes másodperc
     
     public EventHandler<EventArgs>? GameTicked;
@@ -24,7 +24,7 @@ public class Model : ITickable
     {
         _persistence = new Persistence.Persistence(width, height, true);
 
-        _persistence.GameOver += (_, e) => GameOver?.Invoke(this, e);
+        RegisterEvents();
 
         // 1. Lekérjük a példányt egy változóba
         var timer = TimeControl.Instance();
@@ -73,6 +73,26 @@ public class Model : ITickable
     public bool IsPaused() => !TimeControl.Instance().IsStopped;
     #endregion
 
+    public void Reset(int width, int height)
+    {
+        // Új perzisztencia réteg létrehozása
+        _persistence = new Persistence.Persistence(width, height, true);
+
+        RegisterEvents();
+
+        _totalSeconds = 0;
+
+        // Értesítjük a View-t, hogy minden adat (mezők, büdzsé) megváltozott
+        NewGame?.Invoke(this, EventArgs.Empty);
+
+        // Frissítjük az összes mezőt a UI-on
+        for (int i = 0; i < width; i++)
+            for (int j = 0; j < height; j++)
+                OnFieldsUpdated(_persistence.Fields[i][j]);
+
+        BudgetChanged?.Invoke(this, EventArgs.Empty);
+        MoodChanged?.Invoke(this, new MoodChangedEventArgs(_persistence.CurrentMood));
+    }
     public void Place(Coordinate coord, Buildable buildable)
     { 
        
@@ -106,11 +126,14 @@ public class Model : ITickable
         //3. költség
         int cost = (int)Math.Round((1 + totalForestFactor / (width * height)) * buildable.placementCost, 0);
 
-        if (cost > GetBudget()) return;
+        //if (cost > GetBudget()) return;
         if (buildable is Decoration decor)
         {
             resource = decor.costResource;
-            if (_persistence.Storage[decor.costResource.resource] < decor.costResource.cost) return;
+            if (_persistence.Storage[decor.costResource.resource] < decor.costResource.cost) {
+                // hiba dobása? nincs elég nyersanyag
+                return;
+            }
         }
 
         //4. elhelyezés
@@ -289,8 +312,18 @@ public class Model : ITickable
 
     public List<Type> ListBuyableIndustrialVehicles()
     {
-        //TODO
-        return GetBuildableTypesInNamespace<Decoration>();
+        // Megkeressük az összes olyan osztályt, ami a GoodsVehicle-ből származik
+        // Mivel a GoodsVehicle generikus, a Type-szintű ellenőrzés kicsit más
+        string targetNamespace = typeof(CSDB_UtopiaModel.Model.Model).Namespace;
+
+        return Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(t => t.IsClass &&
+                        !t.IsAbstract &&
+                        (t.IsAssignableTo(typeof(IVehicle))) && // Minden ami jármű
+                        !t.IsAssignableTo(typeof(PassengerVehicle)) && // De nem utas-szállító
+                        t.Namespace == targetNamespace)
+            .ToList();
     }
 
     private List<Type> GetBuildableTypesInNamespace<T>()
@@ -304,6 +337,13 @@ public class Model : ITickable
                         t.IsAssignableTo(typeof(T)) &&
                         t.Namespace == targetNamespace)
             .ToList();
+    }
+
+    //Szükséges új játék kezdetekor hogy a legfrissebb persistence objektum feliratkozzon az eseményekre
+    private void RegisterEvents()
+    {
+        // Mindig a jelenlegi _persistence objektumra iratkozunk fel
+        _persistence.GameOver += (_, e) => GameOver?.Invoke(this, e);
     }
 
     protected virtual void OnResourceChanged(IResource resource, int newValue)

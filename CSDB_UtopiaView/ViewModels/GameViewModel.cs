@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection;
 
 namespace CSDB_UtopiaView.ViewModels;
 
@@ -41,7 +42,7 @@ public partial class GameViewModel : ViewModelBase
 
     // Építési panel láthatósága és a gombok listája
     [ObservableProperty] private bool _isBuildingPanelVisible;
-    public ObservableCollection<Type> AvailableBuildables { get; } = new();
+    public ObservableCollection<BuildableInfo> AvailableBuildables { get; } = new();
 
     // Tároljuk, hogy a felhasználó éppen mit választott ki építésre
     private Type? _selectedType;
@@ -54,6 +55,9 @@ public partial class GameViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isPaused = true;
+
+    [ObservableProperty]
+    private bool _isGameOver;
 
     [ObservableProperty]
     private int _speedLevel = 1; // Alapértelmezett: Normal (1)
@@ -139,6 +143,29 @@ public partial class GameViewModel : ViewModelBase
 
     [RelayCommand]
     public void LoadGame(string fileName) { /* Betöltés logika */ }
+
+    [RelayCommand]
+    public void ExitGame()
+    {
+        Environment.Exit(0);
+    }
+
+    [RelayCommand]
+    public void RestartGame()
+    {
+        IsGameOver = false;
+        IsPaused = false;
+
+        // Ténylegesen újrainicializáljuk a modellt
+        _model.Reset(Width, Height);
+
+        // Frissítjük a helyi property-ket
+        Budget = _model.GetBudget();
+        CurrentMood = _model.GetMood();
+
+        // Újratöltjük a nyersanyagokat a kijelzőn
+        InitializeDisplayStorage();
+    }
 
     [RelayCommand]
     public void IncreaseSpeed()
@@ -299,11 +326,20 @@ public partial class GameViewModel : ViewModelBase
 
     [RelayCommand]
     public void ListBuyablePassengerVehicles() {
-        UpdateAvailableBuildables(_model.ListBuyablePassengerVehicles());
+        // Lekérjük az utas-szállítókat
+        var passengers = _model.ListBuyablePassengerVehicles();
+        // Lekérjük az ipari szállítókat
+        var industrial = _model.ListBuyableIndustrialVehicles();
+
+        // Összefűzzük a kettőt és frissítjük a panelt
+        UpdateAvailableBuildables(passengers.Concat(industrial).ToList());
     }
 
     [RelayCommand]
-    public void ListBuyableIndustrialVehicles() { }
+    public void ListBuyableIndustrialVehicles()
+    {
+        UpdateAvailableBuildables(_model.ListBuyableIndustrialVehicles());
+    }
 
     [RelayCommand]
     public void ListBuildableOtherBuildings()
@@ -311,27 +347,111 @@ public partial class GameViewModel : ViewModelBase
         UpdateAvailableBuildables(_model.ListBuildableOtherBuildings());
     }
 
+    [RelayCommand]
+    public void CloseBuildingPanel()
+    {
+        IsBuildingPanelVisible = false;
+        _selectedType = null; // Töröljük a kijelölést is, ha volt
+        AvailableBuildables.Clear();
+    }
+
     private void UpdateAvailableBuildables(List<Type> types)
     {
-        // Ha ugyanazt a listát kérnénk le, ami már látszik, akkor csukjuk be a panelt
-        // Ehhez ellenőrizzük, hogy a lista első eleme megegyezik-e a már bent lévővel
-        if (IsBuildingPanelVisible && AvailableBuildables.SequenceEqual(types))
+        // Panel bezárása, ha ugyanazt a kategóriát kattintjuk
+        if (IsBuildingPanelVisible && AvailableBuildables.Count > 0 &&
+            types.Count > 0 && AvailableBuildables[0].Type == types[0])
         {
             IsBuildingPanelVisible = false;
-            _selectedType = null;
+            AvailableBuildables.Clear();
             return;
         }
 
         AvailableBuildables.Clear();
+
         foreach (var type in types)
         {
-            AvailableBuildables.Add(type);
+            try
+            {
+                if (type.IsAbstract || type.IsInterface) continue;
+
+                string displayName = type.Name;
+                if (displayName.Contains('`'))
+                {
+                    displayName = displayName.Substring(0, displayName.IndexOf('`'));
+                }
+                BuildableInfo info = new() { Name = displayName, Type = type };
+
+                // JÁRMŰVEK (Biztonsági fix értékekkel, hogy ne szálljon el a throw miatt)
+                if (type.IsAssignableTo(typeof(IVehicle)))
+                {
+                    info.IsVehicle = true;
+                    info.Speed = 60;
+                    info.Maintenance = 200;
+                    info.Capacity = 40;
+                    // Itt NEM hívunk Activator-t, amíg a modellben throw new NotImplementedException() van!
+                }
+                // ÉPÜLETEK ÉS UTAK
+                else
+                {
+                    Buildable? bDummy = null;
+
+                    if (type.IsAssignableTo(typeof(ResourceExtractor)))
+                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 10);
+                    else if (type.IsAssignableTo(typeof(Factory)))
+                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 30);
+                    else if (type.IsAssignableTo(typeof(Road)))
+                    {
+                        // PRÓBÁLKOZÁS SORRENDJE FONTOS
+                        try
+                        {
+                            // 1. Általános út (3 paraméter: Field, int, IDirection)
+                            // A 'null' helyett adjunk át egy érvényes irány típust, ha a híd kéri
+                            bDummy = (Buildable?)Activator.CreateInstance(type, null, 50, null);
+                        }
+                        catch
+                        {
+                            try
+                            {
+                                // 2. Hidak (2 paraméter: Field, IDirection)
+                                // Itt is a null IDirection lehet a gond, ha a híd konstruktora használja
+                                bDummy = (Buildable?)Activator.CreateInstance(type, null, null);
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Road hiba ({type.Name}): {ex.Message}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Házak, dekorok (1 paraméter)
+                        bDummy = (Buildable?)Activator.CreateInstance(type, (Field?)null);
+                    }
+
+                    if (bDummy != null)
+                    {
+                        info.PlacementCost = bDummy.placementCost;
+                        if (bDummy is Decoration decor && decor.costResource.resource != null)
+                            info.ResourceRequirement = $"{decor.costResource.cost} {decor.costResource.resource.GetType().Name}";
+                    }
+                    else
+                    {
+                        // Ha nem sikerült példányosítani, adjunk meg alapértelmezett árat, 
+                        // hogy legalább a gomb megjelenjen
+                        info.PlacementCost = 0;
+                    }
+                }
+
+                AvailableBuildables.Add(info);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Hiba a(z) {type.Name} feldolgozásakor: {ex.Message}");
+            }
         }
 
-        // Mindig kikapcsoljuk a bontó módot, ha építeni akarunk
         IsDemolishMode = false;
-        _selectedType = null;
-        IsBuildingPanelVisible = true;
+        IsBuildingPanelVisible = AvailableBuildables.Count > 0;
     }
 
     // Modell eseménykezelők kifejtése
@@ -396,7 +516,8 @@ public partial class GameViewModel : ViewModelBase
 
     private void Model_GameOver(object? sender, EventArgs e)
     {
-        // Értesítjük a View-t a játék végéről (pl. Game Over ablak megjelenítése)
+        IsPaused = true; // Állítsuk meg az időt
+        IsGameOver = true; // Ez fogja aktiválni az ablakot
         GameOver?.Invoke(this, EventArgs.Empty);
     }
 
@@ -411,4 +532,19 @@ public partial class GameViewModel : ViewModelBase
     {
         throw new NotImplementedException();
     }
+}
+
+public class BuildableInfo
+{
+    public string Name { get; set; } = string.Empty;
+    public Type Type { get; set; } = null!;
+    public int PlacementCost { get; set; }
+    public string ResourceRequirement { get; set; } = string.Empty;
+    public bool HasResourceRequirement => !string.IsNullOrEmpty(ResourceRequirement);
+
+    // Jármű specifikus adatok
+    public bool IsVehicle { get; set; }
+    public int Speed { get; set; }
+    public int Maintenance { get; set; }
+    public int Capacity { get; set; }
 }

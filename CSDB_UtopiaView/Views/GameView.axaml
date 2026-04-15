@@ -66,14 +66,29 @@
                            Margin="0,0,0,5"/>
                 <Separator/>
         
-                <ItemsControl ItemsSource="{Binding AvailableBuildables}">
+               <ItemsControl ItemsSource="{Binding AvailableBuildables}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Button HorizontalAlignment="Stretch"
-                                    Margin="0,2"
+                            <Button HorizontalAlignment="Stretch" Margin="0,2"
                                     Command="{Binding $parent[UserControl].((vm:GameViewModel)DataContext).SelectBuildableCommand}"
-                                    CommandParameter="{Binding}">
-                                <TextBlock Text="{Binding Name}" HorizontalAlignment="Center"/>
+                                    CommandParameter="{Binding Type}">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    
+                                    <StackPanel IsVisible="{Binding !IsVehicle}">
+                                        <TextBlock Text="{Binding PlacementCost, StringFormat='{}{0} Pénz'}" 
+                                                   Foreground="DarkGreen" FontSize="12" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding ResourceRequirement}" 
+                                                   IsVisible="{Binding HasResourceRequirement}"
+                                                   Foreground="Blue" FontSize="11" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <StackPanel IsVisible="{Binding IsVehicle}">
+                                        <TextBlock Text="{Binding Speed, StringFormat='Sebesség: {0}'}" FontSize="10"/>
+                                        <TextBlock Text="{Binding Capacity, StringFormat='Kapacitás: {0}'}" FontSize="10"/>
+                                        <TextBlock Text="{Binding Maintenance, StringFormat='Költség: {0}'}" Foreground="Red" FontSize="10"/>
+                                    </StackPanel>
+                                </StackPanel>
                             </Button>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -84,7 +99,7 @@
                         HorizontalContentAlignment="Center"
                         Background="IndianRed"
                         Foreground="White"
-                        Command="{Binding ListBuildableOtherBuildingsCommand}"/>
+                        Command="{Binding CloseBuildingPanelCommand}"/>
             </StackPanel>
         </Border>
 
@@ -192,7 +207,7 @@
                 <Button Width="80" Height="40" Content="Út" Command="{Binding ListBuildableRoadsCommand}"
                         VerticalContentAlignment="Center"
                         HorizontalContentAlignment="Center"/>
-                <Button Width="80" Height="40" Content="Autók" Command="{Binding ListBuyablePassengerVehiclesCommand}"
+                <Button Width="80" Height="40" Content="Járművek" Command="{Binding ListBuyablePassengerVehiclesCommand}"
                         VerticalContentAlignment="Center"
                         HorizontalContentAlignment="Center"/>
                 <Button Width="80" Height="40" Content="Házak" Command="{Binding ListBuildableResidentialCommand}"
@@ -230,5 +245,53 @@
                 </Button>
             </StackPanel>
         </Border>
+
+        <Panel IsVisible="{Binding IsGameOver}" ZIndex="2000">
+        <Border Background="#AA000000"/> 
+        
+        <Border Background="White" 
+                CornerRadius="15" 
+                Padding="30" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center"
+                BorderBrush="Black" 
+                BorderThickness="2"
+                Width="350">
+            
+            <StackPanel Spacing="20">
+                <TextBlock Text="JÁTÉK VÉGE" 
+                           FontSize="32" 
+                           FontWeight="Bold" 
+                           Foreground="DarkRed" 
+                           HorizontalAlignment="Center"/>
+                
+                <TextBlock Text="Sajnos csődbe mentél!" 
+                           TextWrapping="Wrap" 
+                           TextAlignment="Center"
+                           FontSize="16"/>
+
+                <Separator Background="LightGray"/>
+
+                <Button Content="Új játék indítása" 
+                        Command="{Binding RestartGameCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Height="45"
+                        Background="DarkGreen"
+                        Foreground="White"
+                        FontWeight="Bold"/>
+
+                <Button Content="Kilépés az asztalra" 
+                        Command="{Binding ExitGameCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Height="45"
+                        Background="Gray"
+                        Foreground="White"/>
+            </StackPanel>
+        </Border>
+    </Panel>
     </Grid>
 </UserControl>
