@@ -215,6 +215,15 @@ public partial class GameViewModel : ViewModelBase
             // ÉPÍTÉS LOGIKA
             if (_selectedType != null)
             {
+                // Út építése
+                if (_selectedType.IsAssignableTo(typeof(Road)))
+                {
+                    // Itt hívjuk meg a Modell metódusát, ami lekezeli a 
+                    // tájolást és a hurok-ellenőrzést
+                    // _model.PlaceRoad(new Coordinate(cell.X, cell.Y));   EZT KELL MEGÍRNI
+                    return; // Ne menjen tovább az építés
+                }
+
                 Field targetField = _model.GetField(cell.X, cell.Y);
                 Buildable? instance = null;
 
@@ -228,10 +237,7 @@ public partial class GameViewModel : ViewModelBase
                 else if (_selectedType.IsAssignableTo(typeof(Factory)))
                 {
                     instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 30);
-                }
-                //else if (_selectedType.IsAssignableTo(typeof(Motorway))) {
-                //    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 120, new Direction());
-                //}
+                }       
 
                 else
                 {
