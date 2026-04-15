@@ -9,10 +9,22 @@ public class Model : ITickable
     private TimeControl _timeControl;
     private readonly Persistence.Persistence _persistence;
     private int _totalSeconds = 0; // Az eltelt összes másodperc
+    
+    public EventHandler<EventArgs>? GameTicked;
+    public EventHandler<FieldEventArgs>? FieldsUpdated;
+    public EventHandler<EventArgs>? BudgetChanged;
+    public EventHandler<ResourceChangedEventArgs>? ResourceChanged;
+    public EventHandler<MoodChangedEventArgs>? MoodChanged;
+    public EventHandler<LogEventArgs>? NewLog;
+    public EventHandler<EventArgs>? NewGame;
+    public EventHandler<EventArgs>? GameOver;
+    public EventHandler<EventArgs>? DateChanged;
 
     public Model(int width, int height)
     {
         _persistence = new Persistence.Persistence(width, height, true);
+
+        _persistence.GameOver += (_, e) => GameOver?.Invoke(this, e);
 
         // 1. Lekérjük a példányt egy változóba
         var timer = TimeControl.Instance();
@@ -65,8 +77,8 @@ public class Model : ITickable
     { 
        
         // 1. Épület méretének lekérése
-        int width = buildable.area.Item1;
-        int height = buildable.area.Item2;
+        int width = buildable.area.Width;
+        int height = buildable.area.Height;
         List<Land> targetLands = new List<Land>();
         float totalForestFactor = 0;
         (IResource?, int) resource = (null,0);
@@ -160,7 +172,9 @@ public class Model : ITickable
     public Field GetField(int x, int y) {
         return _persistence.Fields[x][y];
     }
+    
     public Field GetField(Coordinate coords) => GetField(coords.X, coords.Y);
+    
     public int GetMood() // should be a property
     {
         return _persistence.CurrentMood;
@@ -291,16 +305,6 @@ public class Model : ITickable
                         t.Namespace == targetNamespace)
             .ToList();
     }
-
-    public EventHandler<EventArgs>? GameTicked;
-    public EventHandler<FieldEventArgs>? FieldsUpdated;
-    public EventHandler<EventArgs>? BudgetChanged;
-    public EventHandler<ResourceChangedEventArgs>? ResourceChanged;
-    public EventHandler<MoodChangedEventArgs>? MoodChanged;
-    public EventHandler<LogEventArgs>? NewLog;
-    public EventHandler<EventArgs>? NewGame;
-    public EventHandler<EventArgs>? GameOver;
-    public EventHandler<EventArgs>? DateChanged;
 
     protected virtual void OnResourceChanged(IResource resource, int newValue)
     {
