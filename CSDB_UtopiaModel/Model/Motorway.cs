@@ -3,7 +3,7 @@ using CSDB_UtopiaModel.Persistence;
 namespace CSDB_UtopiaModel.Model;
 
 public class Motorway : Road
-{ 
+{
         private Intersection? _intersection;
 
         public bool HasIntersection
@@ -15,10 +15,12 @@ public class Motorway : Road
         {
         }
 
-        public Intersection? GetIntersection() => _intersection; 
+        public Intersection? GetIntersection() => _intersection;
 
         public void AddIntersection(Intersection i)
-        { 
+        {
+                if (HasIntersection)
+                        throw new InvalidOperationException("The road already has an intersection");
                 _intersection = i;
         }
 }
