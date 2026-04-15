@@ -38,17 +38,17 @@ public abstract class Road : Buildable, INavigable
 
     public HashSet<Section> Sections { get; set; } = new();
 
-    public Direction Direction { get; set; }
+    public IDirection Direction { get; set; }
 
     public EventHandler<DirectionEventArgs>? Freed;
 
-    public Road(Field f, int maxSpeed, Direction d) : base(f)
+    public Road(Field f, int maxSpeed, IDirection d) : base(f)
     {
         MaxSpeed = maxSpeed;
         Direction = d;
     }
 
-    public bool IsFree(Direction dir)
+    public bool IsFree(IDirection dir)
     {
         if (Direction is VerticalDirection)
         {

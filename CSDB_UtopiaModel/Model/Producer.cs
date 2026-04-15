@@ -14,7 +14,7 @@ public abstract class Producer : Building, Tickable
         this.yield = yield;
     }
 
-    public abstract Resource Produce();
-    public abstract Resource Require();
+    public abstract IResource Produce();
+    public abstract IResource Require();
     public virtual void Tick() { }
 };

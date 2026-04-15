@@ -50,38 +50,38 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
                     field = new Mountain(Coordinate);
                     break;
                 case FieldTypes.RoadHor:
-                    m = new Motorway(field, 20, UP.Instance());
+                    m = new Motorway(field, 20, Up.Instance());
                     break;
                 case FieldTypes.RoadVer:
-                    m = new Motorway(field, 20, LEFT.Instance());
+                    m = new Motorway(field, 20, Left.Instance());
                     break;
                 case FieldTypes.FourInter:
-                    m = new Motorway(field, 20, UP.Instance());
+                    m = new Motorway(field, 20, Up.Instance());
                     Intersection i4 = new FourWayIntersection(field);
                     m.AddIntersection(i4);
                     break;
 
                 case FieldTypes.ThreeInterHorUp:
-                    m = new Motorway(field, 20, UP.Instance());
-                    Intersection i30 = new ThreeWayIntersection(field, UP.Instance());
+                    m = new Motorway(field, 20, Up.Instance());
+                    Intersection i30 = new ThreeWayIntersection(field, Up.Instance());
                     m.AddIntersection(i30);
                     break;
                 
                 case FieldTypes.ThreeInterHorDown:
-                    m = new Motorway(field, 20, DOWN.Instance());
-                    Intersection i31 = new ThreeWayIntersection(field, DOWN.Instance());
+                    m = new Motorway(field, 20, Down.Instance());
+                    Intersection i31 = new ThreeWayIntersection(field, Down.Instance());
                     m.AddIntersection(i31);
                     break;
 
                 case FieldTypes.ThreeInterVerLeft:
-                    m = new Motorway(field, 20, LEFT.Instance());
-                    Intersection i32 = new ThreeWayIntersection(field, LEFT.Instance());
+                    m = new Motorway(field, 20, Left.Instance());
+                    Intersection i32 = new ThreeWayIntersection(field, Left.Instance());
                     m.AddIntersection(i32);
                     break;
                 
                 case FieldTypes.ThreeInterVerRight:
-                    m = new Motorway(field, 20, RIGHT.Instance());
-                    Intersection i33 = new ThreeWayIntersection(field, RIGHT.Instance());
+                    m = new Motorway(field, 20, Right.Instance());
+                    Intersection i33 = new ThreeWayIntersection(field, Right.Instance());
                     m.AddIntersection(i33);
                     break;
             }

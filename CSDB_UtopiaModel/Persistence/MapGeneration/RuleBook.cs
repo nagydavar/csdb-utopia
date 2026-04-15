@@ -125,8 +125,8 @@ internal class RuleBook
             
             foreach (var b in Enum.GetValues<FieldTypes>())
             {
-                List<Direction> directions = new List<Direction>([UP.Instance(), DOWN.Instance(), LEFT.Instance(), RIGHT.Instance()]);
-                foreach (Direction d in directions)
+                List<IDirection> directions = new List<IDirection>([Up.Instance(), Down.Instance(), Left.Instance(), Right.Instance()]);
+                foreach (IDirection d in directions)
                 {
                     bool bINa = rules[a].GetRule(d).Contains(b);
                     bool aINb = rules[b].GetRule(d.Opposite()).Contains(a);

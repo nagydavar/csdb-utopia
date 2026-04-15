@@ -14,8 +14,8 @@ class Persistence
     public List<ResourceExtractor> ResourceExtractors { get; private set; }
     public List<Field> FactoryFields { get; private set; }
     public List<Field> ResourceExtractorFields { get; private set; }
-    public List<Vehicle<Resource>> VehiclesOnMap { get; private set; }
-    public Dictionary<Resource, int> Storage { get; private set; }
+    public List<Vehicle<IResource>> VehiclesOnMap { get; private set; }
+    public Dictionary<IResource, int> Storage { get; private set; }
     public DateTime Date { get; private set; }
     public int Width { get; private set; }
     public int Height { get; private set; }
@@ -48,7 +48,7 @@ class Persistence
             }
         }
 
-        Storage = new Dictionary<Resource, int>
+        Storage = new Dictionary<IResource, int>
         {
             { HumanResource.Instance(), 0 },
 

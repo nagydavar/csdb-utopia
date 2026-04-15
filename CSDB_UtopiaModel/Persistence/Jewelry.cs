@@ -1,12 +1,13 @@
 namespace CSDB_UtopiaModel.Persistence;
-public class Jewelry : BaseResource, Goods
+
+public class Jewelry : BaseResource, IGoods
 {
-    private static Jewelry? instance;
+    private static Jewelry? _instance;
     private Jewelry() { }
     public static Jewelry Instance()
     {
-        if (instance is null)
-            instance = new Jewelry();
-        return instance;
+        if (_instance is null)
+            _instance = new Jewelry();
+        return _instance;
     }
-};
+}

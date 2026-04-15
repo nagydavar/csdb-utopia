@@ -11,7 +11,7 @@ public class Motorway : Road
                 get => _intersection is not null;
         }
 
-        public Motorway(Field f, int maxSpeed, Direction d) : base(f, maxSpeed, d)
+        public Motorway(Field f, int maxSpeed, IDirection d) : base(f, maxSpeed, d)
         {
         }
 

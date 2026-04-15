@@ -5,5 +5,5 @@ namespace CSDB_UtopiaModel.Model;
 class ThreeWayIntersection: Intersection
 {
     //A T-nek szára adja meg a Direction
-    public ThreeWayIntersection(Field f, Direction d): base(f, d) {} 
+    public ThreeWayIntersection(Field f, IDirection d): base(f, d) {} 
 }
