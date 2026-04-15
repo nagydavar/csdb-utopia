@@ -4,7 +4,7 @@ namespace CSDB_UtopiaModel.Model;
 
 public class DirectionEventArgs: EventArgs
 {
-    public Direction Direction { get; init; }
+    public IDirection Direction { get; init; }
 
-    public DirectionEventArgs(Direction direction) => Direction = direction;
+    public DirectionEventArgs(IDirection direction) => Direction = direction;
 }

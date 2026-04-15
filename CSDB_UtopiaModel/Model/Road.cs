@@ -17,7 +17,7 @@ public abstract class Road : Buildable, INavigable
             if (_leftSide == value) return;
             _leftSide = value;
             if (value is null)
-                Freed?.Invoke(this, new DirectionEventArgs(LEFT.Instance()));
+                Freed?.Invoke(this, new DirectionEventArgs(Left.Instance()));
         }
     }
 
@@ -29,7 +29,7 @@ public abstract class Road : Buildable, INavigable
             if (_rightSide == value) return;
             _rightSide = value;
             if (value is null)
-                Freed?.Invoke(this, new DirectionEventArgs(RIGHT.Instance()));
+                Freed?.Invoke(this, new DirectionEventArgs(Right.Instance()));
         }
     }
 
@@ -55,14 +55,14 @@ public abstract class Road : Buildable, INavigable
             if (dir is not VerticalDirection)
                 throw new Exception();
             
-            return dir == DOWN.Instance() ? LeftSide is null : RightSide is null;
+            return dir == Down.Instance() ? LeftSide is null : RightSide is null;
         }
         else
         {
-            if (dir is not HorizontalDirection)
+            if (dir is not IHorizontalDirection)
                 throw new Exception();
             
-            return dir == RIGHT.Instance() ? LeftSide is null : RightSide is null;
+            return dir == Right.Instance() ? LeftSide is null : RightSide is null;
         }
     }
 
