@@ -8,7 +8,7 @@ public class Model : ITickable
 
     private TimeControl _timeControl;
     private Persistence.Persistence _persistence;
-    private int _totalSeconds = 0; // Az eltelt összes másodperc
+    private uint _totalSeconds = 0; // Az eltelt összes másodperc
 
     public EventHandler<EventArgs>? GameTicked;
     public EventHandler<FieldEventArgs>? FieldsUpdated;
@@ -48,9 +48,9 @@ public class Model : ITickable
     // Formázott idő lekérése a ViewModel számára
     public string GetFormattedTime()
     {
-        int hours = _totalSeconds / 3600;
-        int minutes = (_totalSeconds % 3600) / 60;
-        int seconds = _totalSeconds % 60;
+        uint hours = _totalSeconds / 3600;
+        uint minutes = (_totalSeconds % 3600) / 60;
+        uint seconds = _totalSeconds % 60;
         return $"{hours:D2}:{minutes:D2}:{seconds:D2}";
     }
 
@@ -100,17 +100,23 @@ public class Model : ITickable
 
     public void PlaceRoad(Coordinate coord)
     {
+        Motorway newborn = new(_persistence.Fields[coord.X][coord.Y], int.MaxValue, Up.Instance());
+
+        if (!Place(coord, newborn))
+            return;
+
         // Checking neighbouring intersections
         for (int i = -1; i <= 1; i++)
         {
-            int newx = coord.X + i, newy = coord.Y + i;
-            if (!(0 <= newx && newx < _persistence.Fields.Count))
+            int newx = coord.X + i;
+            if (i == 0 || !(0 <= newx && newx < _persistence.Fields.Count))
                 continue;
             for (int k = -1; k <= 1; k++)
             {
-                if (!(0 <= newy && newy < _persistence.Fields[newx].Count))
+                int newy = coord.Y + k;
+                if (k == 0 || !(0 <= newy && newy < _persistence.Fields[newx].Count))
                     continue;
-                
+
                 if (_persistence.Fields[newx][newy].Buildable is Motorway { HasIntersection: true })
                     return; // can't place two intersections next to each other
             }
@@ -118,17 +124,22 @@ public class Model : ITickable
 
         var roadState = DetermineRoadState(coord);
 
-        Motorway m = new(_persistence.Fields[coord.X][coord.Y], int.MaxValue, roadState.Direction)
-        {
-            IsCurved = roadState.IsCurved,
-            Quadrant = roadState.Quadrant,
-        };
+        newborn.Direction = roadState.Direction;
+        newborn.IsCurved = roadState.IsCurved;
+        newborn.Quadrant = roadState.Quadrant;
 
         if (roadState.Intersection is not null)
-            m.AddIntersection(roadState.Intersection);
-
-        if (!Place(coord, m))
-            return;
+        {
+            try
+            {
+                newborn.AddIntersection(roadState.Intersection);
+            }
+            catch (InvalidOperationException e)
+            {
+                Console.Error.WriteLine("\nCould not add intersection:");
+                Console.Error.WriteLine(e.Message);
+            }
+        }
 
         //Refresh neighbouring roads' states
         for (int i = -1; i <= 1; i++)
@@ -139,7 +150,7 @@ public class Model : ITickable
             for (int k = -1; k <= 1; k++)
             {
                 int newy = coord.Y + k;
-                if ((i==0&&k==0)||!(0 <= newy && newy < _persistence.Fields[newx].Count) ||
+                if ((i == 0 && k == 0) || !(0 <= newy && newy < _persistence.Fields[newx].Count) ||
                     _persistence.Fields[newx][newy].Buildable is not Road road)
                     continue;
 
@@ -154,12 +165,13 @@ public class Model : ITickable
                     {
                         motorway.AddIntersection(roadState.Intersection);
                     }
-                    catch (InvalidOperationException)
+                    catch (InvalidOperationException e)
                     {
-                        // nothing happens
+                        Console.Error.WriteLine("\nCould not add intersection:");
+                        Console.Error.WriteLine(e.Message);
                     }
                 }
-                
+
                 OnFieldsUpdated(_persistence.Fields[newx][newy]);
             }
         }
@@ -222,7 +234,7 @@ public class Model : ITickable
         //5. frissítés
         _persistence.Budget -= cost;
         BudgetChanged?.Invoke(this, EventArgs.Empty);
-        
+
         if (buildable is Decoration decoration)
         {
             _persistence.Storage[resource.Item1!] -= resource.Item2;
@@ -250,7 +262,6 @@ public class Model : ITickable
 
         return true;
     }
-
 
     public void PlaceVehicle(Coordinate coord, Vehicle<IResource> vehicle)
     {
@@ -421,34 +432,34 @@ public class Model : ITickable
         _persistence.GameOver += (_, e) => GameOver?.Invoke(this, e);
     }
 
-    private (bool IsCurved,int Quadrant,IDirection Direction, Intersection? Intersection) DetermineRoadState(Coordinate coord)
+    private (bool IsCurved, int Quadrant, IDirection Direction, Intersection? Intersection) DetermineRoadState(
+        Coordinate coord)
     {
         int tmp, roadCount = 0;
-        Field?[] roadArray = [null, null, null, null];
-        //List<Field> roads = new(4);
-        
+        Field?[] roads = [null, null, null, null];
+
         if ((tmp = coord.X - 1) >= 0 && _persistence.Fields[tmp][coord.Y].Buildable is Road)
         {
-            roadArray[0] = _persistence.Fields[tmp][coord.Y];
+            roads[0] = _persistence.Fields[tmp][coord.Y];
             roadCount++;
         }
-        
+
         if ((tmp = coord.Y + 1) < _persistence.Fields[coord.X].Count &&
             _persistence.Fields[coord.X][tmp].Buildable is Road)
         {
-            roadArray[1] = _persistence.Fields[coord.X][tmp];
+            roads[1] = _persistence.Fields[coord.X][tmp];
             roadCount++;
         }
-        
+
         if ((tmp = coord.X + 1) < _persistence.Fields.Count && _persistence.Fields[tmp][coord.Y].Buildable is Road)
         {
-            roadArray[2] = _persistence.Fields[tmp][coord.Y];
+            roads[2] = _persistence.Fields[tmp][coord.Y];
             roadCount++;
         }
-        
+
         if ((tmp = coord.Y - 1) >= 0 && _persistence.Fields[coord.X][tmp].Buildable is Road)
         {
-            roadArray[3] = _persistence.Fields[coord.X][tmp];
+            roads[3] = _persistence.Fields[coord.X][tmp];
             roadCount++;
         }
 
@@ -465,9 +476,9 @@ public class Model : ITickable
                 isCurved = false;
                 q = 0;
 
-                for (int i = 0; i < roadArray.Length; i++)
+                for (int i = 0; i < roads.Length; i++)
                 {
-                    if (roadArray[i] is not null)
+                    if (roads[i] is not null)
                     {
                         switch (i)
                         {
@@ -491,30 +502,45 @@ public class Model : ITickable
 
                 break;
             case 2:
-                isCurved = true;
-
-                if (roadArray[0] is not null) // up
+                if (roads[0] == roads[2])
                 {
-                    if (roadArray[1] is not null) // right
-                        q = 1;
-                    else // left
-                        q = 2;
+                    isCurved = false;
+                    if (roads[0] is not null)
+                        dir = Up.Instance();
+                    else
+                        dir = Right.Instance();
                 }
-                else // down
+                else
                 {
-                    if (roadArray[1] is not null) // right
-                        q = 3;
-                    else // left
-                        q = 4;
+                    isCurved = true;
+
+                    if (roads[0] is not null) // up
+                    {
+                        if (roads[1] is not null) // right
+                            q = 1;
+                        else // left
+                            q = 2;
+                    }
+                    else // down
+                    {
+                        if (roads[1] is not null) // right
+                            q = 4;
+                        else // left
+                            q = 3;
+                    }
                 }
 
                 break;
             case 3:
+                foreach (Field? field in roads)
+                    if (field?.Buildable is Motorway { HasIntersection: true })
+                        throw new Exception(); // can't place two intersections next to each other
+
                 isCurved = false;
                 q = 0;
 
                 // assume that we put the elements in the list clockwise
-                switch (Array.IndexOf(roadArray, null))
+                switch (Array.IndexOf(roads, null))
                 {
                     case 0:
                         dir = Down.Instance();
@@ -536,6 +562,11 @@ public class Model : ITickable
 
                 break;
             case 4:
+                //TODO refactor code redundancy (case 3)
+                foreach (Field? field in roads)
+                    if (field?.Buildable is Motorway { HasIntersection: true })
+                        throw new Exception(); // can't place two intersections next to each other
+
                 isCurved = false;
                 intersection = new FourWayIntersection(f);
                 break;
