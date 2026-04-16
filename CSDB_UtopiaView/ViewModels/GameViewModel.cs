@@ -247,7 +247,7 @@ public partial class GameViewModel : ViewModelBase
                 {
                     // Itt hívjuk meg a Modell metódusát, ami lekezeli a 
                     // tájolást és a hurok-ellenőrzést
-                    // _model.PlaceRoad(new Coordinate(cell.X, cell.Y));   EZT KELL MEGÍRNI
+                    _model.PlaceRoad(new Coordinate(cell.X, cell.Y));
                     return; // Ne menjen tovább az építés
                 }
 

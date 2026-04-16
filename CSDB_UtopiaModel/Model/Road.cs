@@ -9,7 +9,7 @@ public abstract class Road : Buildable, INavigable
 
     public int MaxSpeed { get; protected set; }
 
-    public byte Quadrant { get; internal set; } = 0;
+    public int Quadrant { get; internal set; } = 0;
 
     public bool IsCurved { get; internal set; } = false;
     
@@ -49,6 +49,8 @@ public abstract class Road : Buildable, INavigable
     // public Vehicle<Resource>? RightSide => new Bus();
 
     public HashSet<Section> Sections { get; set; } = new();
+    
+    public override int placementCost => 100;
 
     public EventHandler<DirectionEventArgs>? Freed;
 
@@ -56,6 +58,8 @@ public abstract class Road : Buildable, INavigable
     {
         MaxSpeed = maxSpeed;
         Direction = d;
+
+        area = (1, 1);
     }
 
     public bool IsFree(IDirection dir)
