@@ -148,36 +148,6 @@ public partial class Cell : ObservableObject
         return "Up"; // Alapértelmezett
     }
 
-    // Megvizsgálja, hogy a 2 csatlakozási irány kanyart alkot-e
-    private string GetCurveSuffix(List<IDirection> connections)
-    {
-        // Megnézzük a típusokat (pl. Up, Down, Left, Right osztályok)
-        bool hasUp = connections.Any(d => d is Up);
-        bool hasDown = connections.Any(d => d is Down);
-        bool hasLeft = connections.Any(d => d is Left);
-        bool hasRight = connections.Any(d => d is Right);
-
-        if (hasLeft && hasUp) return "LU";    // Bal-Fel kanyar
-        if (hasRight && hasUp) return "RU";   // Jobb-Fel kanyar
-        if (hasLeft && hasDown) return "LD";  // Bal-Le kanyar
-        if (hasRight && hasDown) return "RD"; // Jobb-Le kanyar
-
-        return string.Empty; // Egyenes út (pl. Up-Down vagy Left-Right)
-    }
-
-    // Ez a függvény a modelltől kérdezi meg, kik a szomszédos utak
-    private List<IDirection> GetRoadConnections(Field currentField)
-    {
-        // Ideális esetben a Motorway tudja a szomszédait.
-        // Ha nem, akkor a Modell referenciáján keresztül kell lekérdezni 
-        // a 4 szomszédos koordinátát és megnézni, van-e ott út.
-
-        // ha a Road tárolja a Section-öket:
-        // return currentField.Buildable.Sections.Select(s => s.Direction).ToList();
-
-        return new List<IDirection>(); // Implementálandó a Modell felépítése alapján
-    }
-
     private void UpdateVehicles(Field field)
     {
         // Ez egy példa logika, a Modell felépítésétől függően:

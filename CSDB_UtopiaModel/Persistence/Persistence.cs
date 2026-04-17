@@ -46,7 +46,7 @@ class Persistence
     {
         Width = width;
         Height = height;
-        Budget = 10000;
+        Budget = 100000;
         CurrentMood = 100;
 
         if (generateMap)
@@ -68,22 +68,22 @@ class Persistence
             { HumanResource.Instance(), 0 },
 
             // Ipari nyersanyagok
-            { Wood.Instance(), 1000 },
-            { IronOre.Instance(), 1000 },
-            { Coal.Instance(), 1000 },
-            { Oil.Instance(), 1000 },
+            { Wood.Instance(), 10000 },
+            { IronOre.Instance(), 10000 },
+            { Coal.Instance(), 10000 },
+            { Oil.Instance(), 10000 },
 
             // Kincsek
-            { Gold.Instance(), 1000 },
-            { Diamond.Instance(), 1000 },
+            { Gold.Instance(), 10000 },
+            { Diamond.Instance(), 10000 },
 
             // K�szterm�kek / Goods
-            { Plank.Instance(), 1000 },
-            { Iron.Instance(), 1000 },
-            { Gasoline.Instance(), 1000 },
-            { Jewelry.Instance(), 1000 },
-            { Paper.Instance(), 1000 },
-            { Book.Instance(), 1000 }
+            { Plank.Instance(), 10000 },
+            { Iron.Instance(), 10000 },
+            { Gasoline.Instance(), 10000 },
+            { Jewelry.Instance(), 10000 },
+            { Paper.Instance(), 10000 },
+            { Book.Instance(), 10000 }
         };
     }
 
