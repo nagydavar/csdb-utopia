@@ -33,12 +33,12 @@
                                 Height="50" 
                                 Padding="0"
                                 Background="Transparent"
-                                BorderThickness="0.5"
+                                BorderThickness="0"
                                 BorderBrush="Black"
                                 Command="{Binding $parent[ItemsControl].((vm:GameViewModel)DataContext).ClickCellCommand}"
                                 CommandParameter="{Binding}">
                             
-                            <Image Stretch="UniformToFill" Source="{Binding Image}">
+                            <Image Stretch="Fill" Source="{Binding Image}">
 
                             </Image>
                         </Button>
