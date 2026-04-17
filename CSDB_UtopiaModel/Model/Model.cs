@@ -8,7 +8,7 @@ public class Model : ITickable
 
     private TimeControl _timeControl;
     private Persistence.Persistence _persistence;
-    private int _totalSeconds = 0; // Az eltelt összes másodperc
+    private uint _totalSeconds = 0; // Az eltelt összes másodperc
 
     public EventHandler<EventArgs>? GameTicked;
     public EventHandler<FieldEventArgs>? FieldsUpdated;
@@ -48,9 +48,9 @@ public class Model : ITickable
     // Formázott idő lekérése a ViewModel számára
     public string GetFormattedTime()
     {
-        int hours = _totalSeconds / 3600;
-        int minutes = (_totalSeconds % 3600) / 60;
-        int seconds = _totalSeconds % 60;
+        uint hours = _totalSeconds / 3600;
+        uint minutes = (_totalSeconds % 3600) / 60;
+        uint seconds = _totalSeconds % 60;
         return $"{hours:D2}:{minutes:D2}:{seconds:D2}";
     }
 
@@ -100,163 +100,84 @@ public class Model : ITickable
 
     public void PlaceRoad(Coordinate coord)
     {
-        int tmp;
-        Field?[] roadArray = [null, null, null, null];
-        List<Field> roads = new(4);
+        Motorway newborn = new(_persistence.Fields[coord.X][coord.Y], int.MaxValue, Up.Instance());
 
-        if ((tmp = coord.Y - 1) >= 0 && _persistence.Fields[coord.X][tmp].Buildable is Road)
+        if (!Place(coord, newborn))
+            return;
+
+        // Checking neighbouring intersections
+        for (int i = -1; i <= 1; i++)
         {
-            roads.Add(roadArray[0] = _persistence.Fields[coord.X][tmp]);
+            int newx = coord.X + i;
+            if (i == 0 || !(0 <= newx && newx < _persistence.Fields.Count))
+                continue;
+            for (int k = -1; k <= 1; k++)
+            {
+                int newy = coord.Y + k;
+                if (k == 0 || !(0 <= newy && newy < _persistence.Fields[newx].Count))
+                    continue;
+
+                if (_persistence.Fields[newx][newy].Buildable is Motorway { HasIntersection: true })
+                    return; // can't place two intersections next to each other
+            }
         }
 
-        if ((tmp = coord.X + 1) < _persistence.Fields.Count && _persistence.Fields[tmp][coord.Y].Buildable is Road)
+        var roadState = DetermineRoadState(coord);
+
+        newborn.Direction = roadState.Direction;
+        newborn.IsCurved = roadState.IsCurved;
+        newborn.Quadrant = roadState.Quadrant;
+
+        if (roadState.Intersection is not null)
         {
-            roads.Add(roadArray[1] = _persistence.Fields[tmp][coord.Y]);
+            try
+            {
+                newborn.AddIntersection(roadState.Intersection);
+            }
+            catch (InvalidOperationException e)
+            {
+                Console.Error.WriteLine("\nCould not add intersection:");
+                Console.Error.WriteLine(e.Message);
+            }
         }
 
-        if ((tmp = coord.Y + 1) < _persistence.Fields[coord.X].Count &&
-            _persistence.Fields[coord.X][tmp].Buildable is Road)
+        //Refresh neighbouring roads' states
+        for (int i = -1; i <= 1; i++)
         {
-            roads.Add(roadArray[2] = _persistence.Fields[coord.X][tmp]);
-        }
+            int newx = coord.X + i;
+            if (!(0 <= newx && newx < _persistence.Fields.Count))
+                continue;
+            for (int k = -1; k <= 1; k++)
+            {
+                int newy = coord.Y + k;
+                if ((i == 0 && k == 0) || !(0 <= newy && newy < _persistence.Fields[newx].Count) ||
+                    _persistence.Fields[newx][newy].Buildable is not Road road)
+                    continue;
 
-        if ((tmp = coord.X - 1) >= 0 && _persistence.Fields[tmp][coord.Y].Buildable is Road)
-        {
-            roads.Add(roadArray[3] = _persistence.Fields[tmp][coord.Y]);
-        }
+                roadState = DetermineRoadState(_persistence.Fields[newx][newy].Coordinates);
+                road.IsCurved = roadState.IsCurved;
+                road.Quadrant = roadState.Quadrant;
+                road.Direction = roadState.Direction;
 
-        bool isCurved, becomeIntersection = roads.Count is 3 or 4;
-        byte q = 0;
-        IDirection dir = Up.Instance();
-        Intersection? intersection=null;
-        Field f = _persistence.Fields[coord.X][coord.Y];
-        switch (roads.Count)
-        {
-            case 1:
-                isCurved = false;
-                q = 0;
-
-                switch (Array.IndexOf(roadArray, roads[0]))
+                if (roadState.Intersection is not null && road is Motorway motorway)
                 {
-                    case 0:
-                        dir = Up.Instance();
-                        break;
-                    case 1:
-                        dir = Right.Instance();
-                        break;
-                    case 2:
-                        Down.Instance();
-                        break;
-                    case 3:
-                        Left.Instance();
-                        break;
-                    default:
-                        return; // error occured, road cannot be placed
-                }
-
-                break;
-            case 2:
-                if (roads[0].Coordinates.X == roads[1].Coordinates.X)
-                {
-                    isCurved = false;
-                    dir = Right.Instance();
-                    q = 0;
-                }
-                else if (roads[0].Coordinates.Y == roads[1].Coordinates.Y)
-                {
-                    isCurved = false;
-                    dir = Up.Instance();
-                    q = 0;
-                }
-                else if (coord.Y - roads[0].Coordinates.Y > 0 || coord.Y - roads[1].Coordinates.Y > 0) // Up
-                {
-                    isCurved = true;
-                    dir = Up.Instance(); // this has no meaning
-
-                    if (coord.X - roads[0].Coordinates.X > 0 || coord.X - roads[1].Coordinates.X > 0) // Left
+                    try
                     {
-                        q = 2;
+                        motorway.AddIntersection(roadState.Intersection);
                     }
-                    else // Right
+                    catch (InvalidOperationException e)
                     {
-                        q = 1;
+                        Console.Error.WriteLine("\nCould not add intersection:");
+                        Console.Error.WriteLine(e.Message);
                     }
                 }
-                else // Down
-                {
-                    isCurved = true;
-                    dir = Down.Instance(); // this has no meaning 
 
-                    if (coord.X - roads[0].Coordinates.X > 0 || coord.X - roads[1].Coordinates.X > 0) // Left
-                        q = 3;
-                    else // Right
-                        q = 4;
-                }
-
-                break;
-            case 3:
-                foreach (Field field in roads)
-                {
-                    if (field.Buildable is Motorway { HasIntersection: true })
-                        return; // can't place two intersections next to each other
-                }
-
-                isCurved = false;
-                q = 0;
-
-                // assume that we put the elements in the list clockwise
-                switch (Array.IndexOf(roadArray, null))
-                {
-                    case 0:
-                        dir = Down.Instance();
-                        break;
-                    case 1:
-                        dir = Left.Instance();
-                        break;
-                    case 2:
-                        dir = Up.Instance();
-                        break;
-                    case 3:
-                        dir = Right.Instance();
-                        break;
-                    default:
-                        return; // error occured, road cannot be placed
-                }
-
-                intersection = new ThreeWayIntersection(f, dir);
-
-                break;
-            case 4:
-                foreach (Field field in roads)
-                {
-                    if (field.Buildable is Motorway { HasIntersection: true })
-                        return; // can't place two intersections next to each other
-                }
-
-                isCurved = false;
-                // dummy values:
-                q = 0;
-                dir = Up.Instance();
-
-                intersection = new FourWayIntersection(f);
-                break;
-            default:
-                return;
+                OnFieldsUpdated(_persistence.Fields[newx][newy]);
+            }
         }
-
-        Motorway m = new Motorway(_persistence.Fields[coord.X][coord.Y], int.MaxValue, dir)
-        {
-            IsCurved = isCurved,
-            Quadrant = q,
-        };
-
-        if ((roads.Count == 3 || roads.Count == 4) && intersection is not null)
-            m.AddIntersection(intersection);
-        
-        //TODO refresh neighbour roads' states
     }
 
-    public void Place(Coordinate coord, Buildable buildable)
+    public bool Place(Coordinate coord, Buildable buildable)
     {
 
         // 1. Épület méretének lekérése
@@ -272,7 +193,7 @@ public class Model : ITickable
             for (int j = 0; j < height; j++)
             {
                 // Koordináta validáció (ne lógjon ki a pályáról)
-                if (coord.X + i >= _persistence.Width || coord.Y + j >= _persistence.Height) return;
+                if (coord.X + i >= _persistence.Width || coord.Y + j >= _persistence.Height) return false;
 
                 Field f = _persistence.Fields[coord.X + i][coord.Y + j];
 
@@ -282,7 +203,7 @@ public class Model : ITickable
                     targetLands.Add(land);
                     totalForestFactor += 0.05f * land.LevelOfForest;
                 }
-                else return; // Ha csak egyetlen mező is foglalt vagy nem Land, megállunk
+                else return false; // Ha csak egyetlen mező is foglalt vagy nem Land, megállunk
             }
         }
 
@@ -296,7 +217,7 @@ public class Model : ITickable
             if (_persistence.Storage[decor.costResource.resource] < decor.costResource.cost)
             {
                 // hiba dobása? nincs elég nyersanyag
-                return;
+                return false;
             }
         }
 
@@ -313,7 +234,7 @@ public class Model : ITickable
         //5. frissítés
         _persistence.Budget -= cost;
         BudgetChanged?.Invoke(this, EventArgs.Empty);
-        
+
         if (buildable is Decoration decoration)
         {
             _persistence.Storage[resource.Item1!] -= resource.Item2;
@@ -338,8 +259,9 @@ public class Model : ITickable
         {
             OnFieldsUpdated(land);
         }
-    }
 
+        return true;
+    }
 
     public void PlaceVehicle(Coordinate coord, Vehicle<IResource> vehicle)
     {
@@ -508,6 +430,151 @@ public class Model : ITickable
     {
         // Mindig a jelenlegi _persistence objektumra iratkozunk fel
         _persistence.GameOver += (_, e) => GameOver?.Invoke(this, e);
+    }
+
+    private (bool IsCurved, int Quadrant, IDirection Direction, Intersection? Intersection) DetermineRoadState(
+        Coordinate coord)
+    {
+        int tmp, roadCount = 0;
+        Field?[] roads = [null, null, null, null];
+
+        if ((tmp = coord.X - 1) >= 0 && _persistence.Fields[tmp][coord.Y].Buildable is Road)
+        {
+            roads[0] = _persistence.Fields[tmp][coord.Y];
+            roadCount++;
+        }
+
+        if ((tmp = coord.Y + 1) < _persistence.Fields[coord.X].Count &&
+            _persistence.Fields[coord.X][tmp].Buildable is Road)
+        {
+            roads[1] = _persistence.Fields[coord.X][tmp];
+            roadCount++;
+        }
+
+        if ((tmp = coord.X + 1) < _persistence.Fields.Count && _persistence.Fields[tmp][coord.Y].Buildable is Road)
+        {
+            roads[2] = _persistence.Fields[tmp][coord.Y];
+            roadCount++;
+        }
+
+        if ((tmp = coord.Y - 1) >= 0 && _persistence.Fields[coord.X][tmp].Buildable is Road)
+        {
+            roads[3] = _persistence.Fields[coord.X][tmp];
+            roadCount++;
+        }
+
+        bool isCurved = false;
+        int q = 0;
+        IDirection dir = Up.Instance();
+        Intersection? intersection = null;
+        Field f = _persistence.Fields[coord.X][coord.Y];
+        switch (roadCount)
+        {
+            case 0: // should be also included in case 'default' if we want to build only non-separated roads
+                break;
+            case 1:
+                isCurved = false;
+                q = 0;
+
+                for (int i = 0; i < roads.Length; i++)
+                {
+                    if (roads[i] is not null)
+                    {
+                        switch (i)
+                        {
+                            case 0:
+                                dir = Up.Instance();
+                                break;
+                            case 1:
+                                dir = Right.Instance();
+                                break;
+                            case 2:
+                                dir = Down.Instance();
+                                break;
+                            case 3:
+                                dir = Left.Instance();
+                                break;
+                            default:
+                                throw new Exception();
+                        }
+                    }
+                }
+
+                break;
+            case 2:
+                if (roads[0] == roads[2])
+                {
+                    isCurved = false;
+                    if (roads[0] is not null)
+                        dir = Up.Instance();
+                    else
+                        dir = Right.Instance();
+                }
+                else
+                {
+                    isCurved = true;
+
+                    if (roads[0] is not null) // up
+                    {
+                        if (roads[1] is not null) // right
+                            q = 1;
+                        else // left
+                            q = 2;
+                    }
+                    else // down
+                    {
+                        if (roads[1] is not null) // right
+                            q = 4;
+                        else // left
+                            q = 3;
+                    }
+                }
+
+                break;
+            case 3:
+                foreach (Field? field in roads)
+                    if (field?.Buildable is Motorway { HasIntersection: true })
+                        throw new Exception(); // can't place two intersections next to each other
+
+                isCurved = false;
+                q = 0;
+
+                // assume that we put the elements in the list clockwise
+                switch (Array.IndexOf(roads, null))
+                {
+                    case 0:
+                        dir = Down.Instance();
+                        break;
+                    case 1:
+                        dir = Left.Instance();
+                        break;
+                    case 2:
+                        dir = Up.Instance();
+                        break;
+                    case 3:
+                        dir = Right.Instance();
+                        break;
+                    default:
+                        throw new Exception();
+                }
+
+                intersection = new ThreeWayIntersection(f, dir);
+
+                break;
+            case 4:
+                //TODO refactor code redundancy (case 3)
+                foreach (Field? field in roads)
+                    if (field?.Buildable is Motorway { HasIntersection: true })
+                        throw new Exception(); // can't place two intersections next to each other
+
+                isCurved = false;
+                intersection = new FourWayIntersection(f);
+                break;
+            default:
+                throw new Exception();
+        }
+
+        return (isCurved, q, dir, intersection);
     }
 
     protected virtual void OnResourceChanged(IResource resource, int newValue)
