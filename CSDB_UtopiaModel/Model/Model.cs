@@ -141,6 +141,8 @@ public class Model : ITickable
             }
         }
 
+        OnFieldsUpdated(_persistence.Fields[coord.X][coord.Y]);
+
         //Refresh neighbouring roads' states
         for (int i = -1; i <= 1; i++)
         {
@@ -473,61 +475,25 @@ public class Model : ITickable
             case 0: // should be also included in case 'default' if we want to build only non-separated roads
                 break;
             case 1:
-                isCurved = false;
-                q = 0;
-
-                for (int i = 0; i < roads.Length; i++)
-                {
-                    if (roads[i] is not null)
-                    {
-                        switch (i)
-                        {
-                            case 0:
-                                dir = Up.Instance();
-                                break;
-                            case 1:
-                                dir = Right.Instance();
-                                break;
-                            case 2:
-                                dir = Down.Instance();
-                                break;
-                            case 3:
-                                dir = Left.Instance();
-                                break;
-                            default:
-                                throw new Exception();
-                        }
-                    }
-                }
-
+                // Amerre a szomszéd van, arra nézzen
+                if (roads[0] is not null) dir = Up.Instance();
+                else if (roads[1] is not null) dir = Right.Instance();
+                else if (roads[2] is not null) dir = Down.Instance();
+                else if (roads[3] is not null) dir = Left.Instance();
                 break;
+
             case 2:
-                if (roads[0] == roads[2])
-                {
-                    isCurved = false;
-                    if (roads[0] is not null)
-                        dir = Up.Instance();
-                    else
-                        dir = Right.Instance();
-                }
+                // Szemközti szomszédok -> EGYENES
+                if ((roads[0] is not null) && (roads[2] is not null)) { dir = Up.Instance(); isCurved = false; } // Függőleges
+                else if (roads[1] is not null && roads[3] is not null) { dir = Right.Instance(); isCurved = false; } // Vízszintes
                 else
                 {
+                    // Egymás melletti szomszédok -> KANYAR
                     isCurved = true;
-
-                    if (roads[0] is not null) // up
-                    {
-                        if (roads[1] is not null) // right
-                            q = 1;
-                        else // left
-                            q = 2;
-                    }
-                    else // down
-                    {
-                        if (roads[1] is not null) // right
-                            q = 4;
-                        else // left
-                            q = 3;
-                    }
+                    if (roads[0] is not null && roads[1] is not null) q = 1;      // Fent + Jobb
+                    else if (roads[0] is not null && roads[3] is not null) q = 2; // Fent + Bal
+                    else if (roads[2] is not null && roads[3] is not null) q = 3; // Lent + Bal
+                    else if (roads[2] is not null && roads[1] is not null) q = 4; // Lent + Jobb
                 }
 
                 break;
@@ -539,24 +505,16 @@ public class Model : ITickable
                 isCurved = false;
                 q = 0;
 
-                // assume that we put the elements in the list clockwise
-                switch (Array.IndexOf(roads, null))
-                {
-                    case 0:
-                        dir = Down.Instance();
-                        break;
-                    case 1:
-                        dir = Left.Instance();
-                        break;
-                    case 2:
-                        dir = Up.Instance();
-                        break;
-                    case 3:
-                        dir = Right.Instance();
-                        break;
-                    default:
-                        throw new Exception();
-                }
+                // Megkeressük, melyik irányban NINCS út a 4 közül
+                // A 'dir' változó fogja tárolni a T-elágazás irányadó irányát
+                if (roads[2] is null)      // Nincs út LENT
+                    dir = Up.Instance();   // A T szára felfelé mutat
+                else if (roads[3] is null) // Nincs út BALRA
+                    dir = Right.Instance();
+                else if (roads[0] is null) // Nincs út FENT
+                    dir = Down.Instance();
+                else if (roads[1] is null) // Nincs út JOBBRA
+                    dir = Left.Instance();
 
                 intersection = new ThreeWayIntersection(f, dir);
 
