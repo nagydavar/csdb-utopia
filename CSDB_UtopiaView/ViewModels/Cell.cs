@@ -84,55 +84,32 @@ public partial class Cell : ObservableObject
                 }
                 else if (field.Buildable is Road road)
                 {
-                    // Ha Motorway-ről van szó, ellenőrizzük az elágazást
                     if (road is Motorway motorway && motorway.HasIntersection)
                     {
-                        // Megkeressük a motorway-ben tárolt kereszteződést
-                        
-                        //kell getter vagy property
                         var intersection = motorway.GetIntersection();
-
                         if (intersection is FourWayIntersection)
                         {
-                            // Négyágú kereszteződés (X)
                             _fileName = "Roads/Intersection_4.PNG";
                         }
                         else if (intersection is ThreeWayIntersection tWay)
                         {
-                            // T-elágazás (3 irány)
-                            // Itt a tWay.Direction (TrafficLightIDirection) adja meg a T szárának irányát
+                            // A Direction adja meg, merre néz a T-elágazás szára (Up, Down, Left, Right)
                             string dirSuffix = GetDirectionSuffix(tWay.TrafficLightIDirection);
                             _fileName = $"Roads/Intersection_3_{dirSuffix}.PNG";
                         }
                     }
+                    else if (road.IsCurved)
+                    {
+                        // A Modell Quadrant értéke alapján (1, 2, 3, 4)
+                        // 1: Jobb-Fel, 2: Bal-Fel, 3: Bal-Le, 4: Jobb-Le
+                        _fileName = $"Roads/{typeName}_Curve_{road.Quadrant}.PNG";
+                    }
                     else
                     {
-                        // Sima egyenes út (H vagy V) vagy kanyar
-
-                        // Tegyük fel, hogy a road.GetConnections() visszaad egy listát: List<IDirection>
-                        var connections = GetRoadConnections(field);
-
-                        if (connections.Count == 2)
-                        {
-                            string curveSuffix = GetCurveSuffix(connections);
-                            if (!string.IsNullOrEmpty(curveSuffix))
-                            {
-                                // Kanyar képek Roads/Motorway_Curve_LU.PNG (Left-Up), stb.
-                                _fileName = $"Roads/{typeName}_Curve_{curveSuffix}.PNG";
-                            }
-                            else
-                            {
-                                // Ha nem kanyar, akkor egyenes (H vagy V)
-                                string directionSuffix = road.Direction is IHorizontalDirection ? "H" : "V";
-                                _fileName = $"Roads/{typeName}_{directionSuffix}.PNG";
-                            }
-                        }
-                        else
-                        {
-                            // Alapértelmezett egyenes
-                            string directionSuffix = road.Direction is IHorizontalDirection ? "H" : "V";
-                            _fileName = $"Roads/{typeName}_{directionSuffix}.PNG";
-                        }
+                        // Egyenes út: Ha a Direction Up vagy Down, akkor V (Vertical), különben H
+                        bool isVertical = road.Direction is Up || road.Direction is Down;
+                        string dirType = isVertical ? "V" : "H";
+                        _fileName = $"Roads/{typeName}_{dirType}.PNG";
                     }
                 }
             }
@@ -164,9 +141,11 @@ public partial class Cell : ObservableObject
 
     private string GetDirectionSuffix(IDirection dir)
     {
-        // A típusnév alapján (pl. Up, Down, Left, Right osztályok neve)
-        // Ha a dir null, adjunk vissza egy alapértelmezettet
-        return dir?.GetType().Name ?? "Up";
+        if (dir is Up) return "Up";
+        if (dir is Down) return "Down";
+        if (dir is Left) return "Left";
+        if (dir is Right) return "Right";
+        return "Up"; // Alapértelmezett
     }
 
     // Megvizsgálja, hogy a 2 csatlakozási irány kanyart alkot-e
