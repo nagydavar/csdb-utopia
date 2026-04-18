@@ -100,11 +100,6 @@ public class Model : ITickable
 
     public void PlaceRoad(Coordinate coord)
     {
-        Motorway newborn = new(_persistence.Fields[coord.X][coord.Y], int.MaxValue, Up.Instance());
-
-        if (!Place(coord, newborn))
-            return;
-
         // Checking neighbouring intersections
         for (int i = -1; i <= 1; i++)
         {
@@ -121,6 +116,11 @@ public class Model : ITickable
                     return; // can't place two intersections next to each other
             }
         }
+        
+        Motorway newborn = new(_persistence.Fields[coord.X][coord.Y], int.MaxValue, Up.Instance());
+
+        if (!Place(coord, newborn))
+            return;
 
         var roadState = DetermineRoadState(coord);
 
