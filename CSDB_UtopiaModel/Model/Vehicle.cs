@@ -16,6 +16,10 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     public int ThresholdToMove { get; set; }
     public GoingIntention Intention { get; }
 
+    //Ez alapján frissül a kép a View-ban
+    //Mindig frissíteni kell majd az alapján hogy merre fog menni (Tick-ben)
+    public IDirection CurrentDirection { get; set; } = Up.Instance();
+
     public Vehicle(Field _, int a, int b, int c, Navigator d) => throw new NotImplementedException();
     
     protected bool TimeToGoToGarage() => throw new NotImplementedException();

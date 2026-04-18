@@ -39,6 +39,12 @@ public partial class Cell : ObservableObject
     [ObservableProperty]
     private bool _hasVehicle2;
 
+    [ObservableProperty]
+    private double _vehicle1Rotation; // Fokokban (0, 90, 180, 270)
+
+    [ObservableProperty]
+    private double _vehicle2Rotation;
+
     public Cell(int x, int y)
     {
         _x = x;
@@ -150,22 +156,52 @@ public partial class Cell : ObservableObject
 
     private void UpdateVehicles(Field field)
     {
-        // Ez egy példa logika, a Modell felépítésétől függően:
-        if (field.Buildable is Road e)
-        { 
-            HasVehicle1 = e.RightSide != null;
-            HasVehicle2 = e.LeftSide != null;
-
-            //TODO ha már van a modellben implementálva az út. autók
-            if (HasVehicle1)
+        if (field.Buildable is Road road)
+        {
+            // 1. sáv ellenőrzése
+            if (road.RightSide != null)
             {
-                //    VehicleImage1 = ImageLoader.Get($"Vehicles/{e.RightSide.Type}.PNG");
+                HasVehicle1 = true;
+                Vehicle1Rotation = GetRotationAngle(road.RightSide.CurrentDirection);
+
+                // Kinyerjük a típusnevet és levágjuk a generikus jelölőt ha van
+                string vType = road.RightSide.GetType().Name.Split('`')[0];
+                VehicleImage1 = ImageLoader.Get($"Vehicles/{vType}.png");
+            }
+            else
+            {
+                HasVehicle1 = false;
+                VehicleImage1 = null;
             }
 
-            if (HasVehicle2)
+            // 2. sáv ellenőrzése
+            if (road.LeftSide != null)
             {
-                //    VehicleImage2 = ImageLoader.Get($"Vehicles/{e.LeftSide.Type}.PNG");
+                HasVehicle2 = true;
+                Vehicle2Rotation = GetRotationAngle(road.LeftSide.CurrentDirection);
+
+                string vType = road.LeftSide.GetType().Name.Split('`')[0];
+                VehicleImage2 = ImageLoader.Get($"Vehicles/{vType}.png");
+            }
+            else
+            {
+                HasVehicle2 = false;
+                VehicleImage2 = null;
             }
         }
+        else
+        {
+            HasVehicle1 = false;
+            HasVehicle2 = false;
+        }
+    }
+
+    private double GetRotationAngle(IDirection dir)
+    {
+        if (dir is Up) return 0;
+        if (dir is Right) return 90;
+        if (dir is Down) return 180;
+        if (dir is Left) return 270;
+        return 0;
     }
 }
