@@ -142,41 +142,8 @@ public class Model : ITickable
         }
 
         OnFieldsUpdated(_persistence.Fields[coord.X][coord.Y]);
-
-        //Refresh neighbouring roads' states
-        for (int i = -1; i <= 1; i++)
-        {
-            int newx = coord.X + i;
-            if (!(0 <= newx && newx < _persistence.Fields.Count))
-                continue;
-            for (int k = -1; k <= 1; k++)
-            {
-                int newy = coord.Y + k;
-                if ((i == 0 && k == 0) || !(0 <= newy && newy < _persistence.Fields[newx].Count) ||
-                    _persistence.Fields[newx][newy].Buildable is not Road road)
-                    continue;
-
-                roadState = DetermineRoadState(_persistence.Fields[newx][newy].Coordinates);
-                road.IsCurved = roadState.IsCurved;
-                road.Quadrant = roadState.Quadrant;
-                road.Direction = roadState.Direction;
-
-                if (roadState.Intersection is not null && road is Motorway motorway)
-                {
-                    try
-                    {
-                        motorway.AddIntersection(roadState.Intersection);
-                    }
-                    catch (InvalidOperationException e)
-                    {
-                        Console.Error.WriteLine("\nCould not add intersection:");
-                        Console.Error.WriteLine(e.Message);
-                    }
-                }
-
-                OnFieldsUpdated(_persistence.Fields[newx][newy]);
-            }
-        }
+        
+        RefreshNeighbouringRoads(coord);
     }
 
     public bool Place(Coordinate coord, Buildable buildable)
@@ -307,46 +274,48 @@ public class Model : ITickable
         //     throw new Exception("ejnye-bejnye!");
         Buildable? onField = GetField(coord).Buildable;
         Field field = GetField(coord);
-
         Field source = GetField(new Coordinate(coord.X - field.RelativeX, coord.Y - field.RelativeY));
-        if (onField is not null)
-        {
-            for (int i = 0; i < onField.area.Width; i++)
-            {
-                for (int j = 0; j < onField.area.Height; j++)
-                {
-                    Coordinate currentCoord = new Coordinate(source.Coordinates.X + i, source.Coordinates.Y + j);
+        
+        if (onField is null) return;
 
-                    // Biztonsági ellenőrzés, ne lógjunk ki a pályáról
-                    if (currentCoord.X < _persistence.Width && currentCoord.Y < _persistence.Height)
-                    {
-                        Field f = GetField(currentCoord);
-                        f.Buildable = null;
-                        f.RelativeX = 0;
-                        f.RelativeY = 0;
-                        OnFieldsUpdated(f);
-                    }
+        for (int i = 0; i < onField.area.Width; i++)
+        {
+            for (int j = 0; j < onField.area.Height; j++)
+            {
+                Coordinate currentCoord = new Coordinate(source.Coordinates.X + i, source.Coordinates.Y + j);
+
+                // Biztonsági ellenőrzés, ne lógjunk ki a pályáról
+                if (currentCoord.X < _persistence.Width && currentCoord.Y < _persistence.Height)
+                {
+                    Field f = GetField(currentCoord);
+                    f.Buildable = null;
+                    f.RelativeX = 0;
+                    f.RelativeY = 0;
+                    OnFieldsUpdated(f);
                 }
             }
-
-            if (onField is IResidentialBuilding residential)
-            {
-                //népesség csökkentése
-                _persistence.Storage[HumanResource.Instance()] -= residential.givePeople;
-                OnResourceChanged(HumanResource.Instance(), _persistence.Storage[HumanResource.Instance()]);
-
-                //Hangulat visszaadása
-                _persistence.CurrentMood += (-1) * residential.AffectMood; //mert negatív
-                OnMoodChanged(_persistence.CurrentMood);
-            }
-
-            if (onField is Decoration decor)
-            {
-                //hangulat csökkentése
-                _persistence.CurrentMood -= decor.giveMood;
-                OnMoodChanged(_persistence.CurrentMood);
-            }
         }
+
+        if (onField is IResidentialBuilding residential)
+        {
+            //népesség csökkentése
+            _persistence.Storage[HumanResource.Instance()] -= residential.givePeople;
+            OnResourceChanged(HumanResource.Instance(), _persistence.Storage[HumanResource.Instance()]);
+
+            //Hangulat visszaadása
+            _persistence.CurrentMood += (-1) * residential.AffectMood; //mert negatív
+            OnMoodChanged(_persistence.CurrentMood);
+        }
+        
+        if (onField is Decoration decor)
+        {
+            //hangulat csökkentése
+            _persistence.CurrentMood -= decor.giveMood;
+            OnMoodChanged(_persistence.CurrentMood);
+        }
+        
+        if (onField is Road)
+            RefreshNeighbouringRoads(coord);
     }
 
     public List<Type> ListBuildableFactories()
@@ -533,6 +502,50 @@ public class Model : ITickable
         }
 
         return (isCurved, q, dir, intersection);
+    }
+
+    private void RefreshNeighbouringRoads(Coordinate coord)
+    {
+        for (int i = -1; i <= 1; i++)
+        {
+            int newx = coord.X + i;
+            if (!(0 <= newx && newx < _persistence.Fields.Count))
+                continue;
+            for (int k = -1; k <= 1; k++)
+            {
+                int newy = coord.Y + k;
+                if ((i == 0 && k == 0) || !(0 <= newy && newy < _persistence.Fields[newx].Count) ||
+                    _persistence.Fields[newx][newy].Buildable is not Road road)
+                    continue;
+
+                var roadState = DetermineRoadState(_persistence.Fields[newx][newy].Coordinates);
+                road.IsCurved = roadState.IsCurved;
+                road.Quadrant = roadState.Quadrant;
+                road.Direction = roadState.Direction;
+
+                if (road is Motorway motorway)
+                {
+                    if (roadState.Intersection is not null)
+                    {
+                        try
+                        {
+                            motorway.AddIntersection(roadState.Intersection);
+                        }
+                        catch (InvalidOperationException e)
+                        {
+                            Console.Error.WriteLine("\nCould not add intersection:");
+                            Console.Error.WriteLine(e.Message);
+                        }
+                    }
+                    else
+                    {
+                        motorway.RemoveIntersection();
+                    }
+                }
+
+                OnFieldsUpdated(_persistence.Fields[newx][newy]);
+            }
+        }
     }
 
     protected virtual void OnResourceChanged(IResource resource, int newValue)

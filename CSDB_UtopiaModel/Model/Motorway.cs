@@ -17,10 +17,15 @@ public class Motorway : Road
 
         public Intersection? GetIntersection() => _intersection;
 
-        public void AddIntersection(Intersection i)
+        internal void AddIntersection(Intersection i)
         {
                 if (HasIntersection && !(_intersection is ThreeWayIntersection && i is FourWayIntersection))
                         throw new InvalidOperationException("The road already has an intersection");
                 _intersection = i;
+        }
+
+        internal void RemoveIntersection()
+        {
+                _intersection = null;
         }
 }
