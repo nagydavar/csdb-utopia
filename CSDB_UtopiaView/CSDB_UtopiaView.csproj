@@ -37,7 +37,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Assets\Buildings\Factories\" />
     <Folder Include="Assets\Vehicles\" />
   </ItemGroup>
 
