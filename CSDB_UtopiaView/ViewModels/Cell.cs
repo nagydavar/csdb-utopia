@@ -5,8 +5,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CSDB_UtopiaModel.Model;
 using CSDB_UtopiaModel.Persistence;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.NetworkInformation;
+using System.Linq;
 
 namespace CSDB_UtopiaView.ViewModels;
 
@@ -80,8 +82,35 @@ public partial class Cell : ObservableObject
                 {
                     _fileName = $"Buildings/OtherBuildings/{typeName}.PNG";
                 }
-                else if (field.Buildable is Road) {
-                    _fileName = $"Roads/{typeName}.PNG";
+                else if (field.Buildable is Road road)
+                {
+                    if (road is Motorway motorway && motorway.HasIntersection)
+                    {
+                        var intersection = motorway.GetIntersection();
+                        if (intersection is FourWayIntersection)
+                        {
+                            _fileName = "Roads/Intersection_4.PNG";
+                        }
+                        else if (intersection is ThreeWayIntersection tWay)
+                        {
+                            // A Direction adja meg, merre néz a T-elágazás szára (Up, Down, Left, Right)
+                            string dirSuffix = GetDirectionSuffix(tWay.TrafficLightIDirection);
+                            _fileName = $"Roads/Intersection_3_{dirSuffix}.PNG";
+                        }
+                    }
+                    else if (road.IsCurved)
+                    {
+                        // A Modell Quadrant értéke alapján (1, 2, 3, 4)
+                        // 1: Jobb-Fel, 2: Bal-Fel, 3: Bal-Le, 4: Jobb-Le
+                        _fileName = $"Roads/{typeName}_Curve_{road.Quadrant}.PNG";
+                    }
+                    else
+                    {
+                        // Egyenes út: Ha a Direction Up vagy Down, akkor V (Vertical), különben H
+                        bool isVertical = road.Direction is Up || road.Direction is Down;
+                        string dirType = isVertical ? "V" : "H";
+                        _fileName = $"Roads/{typeName}_{dirType}.PNG";
+                    }
                 }
             }
         }
@@ -108,6 +137,45 @@ public partial class Cell : ObservableObject
 
 
         UpdateVehicles(field);
+    }
+
+    private string GetDirectionSuffix(IDirection dir)
+    {
+        if (dir is Up) return "Up";
+        if (dir is Down) return "Down";
+        if (dir is Left) return "Left";
+        if (dir is Right) return "Right";
+        return "Up"; // Alapértelmezett
+    }
+
+    // Megvizsgálja, hogy a 2 csatlakozási irány kanyart alkot-e
+    private string GetCurveSuffix(List<IDirection> connections)
+    {
+        // Megnézzük a típusokat (pl. Up, Down, Left, Right osztályok)
+        bool hasUp = connections.Any(d => d is Up);
+        bool hasDown = connections.Any(d => d is Down);
+        bool hasLeft = connections.Any(d => d is Left);
+        bool hasRight = connections.Any(d => d is Right);
+
+        if (hasLeft && hasUp) return "LU";    // Bal-Fel kanyar
+        if (hasRight && hasUp) return "RU";   // Jobb-Fel kanyar
+        if (hasLeft && hasDown) return "LD";  // Bal-Le kanyar
+        if (hasRight && hasDown) return "RD"; // Jobb-Le kanyar
+
+        return string.Empty; // Egyenes út (pl. Up-Down vagy Left-Right)
+    }
+
+    // Ez a függvény a modelltől kérdezi meg, kik a szomszédos utak
+    private List<IDirection> GetRoadConnections(Field currentField)
+    {
+        // Ideális esetben a Motorway tudja a szomszédait.
+        // Ha nem, akkor a Modell referenciáján keresztül kell lekérdezni 
+        // a 4 szomszédos koordinátát és megnézni, van-e ott út.
+
+        // ha a Road tárolja a Section-öket:
+        // return currentField.Buildable.Sections.Select(s => s.Direction).ToList();
+
+        return new List<IDirection>(); // Implementálandó a Modell felépítése alapján
     }
 
     private void UpdateVehicles(Field field)

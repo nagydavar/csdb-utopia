@@ -2,19 +2,55 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-public abstract class Road : Buildable, Navigable
+public abstract class Road : Buildable, INavigable
 {
-    public int MaxSpeed { get; set; }
+    private IVehicle? _leftSide;
+    private IVehicle? _rightSide;
 
-    public IVehicle? LeftSide { get; set; }
-    public Vehicle<IResource>? RightSide { get; set; }
+    public int MaxSpeed { get; protected set; }
+
+    public int Quadrant { get; internal set; } = 0;
+
+    public bool IsCurved { get; internal set; } = false;
     
+    public IDirection Direction { get; internal set; }
+
+    public IVehicle? LeftSide
+    {
+        get => _leftSide;
+        set
+        {
+            if (ReferenceEquals(_leftSide, value)) return;
+            if (_leftSide is not null && value is not null)
+                throw new InvalidOperationException("Left side of the road is occupied");
+
+            _leftSide = value;
+            if (value is null)
+                Freed?.Invoke(this, new DirectionEventArgs(Left.Instance()));
+        }
+    }
+
+    public IVehicle? RightSide
+    {
+        get => _rightSide;
+        set
+        {
+            if (ReferenceEquals(_rightSide, value)) return;
+            if (_rightSide is not null && value is not null)
+                throw new InvalidOperationException("Right side of the road is occupied");
+
+            _rightSide = value;
+            if (value is null)
+                Freed?.Invoke(this, new DirectionEventArgs(Right.Instance()));
+        }
+    }
+
     // public IVehicle? LeftSide => new Bus();
     // public Vehicle<Resource>? RightSide => new Bus();
-    
-    public HashSet<Section> Sections { get; set; }
 
-    public IDirection Direction { get; set; }
+    public HashSet<Section> Sections { get; set; } = new();
+    
+    public override int placementCost => 100;
 
     public EventHandler<DirectionEventArgs>? Freed;
 
@@ -22,9 +58,27 @@ public abstract class Road : Buildable, Navigable
     {
         MaxSpeed = maxSpeed;
         Direction = d;
+
+        area = (1, 1);
     }
 
-    public bool IsFree(IDirection _) => throw new NotImplementedException();
+    public bool IsFree(IDirection dir)
+    {
+        if (Direction is VerticalDirection)
+        {
+            if (dir is not VerticalDirection)
+                throw new Exception();
+
+            return dir == Down.Instance() ? LeftSide is null : RightSide is null;
+        }
+        else
+        {
+            if (dir is not IHorizontalDirection)
+                throw new Exception();
+
+            return dir == Right.Instance() ? LeftSide is null : RightSide is null;
+        }
+    }
 
     public void MoveTo() => throw new NotImplementedException();
 }

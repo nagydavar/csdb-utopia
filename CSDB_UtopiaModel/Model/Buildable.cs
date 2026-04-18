@@ -5,7 +5,7 @@ public abstract class Buildable : Buyable
 {
     public virtual int placementCost { get; }
     public (int Width, int Height) area { get; protected set; }
-    protected Field owner;
+    protected readonly Field owner;
     protected Coordinate field;
     public Buildable(Field f)
     {

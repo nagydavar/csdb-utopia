@@ -7,6 +7,8 @@ namespace CSDB_UtopiaModel.Persistence;
 
 class Persistence
 {
+    private int _budget;
+    
     public List<List<Field>> Fields { get; private set; }
     public List<Town> Towns { get; private set; }
     public List<Land> Forests { get; private set; }
@@ -19,14 +21,27 @@ class Persistence
     public DateTime Date { get; private set; }
     public int Width { get; private set; }
     public int Height { get; private set; }
-    public int Budget { get; set; }
+
+    public int Budget
+    {
+        get => _budget;
+        set
+        {
+            _budget = value;
+            if (value <= 0)
+                GameOver?.Invoke(this, EventArgs.Empty);
+        }
+    }
 
     public int CurrentMood { get; set; }
+
+    public event EventHandler<EventArgs>? GameOver; 
 
     public Persistence(int width, int height, List<List<Field>> fields)
     {
         Fields = fields;
     }
+    
     public Persistence(int width, int height, bool generateMap)
     {
         Width = width;

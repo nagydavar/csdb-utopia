@@ -1,15 +1,24 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
+
 public class Motorway : Road
 {
-        private Intersection? intersection;
-        public bool HasIntersection { get => intersection is not null; }
-        public Motorway(Field f, int maxSpeed, IDirection d): base(f, maxSpeed, d) {}
+        public Intersection? Intersection { get; internal set; }
 
-        public void AddIntersection(Intersection i)
+        public bool HasIntersection
         {
-                intersection = i;
+                get => Intersection is not null;
         }
-        
-};
+
+        public Motorway(Field f, int maxSpeed, IDirection d) : base(f, maxSpeed, d)
+        {
+        }
+
+        public Intersection? GetIntersection() => Intersection;
+
+        internal void AddIntersection(Intersection i)
+        {
+                Intersection = i;
+        }
+}
