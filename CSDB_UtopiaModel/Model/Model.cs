@@ -98,52 +98,35 @@ public class Model : ITickable
         MoodChanged?.Invoke(this, new MoodChangedEventArgs(_persistence.CurrentMood));
     }
 
-    public void PlaceRoad(Coordinate coord)
+    public bool PlaceRoad(Coordinate coord)
     {
-        // Checking neighbouring intersections
-        for (int i = -1; i <= 1; i++)
-        {
-            int newx = coord.X + i;
-            if (i == 0 || !(0 <= newx && newx < _persistence.Fields.Count))
-                continue;
-            for (int k = -1; k <= 1; k++)
-            {
-                int newy = coord.Y + k;
-                if (k == 0 || !(0 <= newy && newy < _persistence.Fields[newx].Count))
-                    continue;
+        (bool IsCurved, int Quadrant, IDirection Direction, Intersection? Intersection) roadState;
 
-                if (_persistence.Fields[newx][newy].Buildable is Motorway { HasIntersection: true })
-                    return; // can't place two intersections next to each other
-            }
+        try
+        {
+            roadState = DetermineRoadState(coord);
         }
-        
-        Motorway newborn = new(_persistence.Fields[coord.X][coord.Y], int.MaxValue, Up.Instance());
-
-        if (!Place(coord, newborn))
-            return;
-
-        var roadState = DetermineRoadState(coord);
-
-        newborn.Direction = roadState.Direction;
-        newborn.IsCurved = roadState.IsCurved;
-        newborn.Quadrant = roadState.Quadrant;
-
-        if (roadState.Intersection is not null)
+        catch (InvalidOperationException)
         {
-            try
-            {
-                newborn.AddIntersection(roadState.Intersection);
-            }
-            catch (InvalidOperationException e)
-            {
-                Console.Error.WriteLine("\nCould not add intersection:");
-                Console.Error.WriteLine(e.Message);
-            }
+            return false;
         }
 
-        OnFieldsUpdated(_persistence.Fields[coord.X][coord.Y]);
-        
-        RefreshNeighbouringRoads(coord);
+        Motorway newborn = new(_persistence.Fields[coord.X][coord.Y], int.MaxValue, Up.Instance())
+        {
+            Direction = roadState.Direction,
+            IsCurved = roadState.IsCurved,
+            Quadrant = roadState.Quadrant,
+            Intersection = roadState.Intersection,
+        };
+
+        if (!Place(coord, newborn)) return false;
+
+        if (RefreshNeighbouringRoads(coord)) return true;
+
+        // if the refreshing was not successful
+        Demolish(coord);
+        _persistence.Budget += newborn.placementCost;
+        return false;
     }
 
     public bool Place(Coordinate coord, Buildable buildable)
@@ -262,7 +245,6 @@ public class Model : ITickable
     {
         return _persistence.Storage.ContainsKey(resource) ? _persistence.Storage[resource] : 0;
     }
-    // id�ig �j
 
     public void AddVehicle(Vehicle<IResource> vehicle)
     {
@@ -275,7 +257,7 @@ public class Model : ITickable
         Buildable? onField = GetField(coord).Buildable;
         Field field = GetField(coord);
         Field source = GetField(new Coordinate(coord.X - field.RelativeX, coord.Y - field.RelativeY));
-        
+
         if (onField is null) return;
 
         for (int i = 0; i < onField.area.Width; i++)
@@ -306,14 +288,14 @@ public class Model : ITickable
             _persistence.CurrentMood += (-1) * residential.AffectMood; //mert negatív
             OnMoodChanged(_persistence.CurrentMood);
         }
-        
+
         if (onField is Decoration decor)
         {
             //hangulat csökkentése
             _persistence.CurrentMood -= decor.giveMood;
             OnMoodChanged(_persistence.CurrentMood);
         }
-        
+
         if (onField is Road)
             RefreshNeighbouringRoads(coord);
     }
@@ -453,13 +435,21 @@ public class Model : ITickable
 
             case 2:
                 // Szemközti szomszédok -> EGYENES
-                if ((roads[0] is not null) && (roads[2] is not null)) { dir = Up.Instance(); isCurved = false; } // Függőleges
-                else if (roads[1] is not null && roads[3] is not null) { dir = Right.Instance(); isCurved = false; } // Vízszintes
+                if ((roads[0] is not null) && (roads[2] is not null))
+                {
+                    dir = Up.Instance();
+                    isCurved = false;
+                } // Függőleges
+                else if (roads[1] is not null && roads[3] is not null)
+                {
+                    dir = Right.Instance();
+                    isCurved = false;
+                } // Vízszintes
                 else
                 {
                     // Egymás melletti szomszédok -> KANYAR
                     isCurved = true;
-                    if (roads[0] is not null && roads[1] is not null) q = 1;      // Fent + Jobb
+                    if (roads[0] is not null && roads[1] is not null) q = 1; // Fent + Jobb
                     else if (roads[0] is not null && roads[3] is not null) q = 2; // Fent + Bal
                     else if (roads[2] is not null && roads[3] is not null) q = 3; // Lent + Bal
                     else if (roads[2] is not null && roads[1] is not null) q = 4; // Lent + Jobb
@@ -467,17 +457,16 @@ public class Model : ITickable
 
                 break;
             case 3:
-                foreach (Field? field in roads)
-                    if (field?.Buildable is Motorway { HasIntersection: true })
-                        throw new Exception(); // can't place two intersections next to each other
+                if (HasNeighbouringIntersection(coord))
+                    throw new InvalidOperationException("can't place two intersections next to each other");
 
                 isCurved = false;
                 q = 0;
 
                 // Megkeressük, melyik irányban NINCS út a 4 közül
                 // A 'dir' változó fogja tárolni a T-elágazás irányadó irányát
-                if (roads[2] is null)      // Nincs út LENT
-                    dir = Up.Instance();   // A T szára felfelé mutat
+                if (roads[2] is null) // Nincs út LENT
+                    dir = Up.Instance(); // A T szára felfelé mutat
                 else if (roads[3] is null) // Nincs út BALRA
                     dir = Right.Instance();
                 else if (roads[0] is null) // Nincs út FENT
@@ -489,10 +478,8 @@ public class Model : ITickable
 
                 break;
             case 4:
-                //TODO refactor code redundancy (case 3)
-                foreach (Field? field in roads)
-                    if (field?.Buildable is Motorway { HasIntersection: true })
-                        throw new Exception(); // can't place two intersections next to each other
+                if (HasNeighbouringIntersection(coord))
+                    throw new InvalidOperationException("can't place two intersections next to each other");
 
                 isCurved = false;
                 intersection = new FourWayIntersection(f);
@@ -504,8 +491,38 @@ public class Model : ITickable
         return (isCurved, q, dir, intersection);
     }
 
-    private void RefreshNeighbouringRoads(Coordinate coord)
+    private bool HasNeighbouringIntersection(Coordinate coord)
     {
+        for (int i = -1; i <= 1; i++)
+        {
+            int newx = coord.X + i;
+            if (i == 0 || !(0 <= newx && newx < _persistence.Fields.Count))
+                continue;
+            for (int k = -1; k <= 1; k++)
+            {
+                int newy = coord.Y + k;
+                if (k == 0 || !(0 <= newy && newy < _persistence.Fields[newx].Count))
+                    continue;
+
+                if (_persistence.Fields[newx][newy].Buildable is Motorway { HasIntersection: true })
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool RefreshNeighbouringRoads(Coordinate coord)
+    {
+        const int size = 3;
+
+        (bool IsCurved, int Quadrant, IDirection Direction, Intersection? Intersection)?[,] states =
+            new (bool, int, IDirection, Intersection? )?[size, size];
+
+        for (int i = 0; i < size; i++)
+        for (int k = 0; k < size; k++)
+            states[i, k] = null;
+
         for (int i = -1; i <= 1; i++)
         {
             int newx = coord.X + i;
@@ -514,38 +531,53 @@ public class Model : ITickable
             for (int k = -1; k <= 1; k++)
             {
                 int newy = coord.Y + k;
-                if ((i == 0 && k == 0) || !(0 <= newy && newy < _persistence.Fields[newx].Count) ||
+                if (!(i == 0 || k == 0) || !(0 <= newy && newy < _persistence.Fields[newx].Count) ||
                     _persistence.Fields[newx][newy].Buildable is not Road road)
                     continue;
 
-                var roadState = DetermineRoadState(_persistence.Fields[newx][newy].Coordinates);
+                try
+                {
+                    states[i + 1, k + 1] = DetermineRoadState(_persistence.Fields[newx][newy].Coordinates);
+                }
+                catch (InvalidOperationException)
+                {
+                    return false;
+                }
+            }
+        }
+
+        // Refresh states if it was possible to determine them
+
+        for (int i = -1; i <= 1; i++)
+        {
+            int newx = coord.X + i;
+            if (!(0 <= newx && newx < _persistence.Fields.Count))
+                continue;
+            for (int k = -1; k <= 1; k++)
+            {
+                int newy = coord.Y + k;
+                if (states[i + 1, k + 1] is null || !(i == 0 || k == 0) ||
+                    !(0 <= newy && newy < _persistence.Fields[newx].Count) ||
+                    _persistence.Fields[newx][newy].Buildable is not Road road)
+                    continue;
+
+                var roadState = states[i + 1, k + 1]!.Value;
+
                 road.IsCurved = roadState.IsCurved;
                 road.Quadrant = roadState.Quadrant;
                 road.Direction = roadState.Direction;
 
+
                 if (road is Motorway motorway)
                 {
-                    if (roadState.Intersection is not null)
-                    {
-                        try
-                        {
-                            motorway.AddIntersection(roadState.Intersection);
-                        }
-                        catch (InvalidOperationException e)
-                        {
-                            Console.Error.WriteLine("\nCould not add intersection:");
-                            Console.Error.WriteLine(e.Message);
-                        }
-                    }
-                    else
-                    {
-                        motorway.RemoveIntersection();
-                    }
+                    motorway.Intersection = roadState.Intersection;
                 }
 
                 OnFieldsUpdated(_persistence.Fields[newx][newy]);
             }
         }
+
+        return true;
     }
 
     protected virtual void OnResourceChanged(IResource resource, int newValue)

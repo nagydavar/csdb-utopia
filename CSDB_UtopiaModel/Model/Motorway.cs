@@ -4,28 +4,21 @@ namespace CSDB_UtopiaModel.Model;
 
 public class Motorway : Road
 {
-        private Intersection? _intersection;
+        public Intersection? Intersection { get; internal set; }
 
         public bool HasIntersection
         {
-                get => _intersection is not null;
+                get => Intersection is not null;
         }
 
         public Motorway(Field f, int maxSpeed, IDirection d) : base(f, maxSpeed, d)
         {
         }
 
-        public Intersection? GetIntersection() => _intersection;
+        public Intersection? GetIntersection() => Intersection;
 
         internal void AddIntersection(Intersection i)
         {
-                if (HasIntersection && !(_intersection is ThreeWayIntersection && i is FourWayIntersection))
-                        throw new InvalidOperationException("The road already has an intersection");
-                _intersection = i;
-        }
-
-        internal void RemoveIntersection()
-        {
-                _intersection = null;
+                Intersection = i;
         }
 }
