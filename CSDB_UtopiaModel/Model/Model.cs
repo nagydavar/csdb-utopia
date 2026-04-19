@@ -215,12 +215,13 @@ public class Model : ITickable
         return true;
     }
 
-    public void PlaceVehicle(Coordinate coord, Vehicle<IResource> vehicle)
+    public void PlaceVehicle(Coordinate start, Coordinate end, Vehicle<IResource> vehicle)
     {
-        if (_persistence.Fields[coord.X][coord.Y].Buildable is not Road road)
+        if (_persistence.Fields[start.X][end.Y].Buildable is not Road road)
             throw new InvalidOperationException("You can only place a vehicle to a road");
 
-        throw new NotImplementedException();
+        _persistence.VehiclesOnMap.Add(vehicle);
+        vehicle.AssignNewPath(start, end);
     }
 
     //nyersanyag friss�t�se miatt
@@ -241,13 +242,21 @@ public class Model : ITickable
         return _persistence.CurrentMood;
     }
 
+    public HashSet<Garage> ListGarages()
+    {
+        return _persistence.Garages.ToHashSet();
+    }
+
     public int GetResourceCount(IResource resource)
     {
         return _persistence.Storage.ContainsKey(resource) ? _persistence.Storage[resource] : 0;
     }
+    // id�ig �j
 
     public void AddVehicle(Vehicle<IResource> vehicle)
     {
+        _persistence.VehiclesOnMap.Add(vehicle);
+        
     }
 
     public void Demolish(Coordinate coord)

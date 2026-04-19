@@ -3,10 +3,10 @@
 namespace CSDB_UtopiaTest;
 
 [TestClass]
-public sealed class Test
+public sealed class MapTest
 {
     [TestMethod]
-    public void MapTest()
+    public void MapTestBasic()
     {
         HashSet<Coordinate> roads = new();
         roads.Add(new Coordinate(0, 0));
@@ -26,7 +26,7 @@ public sealed class Test
 
     }
     [TestMethod]
-    public void MapTest2()
+    public void MapTestBasic2()
     {
         List<Coordinate> roads = new();
         roads.Add(new Coordinate(0, 0));

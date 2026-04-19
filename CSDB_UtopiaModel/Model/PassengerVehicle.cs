@@ -4,7 +4,7 @@ namespace CSDB_UtopiaModel.Model;
 
 public abstract class PassengerVehicle : Vehicle<HumanResource>
 {
-    public PassengerVehicle() : base(default!, default, default, default, default!)
+    public PassengerVehicle(Map map, Model m, Coordinate start, Coordinate end) : base(map,m, start, end)
     {
     }
 }
