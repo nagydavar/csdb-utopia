@@ -40,6 +40,7 @@ public class Map {
         public Coordinate GetNearest(Coordinate start, List<Coordinate> ends)
         {
                 
+                if (ends.Count == 0) throw new InvalidOperationException();
                 int minDist = GetDistance(start, ends[0]);
                 Coordinate minCoord = ends[0];
                 for (int i = 1; i < ends.Count; i++)
