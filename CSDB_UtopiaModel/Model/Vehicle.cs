@@ -1,4 +1,3 @@
-using System.Reflection.PortableExecutable;
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
@@ -8,7 +7,8 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     protected int capacity;
     protected int maintenanceCost;
     protected int speed;
-    protected int tickInterval;
+    public virtual int placementCost => 200;
+    protected int tickInterval = 1;
     protected Navigation navigation;
     protected Navigator navi;
     protected Map map;
@@ -50,13 +50,20 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         TimeControl tc = TimeControl.Instance();
         tc += (this, tickInterval);
     }
+    public IDirection CurrentDirection { get; set; } = Up.Instance();
 
     public void AssignNewPath(Coordinate start, Coordinate end)
     {
         navigation = map.GetNavigation(start, end);
-        IDirection d = Position/navi.Current;
-        Intention = new GoingIntention(d, d);
+        navi = (Navigator)navigation.GetEnumerator();
+
         Field oldField = currentField;
+        Position = start; // A setter beállítja a currentField-et is
+
+        IDirection d = Position/navi.Current;
+        CurrentDirection = d;
+        Intention = new GoingIntention(d, d);
+
         Position = new Coordinate(start.X, start.Y);
         navi = (Navigator)navigation.GetEnumerator();
         
@@ -80,14 +87,15 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
             Intention = Intention.newIntention(d);
             
             CurrentRoad.Leave(this);
-            currentField = model.GetField(Position);
+            Field oldField = currentField;
+
             Position = navi.Current;
             
             
             CurrentRoad.MoveTo(d, this);
             Field to = model.GetField(Position);
             
-            model.FieldsUpdated?.Invoke(this, new FieldEventArgs([currentField, to]));
+            model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, to]));
             currentField = to;
             TraveledSinceBought++;
             

@@ -66,6 +66,8 @@ public partial class GameViewModel : ViewModelBase
     // Jármű vétele
     private Stop? _firstStop;
     private Stop? _secondStop;
+    private Cell? _firstSelectedCell;  // Az első sárga keretes cella
+    private Cell? _secondSelectedCell; // A második sárga keretes cella
     private bool _isSelectingStops; // Jelzi, hogy éppen megállókat válogatunk
 
     // Cella állopta
@@ -219,6 +221,11 @@ public partial class GameViewModel : ViewModelBase
     [RelayCommand]
     public void SelectBuildable(Type selectedType)
     {
+        if (_isSelectingStops)
+        {
+            ResetStopSelection();
+        }
+
         // Eltároljuk a választott típust
         _selectedType = selectedType;
         IsDemolishMode = false;
@@ -254,21 +261,44 @@ public partial class GameViewModel : ViewModelBase
                     if (_firstStop == null)
                     {
                         _firstStop = stop;
+                        _firstSelectedCell = cell;
+                        _firstSelectedCell.IsSelected = true;
                         System.Diagnostics.Debug.WriteLine("Első megálló kiválasztva.");
                     }
-                    else if (_firstStop != stop) // Ne lehessen ugyanaz a kettő
-                    {
-                        _secondStop = stop;
-                        System.Diagnostics.Debug.WriteLine("Második megálló kiválasztva. Jármű létrehozása...");
+                     else
+                     {
+                        bool isSameCoordinate = _firstStop.Owner.Coordinates.X == targetField.Coordinates.X &&
+                                                _firstStop.Owner.Coordinates.Y == targetField.Coordinates.Y;
 
-                        // Itt hívjuk meg a Modell metódusát a vásárláshoz
-                        _model.PlaceVehicle(_firstStop.Owner.Coordinates, _secondStop.Owner.Coordinates, _selectedType); // EZ KELL MAJD A MODELLBE
+                        if (!isSameCoordinate)
+                        {
+                            _secondStop = stop;
+                            _secondSelectedCell = cell;
+                            _secondSelectedCell.IsSelected = true;
+                            System.Diagnostics.Debug.WriteLine($"Második megálló kiválasztva: {cell.X}, {cell.Y}");
 
-                        // Reseteljük a kijelölést
-                        ResetStopSelection();
+                            try
+                            {
+                                CreateAndPlaceVehicle(_selectedType, _firstStop, _secondStop);
+                            }
+                            finally
+                            {
+                                ResetStopSelection();
+                            }
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine("Ugyanazt a megállót választottad kétszer!");
+                            // Itt nem csinálunk semmit, várjuk a második, különböző megállót
+                        }
                     }
+                    return; // Megállót találtunk, feldolgoztuk
                 }
-                return; // Kilépünk, hogy ne építsen rá semmit
+                else 
+                {
+                    ResetStopSelection();
+                }
+                    return; // Kilépünk, hogy ne építsen rá semmit
             }
 
             // BONTÁS LOGIKA
@@ -365,6 +395,36 @@ public partial class GameViewModel : ViewModelBase
         {
             // Minden más váratlan hiba elkapása
             System.Diagnostics.Debug.WriteLine($"Váratlan hiba: {ex.Message}");
+        }
+    }
+
+    private void CreateAndPlaceVehicle(Type vehicleType, Stop startStop, Stop endStop)
+    {
+        try
+        {
+            // A modellből le kell kérnünk a Map objektumot. 
+            // Ehhez a Model.cs-be kell egy 'public Map Map => _map;' vagy 'public Map GetMap() => _map;'
+            var map = _model.GetMap();
+
+            // Konstruktor paraméterek: (Map map, Model m, Coordinate start, Coordinate end)
+            object[] parameters = new object[]
+            {
+            map,
+            _model,
+            startStop.Owner.Coordinates,
+            endStop.Owner.Coordinates
+            };
+
+            // Példányosítás
+            var vehicle = (IVehicle)Activator.CreateInstance(vehicleType, parameters)!;
+
+            // Lehelyezés a modellbe (a modell PlaceVehicle metódusa már kezeli a Budget-et és a listát)
+            _model.PlaceVehicle(startStop.Owner.Coordinates, endStop.Owner.Coordinates, (Vehicle<IResource>)vehicle);
+
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Jármű példányosítási hiba: {ex.InnerException?.Message ?? ex.Message}");
         }
     }
 
@@ -551,8 +611,19 @@ public partial class GameViewModel : ViewModelBase
     private void ResetStopSelection()
     {
         _isSelectingStops = false;
+
+        // Csak azt a két cellát frissítjük, amit tényleg kijelöltünk
+        if (_firstSelectedCell != null)
+            _firstSelectedCell.IsSelected = false;
+
+        if (_secondSelectedCell != null)
+            _secondSelectedCell.IsSelected = false;
+
+        // Referenciák ürítése
         _firstStop = null;
         _secondStop = null;
+        _firstSelectedCell = null;
+        _secondSelectedCell = null;
         _selectedType = null;
     }
 

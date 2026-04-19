@@ -47,8 +47,6 @@ public abstract class Road : Buildable, INavigable
 
     // public IVehicle? LeftSide => new Bus();
     // public Vehicle<Resource>? RightSide => new Bus();
-
-    public HashSet<Section> Sections { get; set; } = new();
     
     public override int placementCost => 100;
 

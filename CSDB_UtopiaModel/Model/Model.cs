@@ -21,6 +21,8 @@ public class Model : ITickable
     public EventHandler<EventArgs>? DateChanged;
     private Map _map;
 
+    public Map GetMap() => _map;
+
     public Model(int width, int height)
     {
         _persistence = new Persistence.Persistence(width, height, true);
@@ -227,11 +229,22 @@ public class Model : ITickable
 
     public void PlaceVehicle(Coordinate start, Coordinate end, Vehicle<IResource> vehicle)
     {
-        if (_persistence.Fields[start.X][end.Y].Buildable is not Road road)
+        if (_persistence.Fields[end.X][end.Y].Buildable is not Stop stop)
             throw new InvalidOperationException("You can only place a vehicle to a road");
 
-        _persistence.VehiclesOnMap.Add(vehicle);
-        vehicle.AssignNewPath(start, end);
+        try
+        {
+            vehicle.AssignNewPath(start, end);
+            _persistence.VehiclesOnMap.Add(vehicle);
+            
+            _persistence.Budget -= vehicle.placementCost;
+            BudgetChanged?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception e)
+        {
+            
+        }
+        
     }
 
     //nyersanyag friss�t�se miatt
