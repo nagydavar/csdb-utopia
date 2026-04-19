@@ -86,7 +86,7 @@ test_model:
     # through simple summation of the test project based results
     #- chmod +x ./ci/coverage-percentage.sh
     #- ./ci/coverage-percentage.sh .
-    - ./reportgenerator "-reports:$CI_PROJECT_DIR/*/TestResults/*/coverage.cobertura.xml" "-targetdir:report" "-reporttypes:ConsoleDetailed"
+    - ./reportgenerator "-reports:$CI_PROJECT_DIR/*/TestResults/*/coverage.cobertura.xml" "-targetdir:report" "-reporttypes:Console"
   artifacts:
     paths:
       - ./*/TestResults/TestResults.xml
