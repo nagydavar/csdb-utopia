@@ -1,4 +1,3 @@
-using System.Reflection.PortableExecutable;
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
@@ -50,11 +49,13 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         TimeControl tc = TimeControl.Instance();
         tc += (this, tickInterval);
     }
+    public IDirection CurrentDirection { get; set; } = Up.Instance();
 
     public void AssignNewPath(Coordinate start, Coordinate end)
     {
         navigation = map.GetNavigation(start, end);
         IDirection d = Position/navi.Current;
+        CurrentDirection = d;
         Intention = new GoingIntention(d, d);
         Field oldField = currentField;
         Position = new Coordinate(start.X, start.Y);
