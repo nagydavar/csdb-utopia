@@ -50,6 +50,7 @@ public partial class GameViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isDemolishMode;
 
+    //Idő
     [ObservableProperty]
     private string _currentTime = "00:00:00";
 
@@ -61,6 +62,17 @@ public partial class GameViewModel : ViewModelBase
 
     [ObservableProperty]
     private int _speedLevel = 1; // Alapértelmezett: Normal (1)
+
+    // Jármű vétele
+    private Stop? _firstStop;
+    private Stop? _secondStop;
+    private bool _isSelectingStops; // Jelzi, hogy éppen megállókat válogatunk
+
+    // Cella állopta
+    [ObservableProperty]
+    private FieldDetails? _selectedFieldDetails;
+    [ObservableProperty]
+    private bool _isFieldDetailsVisible;
 
     // Események
     public event EventHandler? NewGame;
@@ -232,6 +244,33 @@ public partial class GameViewModel : ViewModelBase
     {
         try
         {
+            // Megálló kiválasztási logika járművásárláshoz
+            if (_isSelectingStops && _selectedType != null)
+            {
+                Field targetField = _model.GetField(cell.X, cell.Y);
+
+                if (targetField.Buildable is Stop stop)
+                {
+                    if (_firstStop == null)
+                    {
+                        _firstStop = stop;
+                        System.Diagnostics.Debug.WriteLine("Első megálló kiválasztva.");
+                    }
+                    else if (_firstStop != stop) // Ne lehessen ugyanaz a kettő
+                    {
+                        _secondStop = stop;
+                        System.Diagnostics.Debug.WriteLine("Második megálló kiválasztva. Jármű létrehozása...");
+
+                        // Itt hívjuk meg a Modell metódusát a vásárláshoz
+                        // _model.BuyVehicle(_selectedType, _firstStop, _secondStop); // EZ KELL MAJD A MODELLBE
+
+                        // Reseteljük a kijelölést
+                        ResetStopSelection();
+                    }
+                }
+                return; // Kilépünk, hogy ne építsen rá semmit
+            }
+
             // BONTÁS LOGIKA
             if (IsDemolishMode)
             {
@@ -239,9 +278,44 @@ public partial class GameViewModel : ViewModelBase
                 return;
             }
 
+            // HA NINCS KIVÁLASZTVA SEMMI (Információs mód)
+            if (_selectedType == null && !IsDemolishMode && !_isSelectingStops)
+            {
+                Field field = _model.GetField(cell.X, cell.Y);
+                var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+
+                // Adatok kinyerése Reflection-nel (mivel protected-ek)
+                var res = field.GetType().GetField("resource", flags)?.GetValue(field) as IResource;
+                var depl = (int)(field.GetType().GetField("depletionLevel", flags)?.GetValue(field) ?? 0);
+                var townObj = field.GetType().GetField("town", flags)?.GetValue(field);
+                string townName = townObj?.GetType().GetProperty("Name")?.GetValue(townObj)?.ToString() ?? "Vadon";
+
+                SelectedFieldDetails = new FieldDetails
+                {
+                    Coordinates = $"[{field.Coordinates.X}, {field.Coordinates.Y}]",
+                    BuildingName = field.HasBuildable ? field.Buildable!.GetType().Name : "Üres mező",
+                    TownName = townName,
+                    ResourceType = res?.GetType().Name ?? "Ismeretlen",
+                    Depletion = depl
+                };
+
+                IsFieldDetailsVisible = true;
+                return;
+            }
+
             // ÉPÍTÉS LOGIKA
             if (_selectedType != null)
             {
+                // Ha járművet választottunk ki a listából
+                if (_selectedType.IsAssignableTo(typeof(IVehicle)))
+                {
+                    _isSelectingStops = true;
+                    _firstStop = null;
+                    _secondStop = null;
+                    System.Diagnostics.Debug.WriteLine("Válassz ki két megállót az útvonalhoz!");
+                    return;
+                }
+
                 // Út építése
                 if (_selectedType.IsAssignableTo(typeof(Road)))
                 {
@@ -355,6 +429,26 @@ public partial class GameViewModel : ViewModelBase
         AvailableBuildables.Clear();
     }
 
+    [RelayCommand]
+    public void SetFieldDetailsVisible(object? isVisible)
+    {
+        if (isVisible is bool b)
+        {
+            IsFieldDetailsVisible = b;
+        }
+        else if (isVisible is string s && bool.TryParse(s, out bool result))
+        {
+            // A XAML-ből jövő "False" stringként is érkezhet, ezt is lekezeljük
+            IsFieldDetailsVisible = result;
+        }
+
+        // Ha bezárjuk a panelt, érdemes a kijelölést is törölni
+        if (!IsFieldDetailsVisible)
+        {
+            SelectedFieldDetails = null;
+        }
+    }
+
     private void UpdateAvailableBuildables(List<Type> types)
     {
         // Panel bezárása, ha ugyanazt a kategóriát kattintjuk
@@ -454,6 +548,14 @@ public partial class GameViewModel : ViewModelBase
         IsBuildingPanelVisible = AvailableBuildables.Count > 0;
     }
 
+    private void ResetStopSelection()
+    {
+        _isSelectingStops = false;
+        _firstStop = null;
+        _secondStop = null;
+        _selectedType = null;
+    }
+
     // Modell eseménykezelők kifejtése
     private void Model_GameTicked(object? sender, EventArgs e)
     {
@@ -547,4 +649,13 @@ public class BuildableInfo
     public int Speed { get; set; }
     public int Maintenance { get; set; }
     public int Capacity { get; set; }
+}
+
+public class FieldDetails : ObservableObject
+{
+    public string Coordinates { get; set; } = string.Empty;
+    public string BuildingName { get; set; } = "Nincs";
+    public string TownName { get; set; } = "Nincs";
+    public string ResourceType { get; set; } = string.Empty;
+    public int Depletion { get; set; }
 }
