@@ -31,7 +31,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     public INavigable CurrentRoad { get; protected set; }
     
     public int TraveledSinceBought { get; set; }
-    public GoingIntention Intention { get; }
+    public GoingIntention Intention { get; private set; }
 
     protected INavigable getRoad()
     {
@@ -54,6 +54,8 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     public void AssignNewPath(Coordinate start, Coordinate end)
     {
         navigation = map.GetNavigation(start, end);
+        IDirection d = Position/navi.Current;
+        Intention = new GoingIntention(d, d);
         Field oldField = currentField;
         Position = new Coordinate(start.X, start.Y);
         navi = (Navigator)navigation.GetEnumerator();
@@ -75,6 +77,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         if (navi.MoveNext())
         {
             IDirection d = Position/navi.Current;
+            Intention = Intention.newIntention(d);
             
             CurrentRoad.Leave(this);
             currentField = model.GetField(Position);
