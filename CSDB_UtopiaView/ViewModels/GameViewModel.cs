@@ -262,7 +262,7 @@ public partial class GameViewModel : ViewModelBase
                         System.Diagnostics.Debug.WriteLine("Második megálló kiválasztva. Jármű létrehozása...");
 
                         // Itt hívjuk meg a Modell metódusát a vásárláshoz
-                        // _model.BuyVehicle(_selectedType, _firstStop, _secondStop); // EZ KELL MAJD A MODELLBE
+                        _model.PlaceVehicle(_firstStop.Owner.Coordinates, _secondStop.Owner.Coordinates, _selectedType); // EZ KELL MAJD A MODELLBE
 
                         // Reseteljük a kijelölést
                         ResetStopSelection();
