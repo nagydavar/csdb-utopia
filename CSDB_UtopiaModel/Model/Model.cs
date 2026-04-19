@@ -425,37 +425,29 @@ public class Model : ITickable
     {
         int tmp, roadCount = 0;
         Field?[] roads = [null, null, null, null];
+        IDirection[] roadDirections = [Up.Instance(), Right.Instance(), Down.Instance(), Left.Instance()];
 
-        if ((tmp = coord.X - 1) >= 0 && _persistence.Fields[tmp][coord.Y].Buildable is Road)
+        for (int i = 0; i < 4; i++)
         {
-            roads[0] = _persistence.Fields[tmp][coord.Y];
-            roadCount++;
+            IDirection d = roadDirections[i];
+            try
+            {
+                Field field = GetField(coord.Step(d));
+                if (field.Buildable is Road)
+                {
+                    roadCount++;
+                    roads[i] = field;
+                }
+                
+            }
+            catch(Exception e){}
         }
-
-        if ((tmp = coord.Y + 1) < _persistence.Fields[coord.X].Count &&
-            _persistence.Fields[coord.X][tmp].Buildable is Road)
-        {
-            roads[1] = _persistence.Fields[coord.X][tmp];
-            roadCount++;
-        }
-
-        if ((tmp = coord.X + 1) < _persistence.Fields.Count && _persistence.Fields[tmp][coord.Y].Buildable is Road)
-        {
-            roads[2] = _persistence.Fields[tmp][coord.Y];
-            roadCount++;
-        }
-
-        if ((tmp = coord.Y - 1) >= 0 && _persistence.Fields[coord.X][tmp].Buildable is Road)
-        {
-            roads[3] = _persistence.Fields[coord.X][tmp];
-            roadCount++;
-        }
-
+        
         bool isCurved = false;
         int q = 0;
         IDirection dir = Up.Instance();
         Intersection? intersection = null;
-        Field f = _persistence.Fields[coord.X][coord.Y];
+        Field f = GetField(coord);
         switch (roadCount)
         {
             case 0: // should be also included in case 'default' if we want to build only non-separated roads

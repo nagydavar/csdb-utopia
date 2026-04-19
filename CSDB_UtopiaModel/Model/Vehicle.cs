@@ -23,12 +23,16 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         protected set
         {
             position = value;
-            CurrentRoad = getRoad();
+            CurrentNavigable = getRoad();
             currentField = model.GetField(position);
+
+            
+            CurrentDirection = CurrentNavigable is Road road ? road.Direction : Up.Instance();
+                
         }
     }
 
-    public INavigable CurrentRoad { get; protected set; }
+    public INavigable CurrentNavigable { get; protected set; }
     
     public int TraveledSinceBought { get; set; }
     public GoingIntention Intention { get; private set; }
@@ -38,17 +42,17 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         Field f = model.GetField(Position);
         if (f.Buildable is INavigable a) 
             return a;
-        throw new InvalidDataException($"Cannot find road {Position}");
+        throw new InvalidDataException("The specified coordinate is not navigable");
     }
 
     public Vehicle(Map map, Model m, Coordinate start, Coordinate end)
     {
-        navigation = map.GetNavigation(start, end);
-        navi = (Navigator)navigation.GetEnumerator();
-        model = m;
-        Position = start;
         TimeControl tc = TimeControl.Instance();
         tc += (this, tickInterval);
+        model = m;
+        this.map = map;
+        Position = start;
+        AssignNewPath(start, end);
     }
     public IDirection CurrentDirection { get; set; } = Up.Instance();
 
@@ -58,13 +62,12 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         navi = (Navigator)navigation.GetEnumerator();
 
         Field oldField = currentField;
-        Position = start; // A setter beállítja a currentField-et is
+        Position = start; // A setter beï¿½llï¿½tja a currentField-et is
 
-        IDirection d = Position/navi.Current;
-        CurrentDirection = d;
+        IDirection d = (CurrentNavigable is Road road) ? road.Direction : Up.Instance();
+        
         Intention = new GoingIntention(d, d);
 
-        Position = new Coordinate(start.X, start.Y);
         navi = (Navigator)navigation.GetEnumerator();
         
         model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, currentField]));
@@ -84,15 +87,14 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         if (navi.MoveNext())
         {
             IDirection d = Position/navi.Current;
-            Intention = Intention.newIntention(d);
-            
-            CurrentRoad.Leave(this);
+            CurrentNavigable.Leave(this);
             Field oldField = currentField;
 
             Position = navi.Current;
             
+            Intention = Intention.newIntention(d);
             
-            CurrentRoad.MoveTo(d, this);
+            CurrentNavigable.MoveTo(d, this);
             Field to = model.GetField(Position);
             
             model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, to]));

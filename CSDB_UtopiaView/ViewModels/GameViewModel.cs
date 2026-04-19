@@ -109,9 +109,9 @@ public partial class GameViewModel : ViewModelBase
         {
             for (int j = 0; j < _height; j++)
             {
-                var cell = new Cell(i, j);
+                var cell = new Cell(j, _height - i -1);
                 // Lekérjük a modellből az adott mezőt és frissítjük a cellát
-                var field = _model.GetField(i, j); // Feltételezve, hogy van ilyen metódusod
+                var field = _model.GetField(j, _height - i -1); // Feltételezve, hogy van ilyen metódusod
                 cell.Update(field);
                 Cells.Add(cell);
             }
