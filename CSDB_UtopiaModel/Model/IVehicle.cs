@@ -2,7 +2,7 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-public interface IVehicle : ITickable
+public interface IVehicle : ITickable, Buyable
 {
     // TODO
     public IDirection CurrentDirection { get; protected set; }

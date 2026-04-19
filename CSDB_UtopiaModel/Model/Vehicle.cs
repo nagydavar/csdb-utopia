@@ -7,6 +7,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     protected int capacity;
     protected int maintenanceCost;
     protected int speed;
+    public virtual int placementCost => 200;
     protected int tickInterval;
     protected Navigation navigation;
     protected Navigator navi;

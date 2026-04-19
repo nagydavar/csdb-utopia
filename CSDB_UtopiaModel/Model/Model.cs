@@ -230,8 +230,19 @@ public class Model : ITickable
         if (_persistence.Fields[start.X][end.Y].Buildable is not Road road)
             throw new InvalidOperationException("You can only place a vehicle to a road");
 
-        _persistence.VehiclesOnMap.Add(vehicle);
-        vehicle.AssignNewPath(start, end);
+        try
+        {
+            vehicle.AssignNewPath(start, end);
+            _persistence.VehiclesOnMap.Add(vehicle);
+            
+            _persistence.Budget -= vehicle.placementCost;
+            BudgetChanged?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception e)
+        {
+            
+        }
+        
     }
 
     //nyersanyag friss�t�se miatt
