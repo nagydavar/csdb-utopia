@@ -1,0 +1,136 @@
+# Default image (https://hub.docker.com/r/microsoft/dotnet-sdk)
+# Multiarch image, it has both Linux and Windows versions
+image: mcr.microsoft.com/dotnet/sdk:10.0
+
+stages:
+  - build
+  - test
+  - deploy
+
+include:
+  # NuGet Dependency Scanning
+  # https://docs.gitlab.com/ee/user/application_security/dependency_scanning/
+  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
+  # Secret Detection
+  # https://docs.gitlab.com/user/application_security/secret_detection/
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+  # Static Application Security Testing (SAST)
+  # https://docs.gitlab.com/user/application_security/sast/
+  - template: Jobs/SAST.gitlab-ci.yml
+  # Static analysis-based Code Quality evaluation for .NET/C#
+  # https://szofttech.inf.elte.hu/components/code-quality-dotnet
+  - component: szofttech.inf.elte.hu/components/code-quality-dotnet/windows@2
+
+variables:
+  # Enable GitLab Advanced SAST (Ultimate feature)
+  GITLAB_ADVANCED_SAST_ENABLED: true
+
+# Build model
+# (Uses Linux-based runner, because windows tag is NOT specified.)
+build_model:
+  stage: build
+  before_script:
+    - dotnet --version
+  script:
+    - dotnet build CSDB_UtopiaModel
+    - dotnet build CSDB_UtopiaTest
+    - dotnet build CSDB_UtopiaView
+    - dotnet build CSDB_UtopiaView.Desktop
+
+# Build complete solution
+# (Uses Windows-based runner, because windows tag IS specified.)
+build_view:
+  stage: build
+  # Use a Windows Server Core based docker image
+  # The default mcr.microsoft.com/dotnet/sdk:10.0 would depend on Windows Nano Server, 
+  # which is not enough for us, as it does not containt the desktop packs.
+  image: mcr.microsoft.com/dotnet/sdk:10.0-windowsservercore-ltsc2025
+  tags: [windows]
+  before_script:
+    - dotnet --version
+  script:
+    - dotnet build CSDB_Utopia.sln
+
+# Test
+# (Uses Linux-based runner, because windows tag is NOT specified.)
+test_model:
+  stage: test
+  before_script:    
+    # Restore NuGet packages to the local .nuget folder (inside the project directory).
+    - dotnet restore CSDB_UtopiaTest --packages .nuget
+  script:
+    # Run the tests, and as extra:
+    # 1) log test result in JUnit format, so GitLab web UI can diplay them;
+    # 2) collect code coverage statistics.
+    - > 
+      dotnet test CSDB_UtopiaTest --no-restore
+      --logger:"junit;MethodFormat=Class;FailureBodyFormat=Verbose"
+      --collect="XPlat Code Coverage"
+    # Install tools for code coverage extraction from Cobertura XML files
+    - apt-get update -yqq
+    - apt-get install -yqq bc
+    - dotnet tool install --tool-path . dotnet-reportgenerator-globaltool
+    # Compute code coverage percentage from Cobertura XML files through merging them with ReportGenerator
+    # This is useful when you have multiple test projects in a repository
+    # https://github.com/danielpalme/ReportGenerator
+    - ./reportgenerator "-reports:$CI_PROJECT_DIR/*/TestResults/*/coverage.cobertura.xml" "-targetdir:report" "-reporttypes:Cobertura"
+    # Also generate a web-based summary of the code coverage, which we can publish later through GitLab Pages
+    - ./reportgenerator "-reports:$CI_PROJECT_DIR/*/TestResults/*/coverage.cobertura.xml" "-targetdir:report/html" "-reporttypes:Html"
+    # The generated Cobertura.xml file contains the overall code coverage in a format like this:
+    # <coverage line-rate="..." ...>
+    # Let's get that with the powers of sed :)
+    - line_rate="$(head -n 3 ./report/Cobertura.xml | sed 'N;N;s/.*line-rate="\([^" ]*\).*/\1/g')"
+    - coverage=$(echo "${line_rate} * 100" | bc)
+    - 'printf "TOTAL_COVERAGE=%2.2f\n" "$coverage"'
+    # Alternatively, without the reportgenerator tool, we could compute the total coverage 
+    # through simple summation of the test project based results
+    #- chmod +x ./ci/coverage-percentage.sh
+    #- ./ci/coverage-percentage.sh .
+  artifacts:
+    paths:
+      - ./*/TestResults/TestResults.xml
+      - ./*/TestResults/*/coverage.cobertura.xml
+      - ./report/html/
+    reports:
+      # Publish unit test results to GitLab UI
+      # https://docs.gitlab.com/ci/testing/unit_test_reports/
+      junit:
+        - ./*/TestResults/TestResults.xml
+      # Test coverage visualization on GitLab UI
+      # https://docs.gitlab.com/ci/testing/code_coverage/
+      coverage_report:
+        coverage_format: cobertura
+        path: ./*/TestResults/*/coverage.cobertura.xml
+  # Report code coverage for GitLab
+  # https://docs.gitlab.com/ci/testing/code_coverage/
+  coverage: '/TOTAL_COVERAGE=(\d+.\d+)/'
+   # Cache and keep downloaded NuGet dependencies between CI pipelines
+  cache:
+    # The CI_COMMIT_REF_SLUG is a slug for the branch or tag name,
+    # so there will be a separate cache for each branch.
+    key: "unittest-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .nuget
+
+# Documentation
+# (Uses Linux-based runner, because windows tag is NOT specified.)
+pages:
+  stage: deploy
+  image: ubuntu:24.04 # .NET SDK is not needed for this job
+  before_script:
+    - apt-get update -yqq
+    - apt-get install -yqq doxygen graphviz
+  script:
+    # Generate code documentation with Doxygen (see the Doxyfile for config)
+    - doxygen
+    - mkdir -p public/docs/
+    - cp -r doc/html/. public/docs/
+    # Add the code coverage web summary as well
+    - mkdir -p public/covergae
+    - cp -r report/html/. public/coverage/
+  artifacts:
+    paths:
+      - public
+    expire_in: 1 day
+  only:
+    - master
