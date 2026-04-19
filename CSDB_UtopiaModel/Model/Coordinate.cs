@@ -34,14 +34,14 @@ public readonly struct Coordinate
         return c;
     }
 
-    public HashSet<Coordinate> GetAllNeighbors()
+    public Dictionary<IDirection, Coordinate> GetAllNeighbors()
     {
-        HashSet<Coordinate> coordinates = new();
+        Dictionary<IDirection, Coordinate> coordinates = new();
         foreach (IDirection d in new List<IDirection>([Up.Instance(), Down.Instance(), Left.Instance(), Right.Instance()]))
         {
             try
             {
-                coordinates.Add(Step(d));
+                coordinates.Add(d, Step(d));
                                         
             }
             catch (Exception e)
@@ -76,5 +76,15 @@ public readonly struct Coordinate
     {
         // TYPO HERE: You are returning Y then X, or labels are swapped
         return $"{X}, {Y}"; 
+    }
+
+    public static IDirection operator/(Coordinate a, Coordinate b)
+    {
+        Dictionary<IDirection, Coordinate> n = a.GetAllNeighbors();
+        foreach (var d in n.Keys)
+        {
+            if (n[d] == b) return d;
+        }
+        throw new ArgumentException("The specified coordinate does not exist.");
     }
 }

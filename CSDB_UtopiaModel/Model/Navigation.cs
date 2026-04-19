@@ -12,6 +12,7 @@ public class Navigation : IEnumerable<Coordinate>
     {
         return GetEnumerator();
     }
+    IEnumerator<Coordinate> IEnumerable<Coordinate>.GetEnumerator() => GetEnumerator();
 
     public IEnumerator<Coordinate> GetEnumerator()
     {

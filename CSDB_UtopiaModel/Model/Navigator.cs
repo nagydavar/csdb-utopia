@@ -12,7 +12,7 @@ public class Navigator : IEnumerator<Coordinate>
     public Coordinate Current => current;
 
     object System.Collections.IEnumerator.Current => Current; // explicit interface implementation, not to be modified
-
+  
     public bool MoveNext()
     {
         if (current == Destination) return false;
@@ -24,7 +24,10 @@ public class Navigator : IEnumerator<Coordinate>
 
     public void Dispose(){}
 
-    public void Reset() => current = start;
+    public void Reset() => reverse = !reverse;
+    
+    public bool Ended => Current == Destination;
+    
 
     public Navigator(Coordinate start, Coordinate end, Map map)
     {

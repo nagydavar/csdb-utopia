@@ -6,6 +6,7 @@ public class Map {
         //private Graph g;
         private Dictionary<Coordinate, HashSet<Coordinate>> map = new();
         Dictionary<Coordinate, Dictionary<Coordinate,Tuple<Coordinate?, int>>> pathForAllPair =  new();
+        //Dictionary<Coordinate, Dictionary<Coordinate,Tuple<IDirection?, int>>> dirForAllPair =  new();
         Dictionary<Coordinate, Dictionary<Coordinate,bool>> adjMatrix = new ();
         //Dictionary<Tuple<Coordinate, Coordinate>, Section> preCalculatedSections = new();
 
@@ -15,7 +16,7 @@ public class Map {
         }
         private HashSet<Coordinate> getNeighbors(Coordinate coord)
         {
-                HashSet<Coordinate> n = coord.GetAllNeighbors();
+                HashSet<Coordinate> n = coord.GetAllNeighbors().Values.ToHashSet();
                 n.RemoveWhere(c => !adjMatrix.ContainsKey(c)/* && !adjMatrix[coord][c]*/);
                 return n;
         }
@@ -73,7 +74,9 @@ public class Map {
                         Coordinate? parent2 = isNeighbor ? coord : null;
                         Tuple<Coordinate?, int> toNext = new Tuple<Coordinate?, int>(parent1, newDist);
                         if (!pathForAllPair[coord].TryAdd(nextCoord, toNext))
+                        {
                                 pathForAllPair[coord][nextCoord] = toNext;
+                        }
                         Tuple<Coordinate?, int> toThis = new Tuple<Coordinate?, int>(parent2, newDist);
                         if (!pathForAllPair[nextCoord].TryAdd(coord, toThis))
                                 pathForAllPair[nextCoord][coord] = toThis;
@@ -92,105 +95,7 @@ public class Map {
                         UpdatePathBuildRoad(coord, n); 
                 }
         }
-
-        /*
-        private void AddRoad(Coordinate c1, Coordinate c2)
-        {
-                if (!c1.GetAllNeighbors().Contains(c2)) throw new ArgumentException();
-
-                map[c1].Add(c2);
-                map[c2].Add(c1);
-
-
-
-        }
-        private Section? getPreCalculated(Coordinate c1, Coordinate c2)
-        {
-                Tuple<Coordinate, Coordinate> ab = new Tuple<Coordinate, Coordinate>(c1, c2);
-                Tuple<Coordinate, Coordinate> ba = new Tuple<Coordinate, Coordinate>(c2, c1);
-
-                if (preCalculatedSections.TryGetValue(ab, out var precalculated1))
-                        return precalculated1;
-                else if (preCalculatedSections.TryGetValue(ba, out var preCalculated2))
-                        return preCalculated2;
-                return null;
-        }
-
-
-        private async Task recalculate(Coordinate start, Coordinate end)
-        {
-
-                Section? preCalculated = getPreCalculated(start, end);
-                if (preCalculated is null) throw new ArgumentException();
-
-                preCalculatedSections[new Tuple<Coordinate, Coordinate>(start, end)] = await calculateSection(start, end);
-        }
-
-        private async Task<Section> calculateSection(Coordinate start, Coordinate end)
-        {
-                Coordinate? c = pathForAllPair[start][end].Item1;
-                if (c is null) throw new ArgumentException();
-                List<Coordinate> path = new();
-                path.Add(c.Value);
-                while (c != start)
-                {
-
-                        c = pathForAllPair[c.Value][end].Item1;
-
-                        if (c is null) throw new ArgumentException();
-                        path.Add(c.Value);
-                }
-        }
-
-        public async Task<Section> calculate(Coordinate start, Coordinate end)
-        {
-                Section? preCalculated = getPreCalculated(start, end);
-                if (preCalculated is not null) return preCalculated;
-                Section section = await calculateSection(start, end);
-
-                preCalculatedSections.Add(new Tuple<Coordinate, Coordinate>(start, end), section);
-
-                return section;
-        }
-
-        public Section calculateOld(Coordinate c1, Coordinate c2)
-        {
-                //Naive: BFS
-
-
-                if (!map.ContainsKey(c1) || !map.ContainsKey(c2)) throw new ArgumentException();
-                Dictionary<Coordinate, Coordinate> parent = new();
-                Dictionary<Coordinate, int> distance = new();
-                Queue<Coordinate> S = new Queue<Coordinate>();
-                S.Enqueue(c1);
-                while (S.Count > 0)
-                {
-                        Coordinate road = S.Dequeue();
-                        foreach (Coordinate neighbor in map[road])
-                        {
-                                if (!distance.ContainsKey(neighbor))
-                                {
-                                        distance.Add(neighbor, distance[road] + 1);
-                                        parent.Add(neighbor, road);
-                                        S.Enqueue(neighbor);
-                                }
-
-                        }
-
-                }
-        }
-           public Path calculate(List<Coordinate> coords)
-                {
-                        List<Section> sections = new List<Section>(coords.Count-1);
-                        for (int i = 0; i < coords.Count-1; i++)
-                        {
-                                Section? s = calculate(coords[i], coords[i + 1]);
-                                if (s is null) throw new ArgumentException();
-                                sections.Add(s);
-                        }
-                        Path path = new Path(sections);
-                }
-*/
+        
         private int GetDistance(Coordinate c1, Coordinate c2) => pathForAllPair[c1][c2].Item2;
         private Coordinate? GetParent(Coordinate c1, Coordinate c2) => pathForAllPair[c1][c2].Item1;
         
@@ -199,7 +104,6 @@ public class Map {
                 
                 adjMatrix[i][j] = false;
                 adjMatrix[j][i] = false;
-                HashSet<Tuple<Coordinate, Coordinate >> affectedPairs = new();
                 HashSet<Coordinate> jAdj = new HashSet<Coordinate>(); //i ből ide lehet eljutni legrövidebben
                 HashSet<Coordinate> iAdj = new HashSet<Coordinate>(); //j be innen lehet eljutni legrövidebben
 
@@ -285,18 +189,22 @@ public class Map {
                 foreach (Coordinate i in coords)
                 {
                         pathForAllPair.TryAdd(i, new Dictionary<Coordinate, Tuple<Coordinate?, int>>());
+                        //dirForAllPair.TryAdd(i, new Dictionary<Coordinate, Tuple<IDirection?, int>>());
                         adjMatrix.TryAdd(i, new Dictionary<Coordinate, bool>());
-                        HashSet<Coordinate> neighbors = i.GetAllNeighbors();
+                        Dictionary<IDirection, Coordinate> neighbors = i.GetAllNeighbors();
                         foreach (Coordinate j in coords)
                         {
                                 Coordinate? parent;
                                 int dist;
+                                bool contains = false;
                                 
-                                if (neighbors.Contains(j))
+                                
+                                if (neighbors.Values.Contains(j))
                                 {
                                         parent = j;
                                         dist = 1;
                                         adjMatrix[i][j] = true;
+                                        
                                 }
                                 else if (i == j)
                                 {
