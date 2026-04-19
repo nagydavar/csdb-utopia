@@ -19,11 +19,12 @@ public class Model : ITickable
     public EventHandler<EventArgs>? NewGame;
     public EventHandler<EventArgs>? GameOver;
     public EventHandler<EventArgs>? DateChanged;
+    private Map _map;
 
     public Model(int width, int height)
     {
         _persistence = new Persistence.Persistence(width, height, true);
-
+        _map = new Map(new HashSet<Coordinate>());
         RegisterEvents();
 
         // 1. Lekérjük a példányt egy változóba
@@ -121,7 +122,12 @@ public class Model : ITickable
 
         if (!Place(coord, newborn)) return false;
 
-        if (RefreshNeighbouringRoads(coord)) return true;
+        if (RefreshNeighbouringRoads(coord))
+        {
+            _map.BuildRoad(coord);
+            return true;
+
+        }
 
         // if the refreshing was not successful
         Demolish(coord);
@@ -205,6 +211,10 @@ public class Model : ITickable
             _persistence.CurrentMood += residential.AffectMood;
             OnMoodChanged(_persistence.CurrentMood);
         }
+        else if (buildable is Stop stop)
+        {
+            _map.BuildRoad(stop.Owner.Coordinates);
+        }
 
         // Minden megváltozott mezőt elküldünk a View-nak
         foreach (var land in targetLands)
@@ -251,6 +261,7 @@ public class Model : ITickable
     {
         return _persistence.Storage.ContainsKey(resource) ? _persistence.Storage[resource] : 0;
     }
+    // id�ig �j
 
     public void AddVehicle(Vehicle<IResource> vehicle)
     {
@@ -305,7 +316,10 @@ public class Model : ITickable
         }
 
         if (onField is Road)
+        {
             RefreshNeighbouringRoads(coord);
+            _map.DeleteRoad(coord);
+        }
     }
 
     public List<Type> ListBuildableFactories()
