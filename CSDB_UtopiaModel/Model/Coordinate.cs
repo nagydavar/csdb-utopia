@@ -85,6 +85,9 @@ public readonly struct Coordinate
         {
             if (n[d] == b) return d;
         }
-        throw new ArgumentException("The specified coordinate does not exist.");
+        Debug.Assert(true, "The specified coordinate does not exist.");
+        return Up.Instance();
     }
+
+    public bool IsNeigbor(Coordinate other) => this.GetAllNeighbors().ContainsValue(other);
 }

@@ -7,7 +7,7 @@ class Funfair: Decoration
     {
         giveMood = 40;
         costResource = (Iron.Instance(), 100); // Vasba ker�l
-        area = (2, 2);
+        area = (2, 3);
     }
 
     public override int placementCost => 1300;

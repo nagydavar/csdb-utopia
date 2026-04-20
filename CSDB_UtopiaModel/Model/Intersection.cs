@@ -7,7 +7,7 @@ public abstract class Intersection {
         public List<Vehicle<IResource>> stuckedVehicles;
         public List<(GoingIntention, Vehicle<IResource>)> arrived;
         public IDirection TrafficLightIDirection { get; private set; }
-        public Intersection(Field f, IDirection dir) {}
+        public Intersection(Field f, IDirection dir) { TrafficLightIDirection = dir; }
         public Intersection(Field f, TrafficLightControl tlc) => throw new NotImplementedException();
         public void NewGreen() => throw new NotImplementedException();
         public void NotifyNextVehicle() => throw new NotImplementedException();

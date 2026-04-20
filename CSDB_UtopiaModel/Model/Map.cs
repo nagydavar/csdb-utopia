@@ -143,11 +143,21 @@ public class Map {
                                         int distCKD = GetDistance(c, k) + GetDistance(k, d);
                                         if (GetParent(c, k).HasValue && GetParent(k, d).HasValue && distCD > distCKD)
                                         {
-                                                Coordinate? newParent = pathForAllPair[k][d].Item1;
+                                                Coordinate? newParent = pathForAllPair[c][k].Item1;
                                                 Tuple<Coordinate?, int> newDistParent = new(newParent, distCKD);
                                                 pathForAllPair[c][d] = newDistParent;
 
                                         }
+                                        /*
+                                        int distCKD = GetDistance(c, k) + GetDistance(k, d);
+                                        if (GetParent(c, k).HasValue && GetParent(k, d).HasValue && distCD > distCKD)
+                                        {
+                                                Coordinate? newParent = pathForAllPair[i][k].Item1;
+                                                Tuple<Coordinate?, int> newDistParent = new(newParent, distCKD);
+                                                pathForAllPair[c][d] = newDistParent;
+
+                                        }
+                                        */
                                 }
                         }
                 }
@@ -173,7 +183,7 @@ public class Map {
                                 if ((a == j || GetParent(a, j).HasValue ) && (GetParent(i, b).HasValue || i == b) && GetDistance(a, b) > distAJIB)
                                 {
                                                 
-                                        Coordinate? newParent = a == j ? j: pathForAllPair[a][j].Item1;
+                                        Coordinate? newParent = a == j ? i: pathForAllPair[a][j].Item1;
                                         pathForAllPair[a][b] = new Tuple<Coordinate?, int>(newParent, distAJIB);
                                       
                                 }
@@ -248,7 +258,7 @@ public class Map {
 
         }
 
-     
+        public Map() {}
 
         public Map(HashSet<Coordinate> coords)
         {

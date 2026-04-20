@@ -1,4 +1,3 @@
-using System.Reflection.PortableExecutable;
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
@@ -49,40 +48,66 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         protected set
         {
             position = value;
-            CurrentRoad = getRoad();
+            CurrentNavigable = getRoad(position);
             currentField = model.GetField(position);
+
+            
+            CurrentDirection = CurrentNavigable is Road road ? road.Direction : Up.Instance();
+                
         }
     }
 
-    public INavigable CurrentRoad { get; protected set; }
+    public INavigable? CurrentNavigable { get; protected set; }
     
     public int TraveledSinceBought { get; set; }
-    public GoingIntention Intention { get; }
+    public GoingIntention? Intention { get; private set; }
 
-    protected INavigable getRoad()
+    protected INavigable getRoad(Coordinate c)
     {
-        Field f = model.GetField(Position);
+        Field f = model.GetField(c);
         if (f.Buildable is INavigable a) 
             return a;
-        throw new InvalidDataException($"Cannot find road {Position}");
+        throw new InvalidDataException("The specified coordinate is not navigable");
     }
 
-    public Vehicle(Map map, Model m, Coordinate start, Coordinate end)
+    public Vehicle(Map map, Model m)
     {
         regularNavigation = map.GetNavigation(start, end);
         regularNavi = (Navigator)navigation.GetEnumerator();
         model = m;
-        Position = start;
+        this.map = map;
         TimeControl tc = TimeControl.Instance();
         tc += (this, tickInterval);
+        
     }
+    /*
+    public Vehicle(Map map, Model m, Coordinate start, Coordinate end)
+    {
+        TimeControl tc = TimeControl.Instance();
+        tc += (this, tickInterval);
+        model = m;
+        this.map = map;
+        Position = start;
+        AssignNewPath(start, end);
+    }
+    */
+    public IDirection CurrentDirection { get; set; } = Up.Instance();
 
     public void AssignNewPath(Coordinate start, Coordinate end)
     {
-        regularNavigation = map.GetNavigation(start, end);
+        
+        CurrentNavigable?.Leave(this);
         Field oldField = currentField;
-        Position = new Coordinate(start.X, start.Y);
-        regularNavi = (Navigator)navigation.GetEnumerator();
+        
+        Position = start;
+        navigation = map.GetNavigation(start, end);
+        navi = (Navigator)navigation.GetEnumerator();
+
+
+        IDirection d = (CurrentNavigable is Road road) ? road.Direction : Up.Instance();
+        
+        Intention = new GoingIntention(d, d);
+
         
         model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, currentField]));
     }
@@ -111,19 +136,23 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
 
     public Task Tick()
     {
-        if (navi.MoveNext())
+        if (navi is not null && navi.MoveNext())
         {
             IDirection d = Position/navi.Current;
             
-            CurrentRoad.Leave(this);
-            currentField = model.GetField(Position);
+            if (!getRoad(navi.Current).TryMoveTo(d, this)) return Task.CompletedTask;
+            
+            CurrentNavigable.Leave(this);
+            
+            Field oldField = currentField;
+
             Position = navi.Current;
             
+            Intention = Intention.newIntention(d);
             
-            CurrentRoad.MoveTo(d, this);
             Field to = model.GetField(Position);
             
-            model.FieldsUpdated?.Invoke(this, new FieldEventArgs([currentField, to]));
+            model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, to]));
             currentField = to;
             TraveledSinceBought++;
             

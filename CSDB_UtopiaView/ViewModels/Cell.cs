@@ -39,6 +39,15 @@ public partial class Cell : ObservableObject
     [ObservableProperty]
     private bool _hasVehicle2;
 
+    [ObservableProperty]
+    private double _vehicle1Rotation; // Fokokban (0, 90, 180, 270)
+
+    [ObservableProperty]
+    private double _vehicle2Rotation;
+
+    [ObservableProperty]
+    private bool _isSelected;
+
     public Cell(int x, int y)
     {
         _x = x;
@@ -84,55 +93,32 @@ public partial class Cell : ObservableObject
                 }
                 else if (field.Buildable is Road road)
                 {
-                    // Ha Motorway-ről van szó, ellenőrizzük az elágazást
                     if (road is Motorway motorway && motorway.HasIntersection)
                     {
-                        // Megkeressük a motorway-ben tárolt kereszteződést
-                        
-                        //kell getter vagy property
                         var intersection = motorway.GetIntersection();
-
                         if (intersection is FourWayIntersection)
                         {
-                            // Négyágú kereszteződés (X)
                             _fileName = "Roads/Intersection_4.PNG";
                         }
                         else if (intersection is ThreeWayIntersection tWay)
                         {
-                            // T-elágazás (3 irány)
-                            // Itt a tWay.Direction (TrafficLightIDirection) adja meg a T szárának irányát
+                            // A Direction adja meg, merre néz a T-elágazás szára (Up, Down, Left, Right)
                             string dirSuffix = GetDirectionSuffix(tWay.TrafficLightIDirection);
                             _fileName = $"Roads/Intersection_3_{dirSuffix}.PNG";
                         }
                     }
+                    else if (road.IsCurved)
+                    {
+                        // A Modell Quadrant értéke alapján (1, 2, 3, 4)
+                        // 1: Jobb-Fel, 2: Bal-Fel, 3: Bal-Le, 4: Jobb-Le
+                        _fileName = $"Roads/{typeName}_Curve_{road.Quadrant}.PNG";
+                    }
                     else
                     {
-                        // Sima egyenes út (H vagy V) vagy kanyar
-
-                        // Tegyük fel, hogy a road.GetConnections() visszaad egy listát: List<IDirection>
-                        var connections = GetRoadConnections(field);
-
-                        if (connections.Count == 2)
-                        {
-                            string curveSuffix = GetCurveSuffix(connections);
-                            if (!string.IsNullOrEmpty(curveSuffix))
-                            {
-                                // Kanyar képek Roads/Motorway_Curve_LU.PNG (Left-Up), stb.
-                                _fileName = $"Roads/{typeName}_Curve_{curveSuffix}.PNG";
-                            }
-                            else
-                            {
-                                // Ha nem kanyar, akkor egyenes (H vagy V)
-                                string directionSuffix = road.Direction is IHorizontalDirection ? "H" : "V";
-                                _fileName = $"Roads/{typeName}_{directionSuffix}.PNG";
-                            }
-                        }
-                        else
-                        {
-                            // Alapértelmezett egyenes
-                            string directionSuffix = road.Direction is IHorizontalDirection ? "H" : "V";
-                            _fileName = $"Roads/{typeName}_{directionSuffix}.PNG";
-                        }
+                        // Egyenes út: Ha a Direction Up vagy Down, akkor V (Vertical), különben H
+                        bool isVertical = road.Direction is Up || road.Direction is Down;
+                        string dirType = isVertical ? "V" : "H";
+                        _fileName = $"Roads/{typeName}_{dirType}.PNG";
                     }
                 }
             }
@@ -164,59 +150,61 @@ public partial class Cell : ObservableObject
 
     private string GetDirectionSuffix(IDirection dir)
     {
-        // A típusnév alapján (pl. Up, Down, Left, Right osztályok neve)
-        // Ha a dir null, adjunk vissza egy alapértelmezettet
-        return dir?.GetType().Name ?? "Up";
-    }
-
-    // Megvizsgálja, hogy a 2 csatlakozási irány kanyart alkot-e
-    private string GetCurveSuffix(List<IDirection> connections)
-    {
-        // Megnézzük a típusokat (pl. Up, Down, Left, Right osztályok)
-        bool hasUp = connections.Any(d => d is Up);
-        bool hasDown = connections.Any(d => d is Down);
-        bool hasLeft = connections.Any(d => d is Left);
-        bool hasRight = connections.Any(d => d is Right);
-
-        if (hasLeft && hasUp) return "LU";    // Bal-Fel kanyar
-        if (hasRight && hasUp) return "RU";   // Jobb-Fel kanyar
-        if (hasLeft && hasDown) return "LD";  // Bal-Le kanyar
-        if (hasRight && hasDown) return "RD"; // Jobb-Le kanyar
-
-        return string.Empty; // Egyenes út (pl. Up-Down vagy Left-Right)
-    }
-
-    // Ez a függvény a modelltől kérdezi meg, kik a szomszédos utak
-    private List<IDirection> GetRoadConnections(Field currentField)
-    {
-        // Ideális esetben a Motorway tudja a szomszédait.
-        // Ha nem, akkor a Modell referenciáján keresztül kell lekérdezni 
-        // a 4 szomszédos koordinátát és megnézni, van-e ott út.
-
-        // ha a Road tárolja a Section-öket:
-        // return currentField.Buildable.Sections.Select(s => s.Direction).ToList();
-
-        return new List<IDirection>(); // Implementálandó a Modell felépítése alapján
+        if (dir is Up) return "Up";
+        if (dir is Down) return "Down";
+        if (dir is Left) return "Left";
+        if (dir is Right) return "Right";
+        return "Up"; // Alapértelmezett
     }
 
     private void UpdateVehicles(Field field)
     {
-        // Ez egy példa logika, a Modell felépítésétől függően:
-        if (field.Buildable is Road e)
-        { 
-            HasVehicle1 = e.RightSide != null;
-            HasVehicle2 = e.LeftSide != null;
-
-            //TODO ha már van a modellben implementálva az út. autók
-            if (HasVehicle1)
+        if (field.Buildable is Road road)
+        {
+            // 1. sáv ellenőrzése
+            if (road.RightSide != null)
             {
-                //    VehicleImage1 = ImageLoader.Get($"Vehicles/{e.RightSide.Type}.PNG");
+                HasVehicle1 = true;
+                Vehicle1Rotation = GetRotationAngle(road.RightSide.Intention.To);
+
+                // Kinyerjük a típusnevet és levágjuk a generikus jelölőt ha van
+                string vType = road.RightSide.GetType().Name.Split('`')[0];
+                VehicleImage1 = ImageLoader.Get($"Vehicles/{vType}.png");
+            }
+            else
+            {
+                HasVehicle1 = false;
+                VehicleImage1 = null;
             }
 
-            if (HasVehicle2)
+            // 2. sáv ellenőrzése
+            if (road.LeftSide != null)
             {
-                //    VehicleImage2 = ImageLoader.Get($"Vehicles/{e.LeftSide.Type}.PNG");
+                HasVehicle2 = true;
+                Vehicle2Rotation = GetRotationAngle(road.LeftSide.Intention.To);
+
+                string vType = road.LeftSide.GetType().Name.Split('`')[0];
+                VehicleImage2 = ImageLoader.Get($"Vehicles/{vType}.png");
+            }
+            else
+            {
+                HasVehicle2 = false;
+                VehicleImage2 = null;
             }
         }
+        else
+        {
+            HasVehicle1 = false;
+            HasVehicle2 = false;
+        }
+    }
+
+    private double GetRotationAngle(IDirection dir)
+    {
+        if (dir is Up) return 0;
+        if (dir is Right) return 90;
+        if (dir is Down) return 180;
+        if (dir is Left) return 270;
+        return 0;
     }
 }

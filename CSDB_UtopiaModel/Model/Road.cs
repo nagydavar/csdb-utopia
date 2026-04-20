@@ -7,7 +7,13 @@ public abstract class Road : Buildable, INavigable
     private IVehicle? _leftSide;
     private IVehicle? _rightSide;
 
-    public int MaxSpeed { get; set; }
+    public int MaxSpeed { get; protected set; }
+
+    public int Quadrant { get; internal set; } = 0;
+
+    public bool IsCurved { get; internal set; } = false;
+    
+    public IDirection Direction { get; internal set; }
 
     public IVehicle? LeftSide
     {
@@ -41,10 +47,8 @@ public abstract class Road : Buildable, INavigable
 
     // public IVehicle? LeftSide => new Bus();
     // public Vehicle<Resource>? RightSide => new Bus();
-
-    //public HashSet<Section> Sections { get; set; } = new();
-
-    public IDirection Direction { get; set; }
+    
+    public override int placementCost => 100;
 
     public EventHandler<DirectionEventArgs>? Freed;
 
@@ -52,6 +56,8 @@ public abstract class Road : Buildable, INavigable
     {
         MaxSpeed = maxSpeed;
         Direction = d;
+
+        area = (1, 1);
     }
     public bool IsRightSideFree() => RightSide is null;
     public bool IsLeftSideFree() => LeftSide is null;
@@ -71,10 +77,18 @@ public abstract class Road : Buildable, INavigable
             RightSide = null;
     }
 
-    public void MoveTo(IDirection dir, IVehicle vehicle)
+    public bool TryMoveTo(IDirection dir, IVehicle vehicle)
     {
-        if (IsRightSide(dir)) RightSide = vehicle;
-        else LeftSide = vehicle;
+        try
+        {
+            if (IsRightSide(dir)) RightSide = vehicle;
+            else LeftSide = vehicle;
+        }
+        catch (InvalidOperationException e)
+        {
+            return false;
+        }
+        return true;
     }
 
     public static bool IsRightSide(IDirection d)
