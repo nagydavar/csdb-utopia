@@ -10,16 +10,16 @@ class Persistence
     private int _budget;
     
     public List<List<Field>> Fields { get; private set; }
-    public List<Town> Towns { get; private set; }
-    public List<Garage> Garages { get; private set; }
-    public List<Land> Forests { get; private set; }
-    public List<Factory> Factories { get; private set; }
-    public List<ResourceExtractor> ResourceExtractors { get; private set; }
-    public List<Field> FactoryFields { get; private set; }
-    public List<Field> ResourceExtractorFields { get; private set; }
-    public HashSet<IVehicle> VehiclesOnMap { get; private set; }
-    public Dictionary<IResource, int> Storage { get; private set; }
-    public DateTime Date { get; private set; }
+    public List<Town> Towns { get; private set; } = new();
+    public List<Garage> Garages { get; private set; } = new();
+    public List<Land> Forests { get; private set; } = new();
+    public List<Factory> Factories { get; private set; } = new();
+    public List<ResourceExtractor> ResourceExtractors { get; private set; } = new();
+    public List<Field> FactoryFields { get; private set; } = new();
+    public List<Field> ResourceExtractorFields { get; private set; } = new();
+    public HashSet<IVehicle> VehiclesOnMap { get; private set; } = new();
+    public Dictionary<IResource, int> Storage { get; private set; } = new();
+    public DateTime Date { get; private set; } = new();
     public int Width { get; private set; }
     public int Height { get; private set; }
 
