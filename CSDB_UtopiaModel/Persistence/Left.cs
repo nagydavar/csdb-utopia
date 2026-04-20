@@ -12,4 +12,12 @@ public class Left : IHorizontalDirection
             _instance = new Left();
         return _instance;
     }
+
+    public IDirection FromPerspectiveOf(IDirection pers) => pers switch
+    {
+        Up => Right.Instance(),
+        Right => Up.Instance(),
+        Left => Down.Instance(),
+        _ => this
+    };
 }

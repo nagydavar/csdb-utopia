@@ -7,16 +7,41 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     protected int capacity;
     protected int maintenanceCost;
     protected int speed;
-    public virtual int placementCost => 200;
-    protected int tickInterval = 1;
-    protected Navigation? navigation = null; 
-    protected Navigator? navi = null;
-    protected readonly Map map;
-    private readonly Model model;
+    protected int tickInterval;
+    protected Navigation regularNavigation;
+    protected Navigator regularNavi;
+    protected Navigation garageNavigation;
+    protected Navigator garageNavi;
+    protected Navigation navigation => GoingToGarage ? garageNavigation : regularNavigation;
+    protected Navigator navi => GoingToGarage ? garageNavi : regularNavi;
+    protected Map map;
+    private Model model;
     protected Coordinate position;
     protected Field currentField;
-    protected int garageLimit = 20;
+    protected int garageLimit = 1000;
+    public bool GoingToGarage { get; protected set; }
+    public bool GoingFromGarage { get; protected set; }
+    public bool GoingGarage => GoingToGarage || GoingFromGarage;
 
+    public void GoingGarageNextStep()
+    {
+        if (!GoingToGarage)
+        {
+            GoingToGarage = true;
+            GoingFromGarage = false;
+        }
+
+        if (!GoingFromGarage)
+        {
+            GoingFromGarage = true;
+            GoingToGarage = false;
+        }
+        else
+        {
+            GoingFromGarage = false;
+            GoingToGarage = false;
+        }
+    }
     public Coordinate Position
     {
         get => position;
@@ -47,6 +72,8 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
 
     public Vehicle(Map map, Model m)
     {
+        regularNavigation = map.GetNavigation(start, end);
+        regularNavi = (Navigator)navigation.GetEnumerator();
         model = m;
         this.map = map;
         TimeControl tc = TimeControl.Instance();
@@ -87,9 +114,22 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
 
     public void GoToGarage()
     {
-        HashSet<Garage> garages = model.ListGarages();
-        Coordinate garagePos = map.GetNearest(Position, garages.Select(garage => garage.Owner.Coordinates).ToList());
-        AssignNewPath(Position, garagePos);
+        GoingGarageNextStep();
+        Coordinate? nextPos = null;
+        if (GoingToGarage)
+        {
+            HashSet<Garage> garages = model.ListGarages();
+            nextPos = map.GetNearest(Position, garages.Select(garage => garage.Owner.Coordinates).ToList());
+        }
+        else if (GoingFromGarage)
+        {
+            nextPos = navigation.End;
+        }
+        if (nextPos is not null)
+        {
+            garageNavigation = map.GetNavigation(Position, nextPos.Value);
+            garageNavi = (Navigator)navigation.GetEnumerator();
+        }
 
     }
     public int Sell() => throw new NotImplementedException();
@@ -117,9 +157,18 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
             TraveledSinceBought++;
             
         }
-        else if (navi is not null && navi.Ended)
-        { 
-            if (TraveledSinceBought > garageLimit) GoToGarage();
+        else if (navi.Ended)
+        {
+            if (GoingGarage)
+            {
+                GoToGarage();
+            }
+            else if (TraveledSinceBought > garageLimit)
+            {
+                
+                GoToGarage();
+                TraveledSinceBought = 0;
+            }
             else navi.Reset();
         }
         return Task.CompletedTask;
