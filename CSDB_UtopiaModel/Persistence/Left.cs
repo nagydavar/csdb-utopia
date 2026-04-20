@@ -13,8 +13,11 @@ public class Left : IHorizontalDirection
         return _instance;
     }
 
-    public IDirection FromPerspectiveOf(IDirection pers)
+    public IDirection FromPerspectiveOf(IDirection pers) => pers switch
     {
-        throw new NotImplementedException();
-    }
+        Up => Right.Instance(),
+        Right => Up.Instance(),
+        Left => Down.Instance(),
+        _ => this
+    };
 }

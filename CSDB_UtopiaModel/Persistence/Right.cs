@@ -15,9 +15,9 @@ public class Right : IHorizontalDirection
 
     public IDirection FromPerspectiveOf(IDirection pers) => pers switch
     {
-        Right => Up.Instance(),
         Up => Left.Instance(),
         Left => Up.Instance(),
+        Right => Down.Instance(),
         _ => this
     };
 }

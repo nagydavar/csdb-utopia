@@ -13,5 +13,10 @@ public class Down : VerticalDirection
         return _instance;
     }
 
-    public IDirection FromPerspectiveOf(IDirection pers) => pers.Opposite();
+    public IDirection FromPerspectiveOf(IDirection pers) => pers switch
+    {
+        Up => Up.Instance(),
+        Down => this,
+        _ => pers.Opposite()
+    };
 }

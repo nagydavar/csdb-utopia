@@ -90,7 +90,7 @@ public class GoingIntention : IComparable<GoingIntention>
 
     public int CompareTo(GoingIntention? other)
     {
-        int defaultValue = -1;
+        const int defaultValue = -1;
 
         if (other is null) return 1;
         if (Equals(other) || !Crosses(other)) return 0;
