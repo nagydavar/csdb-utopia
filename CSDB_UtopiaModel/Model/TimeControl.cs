@@ -125,19 +125,19 @@ public class TimeControl
 
         _timer.Elapsed += async (_, _) =>
         {
-            //Biztonsági ellenõrzés, ha nincs feliratkozó vagy az LCM 0, ne csináljunk semmit
+            //Biztonsï¿½gi ellenï¿½rzï¿½s, ha nincs feliratkozï¿½ vagy az LCM 0, ne csinï¿½ljunk semmit
             if (_lcm <= 0 || _subscriptions.Count == 0) return;
 
             List<Task> tasks = new(_subscriptions.Count);
 
-            //Index léptetése 1-tõl LCM-ig pörögjön (így az index sosem lesz 0)
-            // Az (index % lcm) 0-tól (lcm-1)-ig adna értéket, ezért adunk hozzá 1-et.
+            //Index lï¿½ptetï¿½se 1-tï¿½l LCM-ig pï¿½rï¿½gjï¿½n (ï¿½gy az index sosem lesz 0)
+            // Az (index % lcm) 0-tï¿½l (lcm-1)-ig adna ï¿½rtï¿½ket, ezï¿½rt adunk hozzï¿½ 1-et.
             _index = (_index % _lcm) + 1;
 
             foreach (var subscription in _subscriptions)
             {
-                //akkor tickeljen az objektum, ha az aktuális index 
-                // osztható az objektum saját feliratkozási értékével.
+                //akkor tickeljen az objektum, ha az aktuï¿½lis index 
+                // oszthatï¿½ az objektum sajï¿½t feliratkozï¿½si ï¿½rtï¿½kï¿½vel.
                 if (_index % subscription.Value == 0)
                 {
                     tasks.Add(subscription.Key.Tick());
@@ -223,8 +223,8 @@ public class TimeControl
     /// </summary>
     public static TimeControl operator +(TimeControl timeControl, (ITickable Key, int Value) subscriber)
     {
-        if (subscriber.Value <= 0)
-            throw new ArgumentException("The subscriber's value must be positive.", nameof(subscriber.Value));
+        if (subscriber.Value <= 1)
+            throw new ArgumentException("The subscriber's value must be greater than one.", nameof(subscriber.Value));
 
         // ReferenceContains
         foreach (var subscription in (timeControl._subscriptions))
@@ -236,7 +236,7 @@ public class TimeControl
 
         timeControl._subscriptions.Add(subscriber.Key, subscriber.Value);
 
-        // Újraszámoljuk az LCM-et minden feliratkozásnál
+        // ï¿½jraszï¿½moljuk az LCM-et minden feliratkozï¿½snï¿½l
         timeControl._lcm = LcmOf(timeControl._subscriptions.Values);
 
         return timeControl;
