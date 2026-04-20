@@ -2,7 +2,9 @@ namespace CSDB_UtopiaModel.Persistence;
 
 public interface IDirection
 {
-    public abstract (int, int) Diff();
-    public abstract IDirection Opposite();
-    //public abstract IDirection Instance()
+    (int, int) Diff();
+
+    IDirection Opposite();
+
+    IDirection FromPerspectiveOf(IDirection pers);
 }

@@ -12,4 +12,9 @@ public class Left : IHorizontalDirection
             _instance = new Left();
         return _instance;
     }
+
+    public IDirection FromPerspectiveOf(IDirection pers)
+    {
+        throw new NotImplementedException();
+    }
 }

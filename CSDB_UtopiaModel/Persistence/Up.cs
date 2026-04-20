@@ -12,4 +12,6 @@ public class Up : VerticalDirection
             _instance = new Up();
         return _instance;
     }
+
+    public IDirection FromPerspectiveOf(IDirection pers) => pers;
 }
