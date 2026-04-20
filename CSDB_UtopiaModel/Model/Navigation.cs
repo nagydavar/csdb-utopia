@@ -4,8 +4,8 @@ namespace CSDB_UtopiaModel.Model;
 
 public class Navigation : IEnumerable<Coordinate>
 {
-    private Coordinate start;
-    private Coordinate end;
+    public Coordinate Start { get; protected set; }
+    public Coordinate End { get; protected set; }
     private Map map;
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -16,13 +16,13 @@ public class Navigation : IEnumerable<Coordinate>
 
     public IEnumerator<Coordinate> GetEnumerator()
     {
-        return new Navigator(start, end, map);
+        return new Navigator(Start, End, map);
     }
 
     public Navigation(Coordinate start, Coordinate end, Map map)
     {
-        this.start = start;
-        this.end = end;
+        this.Start = start;
+        this.End = end;
         this.map = map;
     }
 }

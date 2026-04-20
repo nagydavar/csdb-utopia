@@ -9,14 +9,40 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     protected int maintenanceCost;
     protected int speed;
     protected int tickInterval;
-    protected Navigation navigation;
-    protected Navigator navi;
+    protected Navigation regularNavigation;
+    protected Navigator regularNavi;
+    protected Navigation garageNavigation;
+    protected Navigator garageNavi;
+    protected Navigation navigation => GoingToGarage ? garageNavigation : regularNavigation;
+    protected Navigator navi => GoingToGarage ? garageNavi : regularNavi;
     protected Map map;
     private Model model;
     protected Coordinate position;
     protected Field currentField;
     protected int garageLimit = 1000;
+    public bool GoingToGarage { get; protected set; }
+    public bool GoingFromGarage { get; protected set; }
+    public bool GoingGarage => GoingToGarage || GoingFromGarage;
 
+    public void GoingGarageNextStep()
+    {
+        if (!GoingToGarage)
+        {
+            GoingToGarage = true;
+            GoingFromGarage = false;
+        }
+
+        if (!GoingFromGarage)
+        {
+            GoingFromGarage = true;
+            GoingToGarage = false;
+        }
+        else
+        {
+            GoingFromGarage = false;
+            GoingToGarage = false;
+        }
+    }
     public Coordinate Position
     {
         get => position;
@@ -43,8 +69,8 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
 
     public Vehicle(Map map, Model m, Coordinate start, Coordinate end)
     {
-        navigation = map.GetNavigation(start, end);
-        navi = (Navigator)navigation.GetEnumerator();
+        regularNavigation = map.GetNavigation(start, end);
+        regularNavi = (Navigator)navigation.GetEnumerator();
         model = m;
         Position = start;
         TimeControl tc = TimeControl.Instance();
@@ -53,19 +79,32 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
 
     public void AssignNewPath(Coordinate start, Coordinate end)
     {
-        navigation = map.GetNavigation(start, end);
+        regularNavigation = map.GetNavigation(start, end);
         Field oldField = currentField;
         Position = new Coordinate(start.X, start.Y);
-        navi = (Navigator)navigation.GetEnumerator();
+        regularNavi = (Navigator)navigation.GetEnumerator();
         
         model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, currentField]));
     }
 
     public void GoToGarage()
     {
-        HashSet<Garage> garages = model.ListGarages();
-        Coordinate garagePos = map.GetNearest(Position, garages.Select(garage => garage.Owner.Coordinates).ToList());
-        AssignNewPath(Position, garagePos);
+        GoingGarageNextStep();
+        Coordinate? nextPos = null;
+        if (GoingToGarage)
+        {
+            HashSet<Garage> garages = model.ListGarages();
+            nextPos = map.GetNearest(Position, garages.Select(garage => garage.Owner.Coordinates).ToList());
+        }
+        else if (GoingFromGarage)
+        {
+            nextPos = navigation.End;
+        }
+        if (nextPos is not null)
+        {
+            garageNavigation = map.GetNavigation(Position, nextPos.Value);
+            garageNavi = (Navigator)navigation.GetEnumerator();
+        }
 
     }
     public int Sell() => throw new NotImplementedException();
@@ -90,8 +129,17 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
             
         }
         else if (navi.Ended)
-        { 
-            if (TraveledSinceBought > garageLimit) GoToGarage();
+        {
+            if (GoingGarage)
+            {
+                GoToGarage();
+            }
+            else if (TraveledSinceBought > garageLimit)
+            {
+                
+                GoToGarage();
+                TraveledSinceBought = 0;
+            }
             else navi.Reset();
         }
         return Task.CompletedTask;
