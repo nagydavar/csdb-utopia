@@ -39,7 +39,7 @@ public class Model : ITickable
 
         if (_totalSeconds % _secondsToGrowTrees == 0)
             GrowTrees();
-        
+
         DateChanged?.Invoke(this, EventArgs.Empty);
 
         return Task.CompletedTask;
@@ -54,7 +54,7 @@ public class Model : ITickable
         return $"{hours:D2}:{minutes:D2}:{seconds:D2}";
     }
 
-    public void TogglePause() => _=!_timeControl;
+    public void TogglePause() => _ = !_timeControl;
 
     public void SpeedUp() => ++_timeControl;
 
@@ -395,7 +395,7 @@ public class Model : ITickable
             }
 
             if (!forest.CanGrow) continue;
-            
+
             if (_rnd.Next(0, 4) == 0)
                 forest.ForestSpread();
         }
@@ -410,7 +410,7 @@ public class Model : ITickable
         Coordinate newPlace = new(coord.X + directions[ind].Diff().Item1, coord.Y + directions[ind].Diff().Item2);
 
         if (GetField(newPlace) is not Land { HasBuildable: false } land) return;
-        
+
         land.ForestSpread();
         _persistence.Forests.Add(land);
     }
