@@ -223,7 +223,7 @@ public class TimeControl
     /// </summary>
     public static TimeControl operator +(TimeControl timeControl, (ITickable Key, int Value) subscriber)
     {
-        if (subscriber.Value <= 1)
+        if (subscriber.Value < 1)
             throw new ArgumentException("The subscriber's value must be greater than one.", nameof(subscriber.Value));
 
         // ReferenceContains
