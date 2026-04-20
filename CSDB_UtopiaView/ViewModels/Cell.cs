@@ -45,6 +45,9 @@ public partial class Cell : ObservableObject
     [ObservableProperty]
     private double _vehicle2Rotation;
 
+    [ObservableProperty]
+    private bool _isSelected;
+
     public Cell(int x, int y)
     {
         _x = x;
@@ -162,7 +165,7 @@ public partial class Cell : ObservableObject
             if (road.RightSide != null)
             {
                 HasVehicle1 = true;
-                Vehicle1Rotation = GetRotationAngle(road.RightSide.CurrentDirection);
+                Vehicle1Rotation = GetRotationAngle(road.RightSide.Intention.To);
 
                 // Kinyerjük a típusnevet és levágjuk a generikus jelölőt ha van
                 string vType = road.RightSide.GetType().Name.Split('`')[0];
@@ -178,7 +181,7 @@ public partial class Cell : ObservableObject
             if (road.LeftSide != null)
             {
                 HasVehicle2 = true;
-                Vehicle2Rotation = GetRotationAngle(road.LeftSide.CurrentDirection);
+                Vehicle2Rotation = GetRotationAngle(road.LeftSide.Intention.To);
 
                 string vType = road.LeftSide.GetType().Name.Split('`')[0];
                 VehicleImage2 = ImageLoader.Get($"Vehicles/{vType}.png");

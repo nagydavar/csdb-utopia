@@ -11,12 +11,13 @@ class Persistence
     
     public List<List<Field>> Fields { get; private set; }
     public List<Town> Towns { get; private set; }
+    public List<Garage> Garages { get; private set; }
     public List<Land> Forests { get; private set; }
     public List<Factory> Factories { get; private set; }
     public List<ResourceExtractor> ResourceExtractors { get; private set; }
     public List<Field> FactoryFields { get; private set; }
     public List<Field> ResourceExtractorFields { get; private set; }
-    public List<Vehicle<IResource>> VehiclesOnMap { get; private set; }
+    public HashSet<IVehicle> VehiclesOnMap { get; private set; }
     public Dictionary<IResource, int> Storage { get; private set; }
     public DateTime Date { get; private set; }
     public int Width { get; private set; }

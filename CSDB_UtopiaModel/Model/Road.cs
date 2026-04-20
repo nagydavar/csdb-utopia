@@ -47,8 +47,6 @@ public abstract class Road : Buildable, INavigable
 
     // public IVehicle? LeftSide => new Bus();
     // public Vehicle<Resource>? RightSide => new Bus();
-
-    public HashSet<Section> Sections { get; set; } = new();
     
     public override int placementCost => 100;
 
@@ -61,24 +59,45 @@ public abstract class Road : Buildable, INavigable
 
         area = (1, 1);
     }
+    public bool IsRightSideFree() => RightSide is null;
+    public bool IsLeftSideFree() => LeftSide is null;
+    
 
     public bool IsFree(IDirection dir)
     {
-        if (Direction is VerticalDirection)
-        {
-            if (dir is not VerticalDirection)
-                throw new Exception();
-
-            return dir == Down.Instance() ? LeftSide is null : RightSide is null;
-        }
-        else
-        {
-            if (dir is not IHorizontalDirection)
-                throw new Exception();
-
-            return dir == Right.Instance() ? LeftSide is null : RightSide is null;
-        }
+        bool isRs = IsRightSide(dir);
+        return (isRs && IsRightSideFree()) || (!isRs && IsLeftSideFree());
     }
 
-    public void MoveTo() => throw new NotImplementedException();
+    public void Leave(IVehicle vehicle)
+    {
+        if (LeftSide == vehicle)
+            LeftSide = null;
+        if (RightSide == vehicle)
+            RightSide = null;
+    }
+
+    public bool TryMoveTo(IDirection dir, IVehicle vehicle)
+    {
+        try
+        {
+            if (IsRightSide(dir)) RightSide = vehicle;
+            else LeftSide = vehicle;
+        }
+        catch (InvalidOperationException e)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    public static bool IsRightSide(IDirection d)
+    {
+        
+        if (d == Up.Instance()) return true;
+        if (d == Down.Instance()) return false;
+        if (d == Left.Instance()) return true;
+        return false;
+    }
+
 }
