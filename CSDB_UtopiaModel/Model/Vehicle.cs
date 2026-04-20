@@ -15,7 +15,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     private readonly Model model;
     protected Coordinate position;
     protected Field currentField;
-    protected int garageLimit = 1000;
+    protected int garageLimit = 20;
 
     public Coordinate Position
     {
@@ -32,10 +32,10 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         }
     }
 
-    public INavigable CurrentNavigable { get; protected set; }
+    public INavigable? CurrentNavigable { get; protected set; }
     
     public int TraveledSinceBought { get; set; }
-    public GoingIntention Intention { get; private set; }
+    public GoingIntention? Intention { get; private set; }
 
     protected INavigable getRoad(Coordinate c)
     {
@@ -53,6 +53,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         tc += (this, tickInterval);
         
     }
+    /*
     public Vehicle(Map map, Model m, Coordinate start, Coordinate end)
     {
         TimeControl tc = TimeControl.Instance();
@@ -62,11 +63,13 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         Position = start;
         AssignNewPath(start, end);
     }
+    */
     public IDirection CurrentDirection { get; set; } = Up.Instance();
 
     public void AssignNewPath(Coordinate start, Coordinate end)
     {
-        CurrentNavigable.Leave(this);
+        
+        CurrentNavigable?.Leave(this);
         Field oldField = currentField;
         
         Position = start;

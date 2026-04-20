@@ -415,16 +415,14 @@ public partial class GameViewModel : ViewModelBase
             object[] parameters = new object[]
             {
                 map,
-                _model,
-                startStop.Owner.Coordinates,
-                endStop.Owner.Coordinates
+                _model
             };
 
             // Példányosítás
             var vehicle = (IVehicle)Activator.CreateInstance(vehicleType, parameters)!;
 
             // Lehelyezés a modellbe (a modell PlaceVehicle metódusa már kezeli a Budget-et és a listát)
-            _model.PlaceVehicle(startStop.Owner.Coordinates, endStop.Owner.Coordinates, (Vehicle<IResource>)vehicle);
+            _model.PlaceVehicle(startStop.Owner.Coordinates, endStop.Owner.Coordinates, vehicle);
 
         }
         catch (Exception ex)

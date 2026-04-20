@@ -214,6 +214,10 @@ public class Model : ITickable
         {
             _map.BuildRoad(stop.Owner.Coordinates);
         }
+        else if (buildable is Garage garage)
+        {
+            _persistence.Garages.Add(garage);
+        }
 
         // Minden megváltozott mezőt elküldünk a View-nak
         foreach (var land in targetLands)
@@ -226,6 +230,9 @@ public class Model : ITickable
 
     public void PlaceVehicle(Coordinate start, Coordinate end, IVehicle vehicle)
     {
+        if (_persistence.Garages.Count == 0) 
+            throw new InvalidOperationException("You have to build a garage first");
+            
         if (_persistence.Fields[end.X][end.Y].Buildable is not Stop stop)
             throw new InvalidOperationException("You can only place a vehicle to a road");
 
