@@ -29,6 +29,11 @@ public class Model : ITickable
 
         _timeControl = TimeControl.Instance();
         _timeControl += (this, 1);
+
+        foreach (var list in _persistence.Fields)
+        foreach (var field in list)
+            if (field is Land land)
+                _persistence.Forests.Add(land);
     }
 
     #region Time
@@ -38,7 +43,16 @@ public class Model : ITickable
         _totalSeconds++;
 
         if (_totalSeconds % _secondsToGrowTrees == 0)
-            GrowTrees();
+        {
+            try
+            {
+                GrowTrees();
+            }
+            catch (InvalidOperationException e)
+            {
+                Console.Error.WriteLine("\nGrowing trees was not successful: \n" + e.Message);
+            }
+        }
 
         DateChanged?.Invoke(this, EventArgs.Empty);
 
@@ -374,6 +388,8 @@ public class Model : ITickable
 
     private void GrowTrees()
     {
+        List<Land> toBeAdded = new();
+
         foreach (var forest in _persistence.Forests)
         {
             switch (forest.LevelOfForest)
@@ -381,38 +397,51 @@ public class Model : ITickable
                 case 3:
                     if (_rnd.Next(0, 11) == 0)
                     {
-                        TrySpreadForest(forest.Coordinates);
+                        var tmp = TrySpreadForest(forest.Coordinates);
+                        if (tmp is not null)
+                            toBeAdded.Add(tmp);
                     }
 
                     break;
                 case 4:
                     if (_rnd.Next(0, 6) == 0)
                     {
-                        TrySpreadForest(forest.Coordinates);
+                        var tmp = TrySpreadForest(forest.Coordinates);
+                        if (tmp is not null)
+                            toBeAdded.Add(tmp);
                     }
 
                     break;
             }
 
-            if (!forest.CanGrow) continue;
+            if (!forest.CanGrow || _rnd.Next(0, 4) != 0) continue;
 
-            if (_rnd.Next(0, 4) == 0)
-                forest.ForestSpread();
+
+            forest.ForestSpread();
+            OnFieldsUpdated(forest);
         }
+
+        foreach (var land in toBeAdded)
+            _persistence.Forests.Add(land);
     }
 
-    private void TrySpreadForest(Coordinate coord)
+    private Land? TrySpreadForest(Coordinate coord)
     {
         IDirection[] directions = [Up.Instance(), Right.Instance(), Down.Instance(), Left.Instance()];
 
-        int ind = _rnd.Next(0, directions.Length);
+        int ind = _rnd.Next(0, directions.Length),
+            newx = coord.X + directions[ind].Diff().Item1,
+            newy = coord.Y + directions[ind].Diff().Item2;
 
-        Coordinate newPlace = new(coord.X + directions[ind].Diff().Item1, coord.Y + directions[ind].Diff().Item2);
+        if (0 > newx || newx >= _persistence.Width || 0 > newy || newy >= _persistence.Height) return null;
 
-        if (GetField(newPlace) is not Land { HasBuildable: false } land) return;
+        Coordinate newPlace = new(newx, newy);
+
+        if (GetField(newPlace) is not Land { HasBuildable: false } land) return null;
 
         land.ForestSpread();
-        _persistence.Forests.Add(land);
+        OnFieldsUpdated(land);
+        return land;
     }
 
     private (bool IsCurved, int Quadrant, IDirection Direction, Intersection? Intersection) DetermineRoadState(

@@ -11,7 +11,7 @@ class Persistence
     
     public List<List<Field>> Fields { get; private set; }
     public List<Town> Towns { get; private set; }
-    public List<Land> Forests { get; private set; }
+    public List<Land> Forests { get; private set; } = new();
     public List<Factory> Factories { get; private set; }
     public List<ResourceExtractor> ResourceExtractors { get; private set; }
     public List<Field> FactoryFields { get; private set; }
