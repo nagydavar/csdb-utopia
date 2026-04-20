@@ -4,6 +4,6 @@ namespace CSDB_UtopiaModel.Model;
 
 public interface INavigable
 {
-    void MoveTo(IDirection dir, IVehicle vehicle);
+    bool TryMoveTo(IDirection dir, IVehicle vehicle);
     void Leave(IVehicle vehicle);
 }

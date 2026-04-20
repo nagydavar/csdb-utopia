@@ -77,10 +77,18 @@ public abstract class Road : Buildable, INavigable
             RightSide = null;
     }
 
-    public void MoveTo(IDirection dir, IVehicle vehicle)
+    public bool TryMoveTo(IDirection dir, IVehicle vehicle)
     {
-        if (IsRightSide(dir)) RightSide = vehicle;
-        else LeftSide = vehicle;
+        try
+        {
+            if (IsRightSide(dir)) RightSide = vehicle;
+            else LeftSide = vehicle;
+        }
+        catch (InvalidOperationException e)
+        {
+            return false;
+        }
+        return true;
     }
 
     public static bool IsRightSide(IDirection d)

@@ -6,8 +6,9 @@ public interface IVehicle : ITickable, Buyable
 {
     // TODO
 
-    // A fordító csak akkor engedi a road.RightSide.Intention hívást,
+    // A fordï¿½tï¿½ csak akkor engedi a road.RightSide.Intention hï¿½vï¿½st,
     // ha ez szerepel itt:
     GoingIntention Intention { get; }
     public IDirection CurrentDirection { get; protected set; }
+    public void AssignNewPath(Coordinate start, Coordinate end);
 }

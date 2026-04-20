@@ -227,7 +227,7 @@ public class Model : ITickable
         return true;
     }
 
-    public void PlaceVehicle(Coordinate start, Coordinate end, Vehicle<IResource> vehicle)
+    public void PlaceVehicle(Coordinate start, Coordinate end, IVehicle vehicle)
     {
         if (_persistence.Fields[end.X][end.Y].Buildable is not Stop stop)
             throw new InvalidOperationException("You can only place a vehicle to a road");

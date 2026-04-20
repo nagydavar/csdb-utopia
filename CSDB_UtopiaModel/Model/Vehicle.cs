@@ -9,10 +9,10 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     protected int speed;
     public virtual int placementCost => 200;
     protected int tickInterval = 1;
-    protected Navigation navigation;
-    protected Navigator navi;
-    protected Map map;
-    private Model model;
+    protected Navigation? navigation = null; 
+    protected Navigator? navi = null;
+    protected readonly Map map;
+    private readonly Model model;
     protected Coordinate position;
     protected Field currentField;
     protected int garageLimit = 1000;
@@ -23,7 +23,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         protected set
         {
             position = value;
-            CurrentNavigable = getRoad();
+            CurrentNavigable = getRoad(position);
             currentField = model.GetField(position);
 
             
@@ -37,14 +37,22 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     public int TraveledSinceBought { get; set; }
     public GoingIntention Intention { get; private set; }
 
-    protected INavigable getRoad()
+    protected INavigable getRoad(Coordinate c)
     {
-        Field f = model.GetField(Position);
+        Field f = model.GetField(c);
         if (f.Buildable is INavigable a) 
             return a;
         throw new InvalidDataException("The specified coordinate is not navigable");
     }
 
+    public Vehicle(Map map, Model m)
+    {
+        model = m;
+        this.map = map;
+        TimeControl tc = TimeControl.Instance();
+        tc += (this, tickInterval);
+        
+    }
     public Vehicle(Map map, Model m, Coordinate start, Coordinate end)
     {
         TimeControl tc = TimeControl.Instance();
@@ -58,17 +66,18 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
 
     public void AssignNewPath(Coordinate start, Coordinate end)
     {
+        CurrentNavigable.Leave(this);
+        Field oldField = currentField;
+        
+        Position = start;
         navigation = map.GetNavigation(start, end);
         navi = (Navigator)navigation.GetEnumerator();
 
-        Field oldField = currentField;
-        Position = start; // A setter be�ll�tja a currentField-et is
 
         IDirection d = (CurrentNavigable is Road road) ? road.Direction : Up.Instance();
         
         Intention = new GoingIntention(d, d);
 
-        navi = (Navigator)navigation.GetEnumerator();
         
         model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, currentField]));
     }
@@ -84,17 +93,20 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
 
     public Task Tick()
     {
-        if (navi.MoveNext())
+        if (navi is not null && navi.MoveNext())
         {
             IDirection d = Position/navi.Current;
+            
+            if (!getRoad(navi.Current).TryMoveTo(d, this)) return Task.CompletedTask;
+            
             CurrentNavigable.Leave(this);
+            
             Field oldField = currentField;
 
             Position = navi.Current;
             
             Intention = Intention.newIntention(d);
             
-            CurrentNavigable.MoveTo(d, this);
             Field to = model.GetField(Position);
             
             model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, to]));
@@ -102,7 +114,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
             TraveledSinceBought++;
             
         }
-        else if (navi.Ended)
+        else if (navi is not null && navi.Ended)
         { 
             if (TraveledSinceBought > garageLimit) GoToGarage();
             else navi.Reset();

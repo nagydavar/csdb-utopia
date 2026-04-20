@@ -15,8 +15,12 @@ public class Stop: Buildable, INavigable
             area = (1, 1);
         }
 
-    public void MoveTo(IDirection dir, IVehicle vehicle) => vehicles.Add(vehicle);
-    public void Leave(IVehicle vehicle) => vehicles.Remove(vehicle);
+        public bool TryMoveTo(IDirection dir, IVehicle vehicle)
+        {
+            vehicles.Add(vehicle);
+            return true;
+        }
+        public void Leave(IVehicle vehicle) => vehicles.Remove(vehicle);
 
         public void Load(IResource r, int amount) => throw new NotImplementedException();
         public int Unload(IResource r, int amount) => throw new NotImplementedException();
