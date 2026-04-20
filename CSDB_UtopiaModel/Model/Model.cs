@@ -155,7 +155,7 @@ public class Model : ITickable
                 // Koordináta validáció (ne lógjon ki a pályáról)
                 if (coord.X + i >= _persistence.Width || coord.Y + j >= _persistence.Height) return false;
 
-                Field f = _persistence.Fields[coord.X + i][coord.Y + j];
+                Field f = _persistence.Fields[coord.X + j][coord.Y - i];
 
                 // Csak szabad Land mezőre építhetünk
                 if (f is Land land && !land.HasBuildable)
@@ -185,8 +185,8 @@ public class Model : ITickable
         foreach (var land in targetLands)
         {
             // Kiszámoljuk a relatív pozíciót a kezdőponthoz képest
-            land.RelativeX = land.Coordinates.X - coord.X;
-            land.RelativeY = land.Coordinates.Y - coord.Y;
+            land.RelativeY = land.Coordinates.X - coord.X;
+            land.RelativeX = Math.Abs(land.Coordinates.Y - coord.Y);
 
             land.Place(buildable); // Ez meghívja a Deforest()-et is az adott mezőn
         }
@@ -288,7 +288,7 @@ public class Model : ITickable
         //     throw new Exception("ejnye-bejnye!");
         Buildable? onField = GetField(coord).Buildable;
         Field field = GetField(coord);
-        Field source = GetField(new Coordinate(coord.X - field.RelativeX, coord.Y - field.RelativeY));
+        Field source = GetField(new Coordinate(coord.X - field.RelativeX, coord.Y + field.RelativeY));
 
         if (onField is null) return;
 
@@ -296,7 +296,7 @@ public class Model : ITickable
         {
             for (int j = 0; j < onField.area.Height; j++)
             {
-                Coordinate currentCoord = new Coordinate(source.Coordinates.X + i, source.Coordinates.Y + j);
+                Coordinate currentCoord = new Coordinate(source.Coordinates.X + j, source.Coordinates.Y - i);
 
                 // Biztonsági ellenőrzés, ne lógjunk ki a pályáról
                 if (currentCoord.X < _persistence.Width && currentCoord.Y < _persistence.Height)
