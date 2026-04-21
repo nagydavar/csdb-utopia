@@ -6,6 +6,7 @@ using CSDB_UtopiaModel.Model;
 using CSDB_UtopiaModel.Persistence;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net.NetworkInformation;
 using System.Linq;
@@ -179,14 +180,14 @@ public partial class Cell : ObservableObject
     {
         if (field.Buildable is Road road)
         {
+            IVehicle? rightSide = road.RightSide;
             // 1. sáv ellenőrzése
-            if (road.RightSide != null)
+            if (rightSide is not null)
             {
                 HasVehicle1 = true;
-                Vehicle1Rotation = GetRotationAngle(road.RightSide.Intention.To);
-
+                Vehicle1Rotation = GetRotationAngle(rightSide.Intention.To);
                 // Kinyerjük a típusnevet és levágjuk a generikus jelölőt ha van
-                string vType = road.RightSide.GetType().Name.Split('`')[0];
+                string vType = rightSide.GetType().Name.Split('`')[0];
                 VehicleImage1 = ImageLoader.Get($"Vehicles/{vType}.png");
             }
             else
@@ -194,14 +195,15 @@ public partial class Cell : ObservableObject
                 HasVehicle1 = false;
                 VehicleImage1 = null;
             }
-
+            
+            IVehicle? leftSide = road.LeftSide;
             // 2. sáv ellenőrzése
-            if (road.LeftSide != null)
+            if (leftSide is not null)
             {
                 HasVehicle2 = true;
-                Vehicle2Rotation = GetRotationAngle(road.LeftSide.Intention.To);
+                Vehicle2Rotation = GetRotationAngle(leftSide.Intention.To);
 
-                string vType = road.LeftSide.GetType().Name.Split('`')[0];
+                string vType = leftSide.GetType().Name.Split('`')[0];
                 VehicleImage2 = ImageLoader.Get($"Vehicles/{vType}.png");
             }
             else

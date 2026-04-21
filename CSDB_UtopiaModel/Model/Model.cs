@@ -390,6 +390,7 @@ public class Model : ITickable
         // if (/*undemolishable*/)
         //     throw new Exception("ejnye-bejnye!");
         Buildable? onField = GetField(coord).Buildable;
+        if (onField is Garage && ListGarages().Count == 1) return; 
         Field field = GetField(coord);
         Field source = GetField(new Coordinate(coord.X - field.RelativeY, coord.Y + field.RelativeX));
 
@@ -430,7 +431,7 @@ public class Model : ITickable
             OnMoodChanged(_persistence.CurrentMood);
         }
 
-        if (onField is Road)
+        if (onField is INavigable)
         {
             RefreshNeighbouringRoads(coord);
             _map.DeleteRoad(coord);
