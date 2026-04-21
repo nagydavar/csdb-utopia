@@ -764,6 +764,7 @@ public partial class GameViewModel : ViewModelBase
     public void SellVehicle(IVehicle vehicle)
     {
         _model.SellVehicle(vehicle);
+        
         ActiveVehicles.Remove(vehicle);
         System.Diagnostics.Debug.WriteLine("Jármű eladva.");
     }
