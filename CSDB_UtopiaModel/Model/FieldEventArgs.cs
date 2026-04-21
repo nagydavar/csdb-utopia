@@ -3,8 +3,8 @@ using CSDB_UtopiaModel.Persistence;
 namespace CSDB_UtopiaModel.Model;
 public class FieldEventArgs: EventArgs
 {
-    public List<Field> Fields;
-    public FieldEventArgs(List<Field> fields) {
+    public List<Field?> Fields;
+    public FieldEventArgs(List<Field?> fields) {
         Fields = fields;
     }
 };
