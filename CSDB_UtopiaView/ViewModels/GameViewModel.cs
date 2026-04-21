@@ -63,6 +63,10 @@ public partial class GameViewModel : ViewModelBase
     private Cell? _secondSelectedCell; // A második sárga keretes cella
     private bool _isSelectingStops; // Jelzi, hogy éppen megállókat válogatunk
 
+    //Híd építése
+    private bool _isSelectingBridgePoints;
+    private Cell? _bridgeStartCell;
+
     // Cella állopta
     [ObservableProperty] private FieldDetails? _selectedFieldDetails;
     [ObservableProperty] private bool _isFieldDetailsVisible;
@@ -239,16 +243,22 @@ public partial class GameViewModel : ViewModelBase
     [RelayCommand]
     public void SelectBuildable(Type selectedType)
     {
-        if (_isSelectingStops)
-        {
-            ResetStopSelection();
-        }
+        ResetStopSelection();
+
+        _isSelectingBridgePoints = false;
+        _bridgeStartCell = null;
 
         // Eltároljuk a választott típust
         _selectedType = selectedType;
         IsDemolishMode = false;
         // Opcionális: a panelt nyitva hagyjuk, ha többet akarunk építeni egymás után
         IsBuildingPanelVisible = false;
+
+        if (selectedType.IsAssignableTo(typeof(Bridge)))
+        {
+            _isSelectingBridgePoints = true;
+            System.Diagnostics.Debug.WriteLine("Válassz ki két pontot a hídnak!");
+        }
     }
 
     [RelayCommand]
@@ -269,6 +279,53 @@ public partial class GameViewModel : ViewModelBase
     {
         try
         {
+            // --- HÍD ÉPÍTÉSI LOGIKA ---
+            if (_isSelectingBridgePoints && _selectedType != null)
+            {
+                if (_bridgeStartCell == null)
+                {
+                    // Első kattintás: kezdőpont kijelölése
+                    _bridgeStartCell = cell;
+                    _bridgeStartCell.IsSelected = true;
+                    return; // Megállunk, várjuk a második kattintást
+                }
+                else
+                {
+                    // Második kattintás: végpont
+                    try
+                    {
+                        Coordinate start = new Coordinate(_bridgeStartCell.X, _bridgeStartCell.Y);
+                        Coordinate end = new Coordinate(cell.X, cell.Y);
+
+                        // 1. Meghatározzuk az irányt a két pont alapján
+                        IDirection bridgeDir;
+                        if (start.X == end.X) bridgeDir = Up.Instance();    // Függőleges híd
+                        else if (start.Y == end.Y) bridgeDir = Right.Instance(); // Vízszintes híd
+                        else return; // Nem egy vonalban vannak, a modell úgyis false-t adna
+
+                        // 2. Létrehozunk egy VALÓDI példányt a kezdőmezőre (ez lesz a "template")
+                        // A modell GetField-jét használjuk, hogy érvényes Field objektumot kapjon
+                        var bridgeInstance = (Bridge)Activator.CreateInstance(_selectedType,
+                            new object[] { _model.GetField(start.X, start.Y), bridgeDir })!;
+
+                        // 3. Meghívjuk a modellt a kész objektummal
+                        if (_model.PlaceBridge(start, end, bridgeInstance))
+                        {
+                            System.Diagnostics.Debug.WriteLine("Híd sikeresen megépült.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Bridge építési hiba: {ex.Message}");
+                    }
+                    finally
+                    {
+                        ResetBridgeSelection();
+                    }
+                    return;
+                }
+            }
+
             // Megálló kiválasztási logika járművásárláshoz
             if (_isSelectingStops && _selectedType != null)
             {
@@ -415,7 +472,20 @@ public partial class GameViewModel : ViewModelBase
         {
             // Minden más váratlan hiba elkapása
             System.Diagnostics.Debug.WriteLine($"Váratlan hiba: {ex.Message}");
+            ResetBridgeSelection();
         }
+    }
+
+    // Segédmetódus a takarításhoz
+    private void ResetBridgeSelection()
+    {
+        if (_bridgeStartCell != null)
+        {
+            _bridgeStartCell.IsSelected = false;
+        }
+        _bridgeStartCell = null;
+        _isSelectingBridgePoints = false;
+        _selectedType = null;
     }
 
     private void CreateAndPlaceVehicle(Type vehicleType, Stop startStop, Stop endStop)
@@ -584,6 +654,24 @@ public partial class GameViewModel : ViewModelBase
                     else if (type.Name.Contains("Van")) { info.Speed = 90; info.Capacity = 20; info.Maintenance = 50; info.PlacementCost = 200; }
                     else if (type.Name.Contains("Taxi")) { info.Speed = 120; info.Capacity = 3; info.Maintenance = 30; info.PlacementCost = 150; }
                     else { info.Speed = 60; info.Capacity = 10; info.Maintenance = 50; }
+                }
+
+                // --- HIDAK ---
+                else if (type.IsAssignableTo(typeof(Bridge)))
+                {
+                    info.IsVehicle = false;
+                    try
+                    {
+                        var dummy = (Bridge)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
+                        info.PlacementCost = dummy.placementCost;
+                    }
+                    catch
+                    {
+                        // Ha a fenti trükk nem megy, használjuk a típusnevet:
+                        if (type.Name.Contains("Wooden")) info.PlacementCost = 120;
+                        else if (type.Name.Contains("Stone")) info.PlacementCost = 150;
+                        else if (type.Name.Contains("Steel")) info.PlacementCost = 200;
+                    }
                 }
                 // ÉPÜLETEK ÉS UTAK
                 else

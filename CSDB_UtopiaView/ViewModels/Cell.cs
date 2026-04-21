@@ -93,6 +93,22 @@ public partial class Cell : ObservableObject
                 {
                     FileName = $"Buildings/OtherBuildings/{typeName}.PNG";
                 }
+                else if (field.Buildable is Bridge bridge)
+                {
+                    if (bridge.IsCurved)
+                    {
+                        FileName = $"Roads/{typeName}_Curve_{bridge.Quadrant}.PNG";
+                    }
+                    else
+                    {
+                        // A hidak alapvetően egyenesek (Direction alapján)
+                        // dType: V (Vertical) vagy H (Horizontal)
+                        bool isVertical = bridge.Direction is Up || bridge.Direction is Down;
+                        string dirType = isVertical ? "V" : "H";
+
+                        FileName = $"Roads/{typeName}_{dirType}.PNG";
+                    }
+                }
                 else if (field.Buildable is Road road)
                 {
                     if (road is Motorway motorway && motorway.HasIntersection)

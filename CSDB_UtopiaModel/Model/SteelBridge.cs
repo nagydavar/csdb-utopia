@@ -4,7 +4,11 @@ namespace CSDB_UtopiaModel.Model;
 
 public class SteelBridge : Bridge
 {
-    //kitalalt ertek a 30
-    public SteelBridge(Field f, IDirection d) : base(f, 30, d) {}
-        
-};
+    public override int MaxLength => 25;
+    public override int placementCost => 200;
+
+    public SteelBridge(Field f, IDirection d) : base(f, 30, d)
+    {
+        //TODO value of maxSpeed
+    }
+}

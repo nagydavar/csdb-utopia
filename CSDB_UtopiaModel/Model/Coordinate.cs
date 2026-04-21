@@ -27,10 +27,14 @@ public readonly struct Coordinate
 
     public static Coordinate operator -(Coordinate lhs, Coordinate rhs) => new(lhs.X - rhs.X, lhs.Y - rhs.Y);
 
+    public static bool operator ==(Coordinate? lhs, Coordinate? rhs) => lhs is not null && lhs.Equals(rhs);
+
+    public static bool operator !=(Coordinate? lhs, Coordinate? rhs) => !(lhs == rhs);
+
     public Coordinate Step(Persistence.IDirection d)
     {
         (int dx, int dy) = d.Diff();
-        Coordinate c = new Coordinate(X + dx, Y+dy);
+        Coordinate c = new Coordinate(X + dx, Y + dy);
         return c;
     }
 

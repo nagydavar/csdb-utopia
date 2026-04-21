@@ -100,6 +100,66 @@ public class Model : ITickable
         MoodChanged?.Invoke(this, new MoodChangedEventArgs(_persistence.CurrentMood));
     }
 
+    public bool PlaceBridge(Coordinate start, Coordinate end, Bridge bridge)
+    {
+        // Tengelyek meghat.
+        bool isVertical = start.X == end.X;
+        bool isHorizontal = start.Y == end.Y;
+
+        if (!isVertical && !isHorizontal)
+            return false; // Nem egy vonalban vannak
+
+        int minX = Math.Min(start.X, end.X);
+        int maxX = Math.Max(start.X, end.X);
+        int minY = Math.Min(start.Y, end.Y);
+        int maxY = Math.Max(start.Y, end.Y);
+
+        // Hossz ellenőrzése (mezők száma)
+        int length = isVertical ? (maxY - minY + 1) : (maxX - minX + 1);
+
+        if (length > bridge.MaxLength)
+            return false;
+
+        // Víz-e és üres-e minden mező
+        for (int x = minX; x <= maxX; x++)
+        {
+            for (int y = minY; y <= maxY; y++)
+            {
+                var field = GetField(x, y);
+                if (field is not Water || field.HasBuildable)
+                    return false;
+            }
+        }
+
+        // Tényleges lehelyezés
+        // Végigmegyünk a kijelölt szakaszon
+        for (int x = minX; x <= maxX; x++)
+        {
+            for (int y = minY; y <= maxY; y++)
+            {
+                Coordinate c = new(x, y);
+                Field f = GetField(c);
+                Bridge bPart = bridge.Clone(f);
+
+                // Költség levonása
+                _persistence.Budget -= bPart.placementCost;
+
+                // Buildable beállítása
+                f.Buildable = bPart;
+
+                // Jelezzük az úthálózatnak (ha kell)
+                _map.BuildRoad(c);
+
+                RefreshNeighbouringRoads(c);
+
+                // Frissítjük a View-t
+                OnFieldsUpdated(f);
+            }
+        }
+        BudgetChanged?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
     public bool PlaceRoad(Coordinate coord)
     {
         (bool IsCurved, int Quadrant, IDirection Direction, Intersection? Intersection) roadState;
@@ -490,6 +550,9 @@ public class Model : ITickable
         IDirection dir = Up.Instance();
         Intersection? intersection = null;
         Field f = GetField(coord);
+
+        bool isBridge = f.Buildable is Bridge; // ELLENŐRZÉS: Híd-e
+        
         switch (roadCount)
         {
             case 0: // should be also included in case 'default' if we want to build only non-separated roads
@@ -526,6 +589,13 @@ public class Model : ITickable
 
                 break;
             case 3:
+                if (isBridge)
+                {
+                    // Ha híd, nem lehet T-elágazás. 
+                    // Ekkor válasszunk egy irányt az első két szomszéd alapján (egyenesnek mutatva)
+                    return (false, 0, roadDirections.First(d => roads[Array.IndexOf(roadDirections, d)] != null), null);
+                }
+
                 if (HasNeighbouringIntersection(coord))
                     throw new InvalidOperationException("can't place two intersections next to each other");
 
@@ -547,6 +617,12 @@ public class Model : ITickable
 
                 break;
             case 4:
+                if (isBridge)
+                {
+                    // Ha híd, nem lehet 4-es kereszteződés sem.
+                    return (false, 0, Up.Instance(), null);
+                }
+
                 if (HasNeighbouringIntersection(coord))
                     throw new InvalidOperationException("can't place two intersections next to each other");
 
