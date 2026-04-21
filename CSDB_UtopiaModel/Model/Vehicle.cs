@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
@@ -9,8 +8,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     protected int maintenanceCost;
     protected int speed;
     public abstract int placementCost { get; }
-
-    private readonly int tickInterval = 1;
+    protected readonly int tickInterval = 1;
     protected Navigation? navigation;
     protected Navigator? navi;
    
@@ -59,9 +57,8 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         this.map = map;
         TimeControl tc = TimeControl.Instance();
         tc += (this, tickInterval);
-
+        
     }
-
     /*
     public Vehicle(Map map, Model m, Coordinate start, Coordinate end)
     {
@@ -129,11 +126,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         }
         else if (navi is not null && navi.Ended)
         {
-       
-            if (TraveledSinceBought > garageLimit)
-            {
-                GoToGarage();
-            }
+            if (TraveledSinceBought > garageLimit) GoToGarage();
             else navi.Reset();
         }
 
