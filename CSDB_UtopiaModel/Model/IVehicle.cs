@@ -8,6 +8,8 @@ public interface IVehicle : ITickable, Buyable
 
     // A ford�t� csak akkor engedi a road.RightSide.Intention h�v�st,
     // ha ez szerepel itt:
+
+    Coordinate Position { get; }
     GoingIntention Intention { get; }
     public IDirection CurrentDirection { get; protected set; }
 
@@ -16,4 +18,6 @@ public interface IVehicle : ITickable, Buyable
     int Speed { get; }
     int Capacity { get; }
     int MaintenanceCost { get; }
+
+    int TraveledSinceBought { get; }
 }

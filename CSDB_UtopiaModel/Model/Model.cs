@@ -328,24 +328,28 @@ public class Model : ITickable
     {
         if (vehicle is null) return;
 
-        //Eltávolítás a TimeControl-ból (ne kapjon több Tick-et)
-        // 1. Kimentjük a példányt egy változóba
+        // Megállítás a TimeControl-ban
         var tc = TimeControl.Instance();
-
-        // 2. A változón már elvégezhető a művelet
         tc -= (vehicle as ITickable)!;
 
-        //Eltávolítás az útról (vizuálisan is eltűnik)
-        if (vehicle is Vehicle<IResource> v)
+        // Generikus korlátozás NÉLKÜL
+        // Keressük meg a mezőt a jármű pozíciója alapján
+        Field fieldOnMap = GetField(vehicle.Position);
+
+        if (fieldOnMap.Buildable is Road road)
         {
-            v.CurrentNavigable?.Leave(v);
-            OnFieldsUpdated(GetField(v.Position));
+            // A Road.Leave(IVehicle) metódust hívjuk, ami interfészt vár, 
+            // így minden típussal működni fog (Car, Bus, stb.)
+            road.Leave(vehicle);
         }
+
+        // Vizuális frissítés kiváltása
+        OnFieldsUpdated(fieldOnMap);
 
         // Törlés a listából
         _persistence.VehiclesOnMap.Remove(vehicle);
 
-        // Pénz visszatérítése, a vételi ár fele
+        // Pénz visszatérítése
         _persistence.Budget += vehicle.placementCost / 2;
         BudgetChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -390,6 +394,7 @@ public class Model : ITickable
         // if (/*undemolishable*/)
         //     throw new Exception("ejnye-bejnye!");
         Buildable? onField = GetField(coord).Buildable;
+        if (onField is Garage && ListGarages().Count == 1) return; 
         Field field = GetField(coord);
         Field source = GetField(new Coordinate(coord.X - field.RelativeY, coord.Y + field.RelativeX));
 
@@ -430,7 +435,7 @@ public class Model : ITickable
             OnMoodChanged(_persistence.CurrentMood);
         }
 
-        if (onField is Road)
+        if (onField is INavigable)
         {
             RefreshNeighbouringRoads(coord);
             _map.DeleteRoad(coord);
@@ -495,10 +500,13 @@ public class Model : ITickable
         return Assembly.GetExecutingAssembly()
             .GetTypes()
             .Where(t => t.IsClass &&
-                        !t.IsAbstract &&
-                        (t.IsAssignableTo(typeof(IVehicle))) && // Minden ami jármű
-                        !t.IsAssignableTo(typeof(PassengerVehicle)) && // De nem utas-szállító
-                        t.Namespace == targetNamespace)
+                    !t.IsAbstract &&
+                    // Ne legyen generikus definíció (pl. Van<T> kizárva)
+                    !t.IsGenericTypeDefinition &&
+                    t.IsAssignableTo(typeof(IVehicle)) &&
+                    !t.IsAssignableTo(typeof(PassengerVehicle)) &&
+                    // Csak a megadott névtérben lévő, vagy speciális nevű konkrét osztályok
+                    (t.Namespace == targetNamespace || t.Name.Contains("Industrial") || t.Name.Contains("Treasure")))
             .ToList();
     }
 
