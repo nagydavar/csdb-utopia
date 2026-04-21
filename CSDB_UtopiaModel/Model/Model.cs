@@ -98,6 +98,69 @@ public class Model : ITickable
         MoodChanged?.Invoke(this, new MoodChangedEventArgs(_persistence.CurrentMood));
     }
 
+    public bool PlaceBridge(Coordinate start, Coordinate end, Bridge bridge)
+    {
+        if (start == end)
+            return false;
+
+        int length = 0;
+
+        if (start.X == end.X)
+        {
+            int startInd = Math.Min(start.Y, end.Y), endInd = Math.Max(start.Y, end.Y);
+            for (int i = startInd; i <= endInd; i++)
+            {
+                var field = GetField(start.X, i);
+                if (field is not Water || field.HasBuildable)
+                    return false;
+            }
+
+            length = Math.Abs(start.Y - end.Y);
+        }
+        else if (start.Y == end.Y)
+        {
+            int startInd = Math.Min(start.X, end.X), endInd = Math.Max(start.X, end.X);
+            for (int i = startInd; i <= endInd; i++)
+            {
+                var field = GetField(start.X, i);
+                if (field is not Water || field.HasBuildable)
+                    return false;
+
+                length = Math.Abs(start.X - end.X);
+            }
+        }
+        else
+        {
+            return false; // the coordinates are not on the same axis
+        }
+
+        if (length > bridge.MaxLength)
+            return false;
+
+        if (start.X == end.X)
+        {
+            int startInd = Math.Min(start.Y, end.Y), endInd = Math.Max(start.Y, end.Y);
+            for (int i = startInd; i <= endInd; i++)
+            {
+                Coordinate c = new(start.X, i);
+                if (!Place(c, bridge.Clone(GetField(c))))
+                    return false;
+            }
+        }
+        else if (start.Y == end.Y)
+        {
+            int startInd = Math.Min(start.X, end.X), endInd = Math.Max(start.X, end.X);
+            for (int i = startInd; i <= endInd; i++)
+            {
+                Coordinate c = new(i, start.Y);
+                if (!Place(c, bridge.Clone(GetField(c))))
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
     public bool PlaceRoad(Coordinate coord)
     {
         (bool IsCurved, int Quadrant, IDirection Direction, Intersection? Intersection) roadState;

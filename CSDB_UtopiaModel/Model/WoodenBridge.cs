@@ -4,6 +4,10 @@ namespace CSDB_UtopiaModel.Model;
 
 public class WoodenBridge : Bridge
 {
-    //kitalalt ertek a 10
-    public WoodenBridge(Field f, IDirection d) : base(f, 10, d) {}
+    public override int MaxLength => 5;
+
+    public WoodenBridge(Field f, IDirection d) : base(f, 10, d)
+    {
+        //TODO value of maxSpeed
+    }
 }
