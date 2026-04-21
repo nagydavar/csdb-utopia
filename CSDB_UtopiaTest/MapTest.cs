@@ -188,4 +188,83 @@ public sealed class MapTest
         Assert.AreEqual(0, path.Count);
 
     }
+
+    [TestMethod]
+    public void MapTestBuildNeigborSteps()
+    {
+        List<Coordinate> roads = new();
+        roads.Add(new Coordinate(0, 0));
+        roads.Add(new Coordinate(0, 1));
+        roads.Add(new Coordinate(0, 2));
+        roads.Add(new Coordinate(1, 2));
+        roads.Add(new Coordinate(2, 2));
+        roads.Add(new Coordinate(2, 1));
+        roads.Add(new Coordinate(2, 0));
+        roads.Add(new Coordinate(1, 0));
+        Map m = new Map();
+        foreach (var road1 in roads)
+        {
+            m.BuildRoad(road1);
+
+        }
+
+        foreach (var road1 in roads)
+        {
+
+            foreach (var road2 in roads)
+            {
+                if (road1 != road2 && !road1.IsNeigbor(road2))
+                {
+                    Coordinate? step = m.Step(road1, road2);
+                    Assert.IsNotNull(step);
+                    Assert.AreNotEqual(road1, step);
+                    Assert.IsTrue(road1.IsNeigbor(step.Value));
+                    
+                }
+            }
+        }
+    }
+
+    [TestMethod]
+        public void MapTestDeleteRoad4()
+        {
+            List<Coordinate> roads = new();
+            roads.Add(new Coordinate(0, 0));
+            roads.Add(new Coordinate(0, 1));
+            roads.Add(new Coordinate(0, 2));
+            roads.Add(new Coordinate(1, 2));
+            roads.Add(new Coordinate(2, 2));
+            roads.Add(new Coordinate(2, 1));
+            roads.Add(new Coordinate(2, 0));
+            roads.Add(new Coordinate(1, 0));
+        
+            Map m = new Map(roads.ToHashSet());
+            Coordinate toDelete = new Coordinate(2, 0);
+            m.DeleteRoad(toDelete);
+            
+            foreach (var road1 in roads)
+            {
+    
+                foreach (var road2 in roads)
+                {
+                    if (road1 == toDelete || road2 == toDelete)
+                        Assert.IsNull(m.Step(road1, road2));
+                    else if (road1 != road2)
+                    {
+                        
+                        if (!road1.IsNeigbor(road2))
+                        {
+                            Coordinate? step = m.Step(road1, road2);
+                            Assert.IsNotNull(step);
+                            Assert.AreNotEqual(road1, step);
+                            Assert.IsTrue(road1.IsNeigbor(step.Value));
+                            
+                        }
+
+                    }
+                }
+            }
+        
+    }
+
 }

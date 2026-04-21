@@ -5,7 +5,6 @@ namespace CSDB_UtopiaModel.Model;
 
 public class Model : ITickable
 {
-
     private TimeControl _timeControl;
     private Persistence.Persistence _persistence;
     private uint _totalSeconds = 0; // Az eltelt összes másodperc
@@ -126,9 +125,7 @@ public class Model : ITickable
 
         if (RefreshNeighbouringRoads(coord))
         {
-            _map.BuildRoad(coord);
             return true;
-
         }
 
         // if the refreshing was not successful
@@ -139,7 +136,6 @@ public class Model : ITickable
 
     public bool Place(Coordinate coord, Buildable buildable)
     {
-
         // 1. Épület méretének lekérése
         int width = buildable.area.Width;
         int height = buildable.area.Height;
@@ -155,7 +151,7 @@ public class Model : ITickable
                 // Koordináta validáció (ne lógjon ki a pályáról)
                 if (coord.X + i >= _persistence.Width || coord.Y + j >= _persistence.Height) return false;
 
-                Field f = _persistence.Fields[coord.X + i][coord.Y + j];
+                Field f = _persistence.Fields[coord.X + j][coord.Y - i];
 
                 // Csak szabad Land mezőre építhetünk
                 if (f is Land land && !land.HasBuildable)
@@ -185,8 +181,8 @@ public class Model : ITickable
         foreach (var land in targetLands)
         {
             // Kiszámoljuk a relatív pozíciót a kezdőponthoz képest
-            land.RelativeX = land.Coordinates.X - coord.X;
-            land.RelativeY = land.Coordinates.Y - coord.Y;
+            land.RelativeY = land.Coordinates.X - coord.X;
+            land.RelativeX = Math.Abs(land.Coordinates.Y - coord.Y);
 
             land.Place(buildable); // Ez meghívja a Deforest()-et is az adott mezőn
         }
@@ -213,7 +209,13 @@ public class Model : ITickable
             _persistence.CurrentMood += residential.AffectMood;
             OnMoodChanged(_persistence.CurrentMood);
         }
-        else if (buildable is Stop stop)
+        else if (buildable is Garage garage)
+        {
+            _persistence.Garages.Add(garage);
+        }
+        
+        
+        if (buildable is INavigable stop)
         {
             _map.BuildRoad(stop.Owner.Coordinates);
         }
@@ -227,24 +229,30 @@ public class Model : ITickable
         return true;
     }
 
-    public void PlaceVehicle(Coordinate start, Coordinate end, Vehicle<IResource> vehicle)
+    public void PlaceVehicle(Coordinate start, Coordinate end, IVehicle vehicle) => PlaceVehicle([start, end], vehicle);
+    public void PlaceVehicle(Coordinate[] stops, IVehicle vehicle)
     {
-        if (_persistence.Fields[end.X][end.Y].Buildable is not Stop stop)
-            throw new InvalidOperationException("You can only place a vehicle to a road");
+        if (_persistence.Garages.Count == 0) 
+            throw new InvalidOperationException("You have to build a garage first");
+
+        foreach (var stopCoords in stops)
+        {
+            if (GetField(stopCoords).Buildable is not Stop stop)
+                throw new InvalidOperationException("You can only set path between stops");
+        }
 
         try
         {
-            vehicle.AssignNewPath(start, end);
+            vehicle.AssignNewPath(stops);
             _persistence.VehiclesOnMap.Add(vehicle);
-            
+
             _persistence.Budget -= vehicle.placementCost;
             BudgetChanged?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception e)
         {
-            
+
         }
-        
     }
 
     //nyersanyag friss�t�se miatt
@@ -274,12 +282,11 @@ public class Model : ITickable
     {
         return _persistence.Storage.ContainsKey(resource) ? _persistence.Storage[resource] : 0;
     }
-    // id�ig �j
 
     public void AddVehicle(Vehicle<IResource> vehicle)
     {
         _persistence.VehiclesOnMap.Add(vehicle);
-        
+
     }
 
     public void Demolish(Coordinate coord)
@@ -288,7 +295,7 @@ public class Model : ITickable
         //     throw new Exception("ejnye-bejnye!");
         Buildable? onField = GetField(coord).Buildable;
         Field field = GetField(coord);
-        Field source = GetField(new Coordinate(coord.X - field.RelativeX, coord.Y - field.RelativeY));
+        Field source = GetField(new Coordinate(coord.X - field.RelativeY, coord.Y + field.RelativeX));
 
         if (onField is null) return;
 
@@ -296,17 +303,16 @@ public class Model : ITickable
         {
             for (int j = 0; j < onField.area.Height; j++)
             {
-                Coordinate currentCoord = new Coordinate(source.Coordinates.X + i, source.Coordinates.Y + j);
+                Coordinate currentCoord = new Coordinate(source.Coordinates.X + j, source.Coordinates.Y - i);
 
                 // Biztonsági ellenőrzés, ne lógjunk ki a pályáról
-                if (currentCoord.X < _persistence.Width && currentCoord.Y < _persistence.Height)
-                {
-                    Field f = GetField(currentCoord);
-                    f.Buildable = null;
-                    f.RelativeX = 0;
-                    f.RelativeY = 0;
-                    OnFieldsUpdated(f);
-                }
+                if (currentCoord.X >= _persistence.Width || currentCoord.Y >= _persistence.Height) continue;
+
+                Field f = GetField(currentCoord);
+                f.Buildable = null;
+                f.RelativeX = 0;
+                f.RelativeY = 0;
+                OnFieldsUpdated(f);
             }
         }
 
@@ -425,37 +431,31 @@ public class Model : ITickable
     {
         int tmp, roadCount = 0;
         Field?[] roads = [null, null, null, null];
+        IDirection[] roadDirections = [Up.Instance(), Right.Instance(), Down.Instance(), Left.Instance()];
 
-        if ((tmp = coord.X - 1) >= 0 && _persistence.Fields[tmp][coord.Y].Buildable is Road)
+        for (int i = 0; i < 4; i++)
         {
-            roads[0] = _persistence.Fields[tmp][coord.Y];
-            roadCount++;
-        }
+            IDirection d = roadDirections[i];
+            try
+            {
+                Field field = GetField(coord.Step(d));
+                if (field.Buildable is Road)
+                {
+                    roadCount++;
+                    roads[i] = field;
+                }
 
-        if ((tmp = coord.Y + 1) < _persistence.Fields[coord.X].Count &&
-            _persistence.Fields[coord.X][tmp].Buildable is Road)
-        {
-            roads[1] = _persistence.Fields[coord.X][tmp];
-            roadCount++;
-        }
-
-        if ((tmp = coord.X + 1) < _persistence.Fields.Count && _persistence.Fields[tmp][coord.Y].Buildable is Road)
-        {
-            roads[2] = _persistence.Fields[tmp][coord.Y];
-            roadCount++;
-        }
-
-        if ((tmp = coord.Y - 1) >= 0 && _persistence.Fields[coord.X][tmp].Buildable is Road)
-        {
-            roads[3] = _persistence.Fields[coord.X][tmp];
-            roadCount++;
+            }
+            catch (Exception e)
+            {
+            }
         }
 
         bool isCurved = false;
         int q = 0;
         IDirection dir = Up.Instance();
         Intersection? intersection = null;
-        Field f = _persistence.Fields[coord.X][coord.Y];
+        Field f = GetField(coord);
         switch (roadCount)
         {
             case 0: // should be also included in case 'default' if we want to build only non-separated roads
