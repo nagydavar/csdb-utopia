@@ -1,7 +1,7 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-public class Stop: Buildable, INavigable
+public class Stop: INavigable
 {
         public List<Building> connectsTo = new List<Building>();
         public HashSet<IVehicle> vehicles = new HashSet<IVehicle>();
@@ -15,12 +15,12 @@ public class Stop: Buildable, INavigable
             area = (1, 1);
         }
 
-        public bool TryMoveTo(IDirection dir, IVehicle vehicle)
+        public override bool TryMoveTo(IDirection dir, IVehicle vehicle)
         {
             vehicles.Add(vehicle);
             return true;
         }
-        public void Leave(IVehicle vehicle) => vehicles.Remove(vehicle);
+        public override void Leave(IVehicle vehicle) => vehicles.Remove(vehicle);
 
         public void Load(IResource r, int amount) => throw new NotImplementedException();
         public int Unload(IResource r, int amount) => throw new NotImplementedException();

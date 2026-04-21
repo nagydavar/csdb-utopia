@@ -7,6 +7,12 @@ public class GoingIntention : IComparable<GoingIntention>
     public IDirection From { get; set; }
     public IDirection To { get; set; }
 
+    public GoingIntention NewIntention(IDirection d)
+    {
+        return new GoingIntention(To, d);
+    }
+        
+
     public GoingIntention(IDirection from, IDirection to)
     {
         From = from;

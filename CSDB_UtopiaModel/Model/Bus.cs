@@ -2,6 +2,8 @@ namespace CSDB_UtopiaModel.Model;
 
 public class Bus : PassengerVehicle
 {
+    public override int placementCost { get; } = 300;
+    
     public Bus(Map map, Model m) :base(map, m) {}
 
     // private override int capacity;

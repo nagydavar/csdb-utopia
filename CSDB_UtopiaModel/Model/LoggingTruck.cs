@@ -4,6 +4,8 @@ namespace CSDB_UtopiaModel.Model;
 
 class LoggingTruck : GoodsVehicle<Wood>
 {
+    public override int placementCost { get; } = 250;
+    
     public LoggingTruck(Map map, Model m) : base(map,m)
     {
     }

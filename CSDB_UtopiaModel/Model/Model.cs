@@ -125,7 +125,6 @@ public class Model : ITickable
 
         if (RefreshNeighbouringRoads(coord))
         {
-            _map.BuildRoad(coord);
             return true;
         }
 
@@ -210,13 +209,15 @@ public class Model : ITickable
             _persistence.CurrentMood += residential.AffectMood;
             OnMoodChanged(_persistence.CurrentMood);
         }
-        else if (buildable is Stop stop)
-        {
-            _map.BuildRoad(stop.Owner.Coordinates);
-        }
         else if (buildable is Garage garage)
         {
             _persistence.Garages.Add(garage);
+        }
+        
+        
+        if (buildable is INavigable stop)
+        {
+            _map.BuildRoad(stop.Owner.Coordinates);
         }
 
         // Minden megváltozott mezőt elküldünk a View-nak
@@ -228,17 +229,21 @@ public class Model : ITickable
         return true;
     }
 
-    public void PlaceVehicle(Coordinate start, Coordinate end, IVehicle vehicle)
+    public void PlaceVehicle(Coordinate start, Coordinate end, IVehicle vehicle) => PlaceVehicle([start, end], vehicle);
+    public void PlaceVehicle(Coordinate[] stops, IVehicle vehicle)
     {
         if (_persistence.Garages.Count == 0) 
             throw new InvalidOperationException("You have to build a garage first");
-            
-        if (_persistence.Fields[end.X][end.Y].Buildable is not Stop stop)
-            throw new InvalidOperationException("You can only place a vehicle to a road");
+
+        foreach (var stopCoords in stops)
+        {
+            if (GetField(stopCoords).Buildable is not Stop stop)
+                throw new InvalidOperationException("You can only set path between stops");
+        }
 
         try
         {
-            vehicle.AssignNewPath(start, end);
+            vehicle.AssignNewPath(stops);
             _persistence.VehiclesOnMap.Add(vehicle);
 
             _persistence.Budget -= vehicle.placementCost;

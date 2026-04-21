@@ -10,5 +10,6 @@ public interface IVehicle : ITickable, Buyable
     // ha ez szerepel itt:
     GoingIntention Intention { get; }
     public IDirection CurrentDirection { get; protected set; }
-    public void AssignNewPath(Coordinate start, Coordinate end);
+
+    public void AssignNewPath(Coordinate[] stops);
 }
