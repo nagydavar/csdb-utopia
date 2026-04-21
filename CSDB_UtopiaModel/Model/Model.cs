@@ -5,9 +5,11 @@ namespace CSDB_UtopiaModel.Model;
 
 public class Model : ITickable
 {
+    private const int _secondsToGrowTrees = 180;
     private TimeControl _timeControl;
     private Persistence.Persistence _persistence;
     private uint _totalSeconds = 0; // Az eltelt összes másodperc
+    private readonly Random _rnd = new();
 
     public EventHandler<EventArgs>? GameTicked;
     public EventHandler<FieldEventArgs>? FieldsUpdated;
@@ -28,11 +30,13 @@ public class Model : ITickable
         _map = new Map(new HashSet<Coordinate>());
         RegisterEvents();
 
-        // 1. Lekérjük a példányt egy változóba
-        var timer = TimeControl.Instance();
+        _timeControl = TimeControl.Instance();
+        _timeControl += (this, 1);
 
-        // 2. A változón már elvégezhető az operátor-művelet
-        timer += (this, 1);
+        foreach (var list in _persistence.Fields)
+        foreach (var field in list)
+            if (field is Land land)
+                _persistence.Forests.Add(land);
     }
 
     #region Time
@@ -41,7 +45,18 @@ public class Model : ITickable
     {
         _totalSeconds++;
 
-        // Kiváltjuk az eseményt a View felé
+        if (_totalSeconds % _secondsToGrowTrees == 0)
+        {
+            try
+            {
+                GrowTrees();
+            }
+            catch (InvalidOperationException e)
+            {
+                Console.Error.WriteLine("\nGrowing trees was not successful: \n" + e.Message);
+            }
+        }
+
         DateChanged?.Invoke(this, EventArgs.Empty);
 
         return Task.CompletedTask;
@@ -56,26 +71,13 @@ public class Model : ITickable
         return $"{hours:D2}:{minutes:D2}:{seconds:D2}";
     }
 
-    // Vezérlő metódusok a TimeControl-hoz
-    public void TogglePause()
-    {
-        var timer = TimeControl.Instance();
-        _ = !timer; // A '!' operátor meghívása
-    }
+    public void TogglePause() => _ = !_timeControl;
 
-    public void SpeedUp()
-    {
-        var timer = TimeControl.Instance();
-        _ = ++timer;
-    }
+    public void SpeedUp() => ++_timeControl;
 
-    public void SlowDown()
-    {
-        var timer = TimeControl.Instance();
-        _ = --timer;
-    }
+    public void SlowDown() => --_timeControl;
 
-    public bool IsPaused() => !TimeControl.Instance().IsStopped;
+    public bool IsPaused() => !_timeControl.IsStopped;
 
     #endregion
 
@@ -518,6 +520,64 @@ public class Model : ITickable
     {
         // Mindig a jelenlegi _persistence objektumra iratkozunk fel
         _persistence.GameOver += (_, e) => GameOver?.Invoke(this, e);
+    }
+
+    private void GrowTrees()
+    {
+        List<Land> toBeAdded = new();
+
+        foreach (var forest in _persistence.Forests)
+        {
+            switch (forest.LevelOfForest)
+            {
+                case 3:
+                    if (_rnd.Next(0, 101) == 0)
+                    {
+                        var tmp = TrySpreadForest(forest.Coordinates);
+                        if (tmp is not null)
+                            toBeAdded.Add(tmp);
+                    }
+
+                    break;
+                case 4:
+                    if (_rnd.Next(0, 51) == 0)
+                    {
+                        var tmp = TrySpreadForest(forest.Coordinates);
+                        if (tmp is not null)
+                            toBeAdded.Add(tmp);
+                    }
+
+                    break;
+            }
+
+            if (!forest.CanGrow || _rnd.Next(0, 11) != 0) continue;
+
+
+            forest.ForestSpread();
+            OnFieldsUpdated(forest);
+        }
+
+        foreach (var land in toBeAdded)
+            _persistence.Forests.Add(land);
+    }
+
+    private Land? TrySpreadForest(Coordinate coord)
+    {
+        IDirection[] directions = [Up.Instance(), Right.Instance(), Down.Instance(), Left.Instance()];
+
+        int ind = _rnd.Next(0, directions.Length),
+            newx = coord.X + directions[ind].Diff().Item1,
+            newy = coord.Y + directions[ind].Diff().Item2;
+
+        if (0 > newx || newx >= _persistence.Width || 0 > newy || newy >= _persistence.Height) return null;
+
+        Coordinate newPlace = new(newx, newy);
+
+        if (GetField(newPlace) is not Land { HasBuildable: false } land) return null;
+
+        land.ForestSpread();
+        OnFieldsUpdated(land);
+        return land;
     }
 
     private (bool IsCurved, int Quadrant, IDirection Direction, Intersection? Intersection) DetermineRoadState(

@@ -21,7 +21,9 @@ public class Land : Field
 
     public void ForestSpread()
     {
-        throw new NotImplementedException();
+        if (LevelOfForest >= 4) return;
+        LevelOfForest++;
+        CanGrow = LevelOfForest < 4;
     }
 
     private void Deforest()
