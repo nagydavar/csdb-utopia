@@ -5,7 +5,7 @@ namespace CSDB_UtopiaModel.Model;
 
 public class Model : ITickable
 {
-    private const int _secondsToGrowTrees = 30;
+    private const int _secondsToGrowTrees = 180;
     private TimeControl _timeControl;
     private Persistence.Persistence _persistence;
     private uint _totalSeconds = 0; // Az eltelt összes másodperc
@@ -395,7 +395,7 @@ public class Model : ITickable
             switch (forest.LevelOfForest)
             {
                 case 3:
-                    if (_rnd.Next(0, 11) == 0)
+                    if (_rnd.Next(0, 101) == 0)
                     {
                         var tmp = TrySpreadForest(forest.Coordinates);
                         if (tmp is not null)
@@ -404,7 +404,7 @@ public class Model : ITickable
 
                     break;
                 case 4:
-                    if (_rnd.Next(0, 6) == 0)
+                    if (_rnd.Next(0, 51) == 0)
                     {
                         var tmp = TrySpreadForest(forest.Coordinates);
                         if (tmp is not null)
@@ -414,7 +414,7 @@ public class Model : ITickable
                     break;
             }
 
-            if (!forest.CanGrow || _rnd.Next(0, 4) != 0) continue;
+            if (!forest.CanGrow || _rnd.Next(0, 11) != 0) continue;
 
 
             forest.ForestSpread();
