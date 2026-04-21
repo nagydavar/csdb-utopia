@@ -20,6 +20,10 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     protected int garageLimit = 30;
    
 
+    public int Capacity => capacity;
+    public int MaintenanceCost => maintenanceCost;
+    public int Speed => speed;
+
     
 
 

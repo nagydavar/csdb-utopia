@@ -6,6 +6,9 @@ class Car : PassengerVehicle
     
     public Car(Map map, Model m) : base(map,m)
     {
+        maintenanceCost = 20;
+        speed = 120;
+        capacity = 5;
     }
     // private override int capacity;
     // private override int maintenanceCost;

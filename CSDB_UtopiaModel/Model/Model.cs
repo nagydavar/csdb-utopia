@@ -255,6 +255,40 @@ public class Model : ITickable
         }
     }
 
+    // Járművek listázása a ViewModel számára
+    public List<IVehicle> GetVehiclesOnMap()
+    {
+        return _persistence.VehiclesOnMap.ToList();
+    }
+
+    // Jármű eladása
+    public void SellVehicle(IVehicle vehicle)
+    {
+        if (vehicle is null) return;
+
+        //Eltávolítás a TimeControl-ból (ne kapjon több Tick-et)
+        // 1. Kimentjük a példányt egy változóba
+        var tc = TimeControl.Instance();
+
+        // 2. A változón már elvégezhető a művelet
+        tc -= (vehicle as ITickable)!;
+
+        //Eltávolítás az útról (vizuálisan is eltűnik)
+        if (vehicle is Vehicle<IResource> v)
+        {
+            v.CurrentNavigable?.Leave(v);
+            OnFieldsUpdated(GetField(v.Position));
+        }
+
+        // Törlés a listából
+        _persistence.VehiclesOnMap.Remove(vehicle);
+
+        // Pénz visszatérítése, a vételi ár fele
+        _persistence.Budget += vehicle.placementCost / 2;
+        BudgetChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+
     //nyersanyag friss�t�se miatt
     public int GetBudget() // should be a property
     {

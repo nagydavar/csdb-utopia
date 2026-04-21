@@ -6,6 +6,9 @@ class ArmoredCar<TTreasure> : GoodsVehicle<TTreasure> where TTreasure : Persiste
     
     public ArmoredCar(Map map, Model m) : base(map,m)
     {
+        maintenanceCost = 100;
+        speed = 100;
+        capacity = 40;
     }
     // private override int capacity;
     // private override int maintenanceCost;

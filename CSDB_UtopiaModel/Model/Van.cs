@@ -8,6 +8,9 @@ class Van<TIndustrialResource> : GoodsVehicle<TIndustrialResource> where TIndust
     
     public Van(Map map, Model m, Coordinate start, Coordinate end) : base(map,m)
     {
+        maintenanceCost = 50;
+        speed = 90;
+        capacity = 20;
     }
     // private override int capacity;
     // private override int maintenanceCost;

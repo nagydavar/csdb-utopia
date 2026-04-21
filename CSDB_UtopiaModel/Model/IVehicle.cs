@@ -12,4 +12,8 @@ public interface IVehicle : ITickable, Buyable
     public IDirection CurrentDirection { get; protected set; }
 
     public void AssignNewPath(Coordinate[] stops);
+
+    int Speed { get; }
+    int Capacity { get; }
+    int MaintenanceCost { get; }
 }

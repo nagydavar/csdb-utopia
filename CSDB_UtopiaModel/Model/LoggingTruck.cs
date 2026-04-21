@@ -8,6 +8,9 @@ class LoggingTruck : GoodsVehicle<Wood>
     
     public LoggingTruck(Map map, Model m) : base(map,m)
     {
+        maintenanceCost = 70;
+        speed = 70;
+        capacity = 30;
     }
     // private override int capacity;
     // private override int maintenanceCost;

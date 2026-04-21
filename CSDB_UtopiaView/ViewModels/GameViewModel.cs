@@ -67,6 +67,10 @@ public partial class GameViewModel : ViewModelBase
     [ObservableProperty] private FieldDetails? _selectedFieldDetails;
     [ObservableProperty] private bool _isFieldDetailsVisible;
 
+    // Járművek eladásához
+    [ObservableProperty] private bool _isVehicleListVisible;
+    public ObservableCollection<IVehicle> ActiveVehicles { get; } = new();
+
     // Események
     public event EventHandler? NewGame;
     public event EventHandler? GameOver;
@@ -109,6 +113,7 @@ public partial class GameViewModel : ViewModelBase
         }
     }
 
+    #region Inventory
     private void InitializeDisplayStorage()
     {
         // Listába gyűjtjük az összes Singleton erőforrást
@@ -141,6 +146,8 @@ public partial class GameViewModel : ViewModelBase
             StorageList.Add(entry);
         }
     }
+
+#endregion
 
     // Parancsok (RelayCommands)
     [RelayCommand]
@@ -177,6 +184,8 @@ public partial class GameViewModel : ViewModelBase
         // Újratöltjük a nyersanyagokat a kijelzőn
         InitializeDisplayStorage();
     }
+
+    #region Time
 
     [RelayCommand]
     public void IncreaseSpeed()
@@ -224,6 +233,8 @@ public partial class GameViewModel : ViewModelBase
     public void Pause()
     {
     }
+
+#endregion
 
     [RelayCommand]
     public void SelectBuildable(Type selectedType)
@@ -436,7 +447,7 @@ public partial class GameViewModel : ViewModelBase
         }
     }
 
-    // Listázó parancsok
+    #region ListCommands
     [RelayCommand]
     public void ListBuildableFactories()
     {
@@ -490,6 +501,8 @@ public partial class GameViewModel : ViewModelBase
     {
         UpdateAvailableBuildables(_model.ListBuildableOtherBuildings());
     }
+
+    #endregion
 
     [RelayCommand]
     public void CloseBuildingPanel()
@@ -550,10 +563,27 @@ public partial class GameViewModel : ViewModelBase
                 if (type.IsAssignableTo(typeof(IVehicle)))
                 {
                     info.IsVehicle = true;
-                    info.Speed = 60;
-                    info.Maintenance = 200;
-                    info.Capacity = 40;
-                    // Itt NEM hívunk Activator-t, amíg a modellben throw new NotImplementedException() van!
+
+                    //// Megpróbáljuk kinyerni a placementCost-ot (mivel az property)
+                    //// Létrehozunk egy uninitialized (nyers) objektumot, ami nem futtatja le a konstruktort
+                    //try
+                    //{
+                    //    var dummy = (IVehicle)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
+                    //    info.PlacementCost = dummy.placementCost;
+                    //}
+                    //catch { info.PlacementCost = 200; }
+
+                    // ivel a statisztikák (Speed, Capacity) a konstruktorban állítódnak be, 
+                    // példányosítás nélkül 0-k maradnak. 
+                    // Hard-code-oljuk az alapértékeket a típus neve alapján
+                    if (type.Name.Contains("Armored")) { info.Speed = 100; info.Capacity = 40; info.Maintenance = 100; info.PlacementCost = 300; }
+                    else if (type.Name.Contains("Car")) { info.Speed = 120; info.Capacity = 5; info.Maintenance = 20; info.PlacementCost = 100; }
+                    else if (type.Name.Contains("Bus")) { info.Speed = 90; info.Capacity = 50; info.Maintenance = 60; info.PlacementCost = 300; }
+                    else if (type.Name.Contains("Logging")) { info.Speed = 70; info.Capacity = 30; info.Maintenance = 70; info.PlacementCost = 250; }
+                    else if (type.Name.Contains("Dump")) { info.Speed = 70; info.Capacity = 50; info.Maintenance = 100; info.PlacementCost = 300; }
+                    else if (type.Name.Contains("Van")) { info.Speed = 90; info.Capacity = 20; info.Maintenance = 50; info.PlacementCost = 200; }
+                    else if (type.Name.Contains("Taxi")) { info.Speed = 120; info.Capacity = 3; info.Maintenance = 30; info.PlacementCost = 150; }
+                    else { info.Speed = 60; info.Capacity = 10; info.Maintenance = 50; }
                 }
                 // ÉPÜLETEK ÉS UTAK
                 else
@@ -619,6 +649,38 @@ public partial class GameViewModel : ViewModelBase
         IsDemolishMode = false;
         IsBuildingPanelVisible = AvailableBuildables.Count > 0;
     }
+
+    #region Vehicles
+
+    [RelayCommand]
+    public void ToggleVehicleList()
+    {
+        IsVehicleListVisible = !IsVehicleListVisible;
+        if (IsVehicleListVisible)
+        {
+            RefreshVehicleList();
+        }
+    }
+
+    private void RefreshVehicleList()
+    {
+        ActiveVehicles.Clear();
+        foreach (var v in _model.GetVehiclesOnMap())
+        {
+            ActiveVehicles.Add(v);
+        }
+    }
+
+    // Eladás parancs
+    [RelayCommand]
+    public void SellVehicle(IVehicle vehicle)
+    {
+        _model.SellVehicle(vehicle);
+        ActiveVehicles.Remove(vehicle);
+        System.Diagnostics.Debug.WriteLine("Jármű eladva.");
+    }
+
+    #endregion
 
     private void ResetStopSelection()
     {
