@@ -440,11 +440,11 @@ public partial class GameViewModel : ViewModelBase
                 if (_selectedType.IsAssignableTo(typeof(ResourceExtractor)))
                 {
                     // Itt meg kell adni egy alapértelmezett yield értéket (pl. 10)
-                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 10);
+                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 10, _model);
                 }
                 else if (_selectedType.IsAssignableTo(typeof(Factory)))
                 {
-                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 30);
+                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 30, _model);
                 }
 
                 else

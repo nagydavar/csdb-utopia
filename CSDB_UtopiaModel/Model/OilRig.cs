@@ -1,8 +1,16 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
+
 class OilRig : ResourceExtractor
 {
-        public override Oil Produce() => Oil.Instance();
-        public OilRig(Field f, int yield): base(f, yield) {}
-    };
+    public override Oil Produce() => Oil.Instance();
+
+    public override int RequiredAmount => 0;
+
+    public override int ProducedAmount => 5;
+
+    public OilRig(Field f, int yield, Model model) : base(f, yield, model)
+    {
+    }
+}
