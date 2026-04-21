@@ -801,12 +801,15 @@ public partial class GameViewModel : ViewModelBase
         // Amikor a Model jelzi, hogy bizonyos mezők megváltoztak (pl. építés történt)
         foreach (var field in e.Fields)
         {
-            // Megkeressük a megfelelő Cell objektumot az ObservableCollection-ben
-            var cell = Cells.FirstOrDefault(c => c.X == field.Coordinates.X && c.Y == field.Coordinates.Y);
-            if (cell != null)
+            if (field is not null)
             {
-                // Frissítjük a Cell nézetmodelljét a Field adatai alapján (pl. kép lecserélése)
-                cell.Update(field);
+                // Megkeressük a megfelelő Cell objektumot az ObservableCollection-ben
+                var cell = Cells.FirstOrDefault(c => c.X == field.Coordinates.X && c.Y == field.Coordinates.Y);
+                if (cell != null)
+                {
+                    // Frissítjük a Cell nézetmodelljét a Field adatai alapján (pl. kép lecserélése)
+                    cell.Update(field);
+                }
             }
         }
     }
