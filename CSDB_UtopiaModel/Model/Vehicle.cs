@@ -17,7 +17,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     private Model model;
     protected Coordinate position;
     protected Field? currentField;
-    protected int garageLimit = 30;
+    protected int garageLimit = 100;
    
 
     
