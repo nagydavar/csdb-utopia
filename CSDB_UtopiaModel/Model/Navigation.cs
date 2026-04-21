@@ -4,7 +4,7 @@ namespace CSDB_UtopiaModel.Model;
 
 public class Navigation : IEnumerable<Coordinate>
 {
-    private IList<Coordinate> stops;
+    public IList<Coordinate> stops;
     private Map map;
 
     IEnumerator IEnumerable.GetEnumerator()

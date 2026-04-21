@@ -2,7 +2,7 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-public interface IVehicle : ITickable, Buyable
+public abstract class IVehicle : ITickable, Buyable
 {
     // TODO
 
@@ -11,9 +11,14 @@ public interface IVehicle : ITickable, Buyable
     GoingIntention Intention { get; }
     public IDirection CurrentDirection { get; protected set; }
 
-    public void AssignNewPath(Coordinate[] stops);
+    public abstract void AssignNewPath(Coordinate[] stops);
+    public abstract Task Tick();
+    
+    public abstract int placementCost { get; }
 
-    int Speed { get; }
-    int Capacity { get; }
+    public int Speed { get; }
+    public int Capacity { get; }
     int MaintenanceCost { get; }
+    public int carriedAmount { get; protected set; }
+    
 }
