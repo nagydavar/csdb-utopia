@@ -1,6 +1,11 @@
+using CSDB_UtopiaModel.Persistence;
+
 namespace CSDB_UtopiaModel.Model;
 
-public interface INavigable
+public abstract class INavigable: Buildable
 {
-    void MoveTo();
+    public abstract bool TryMoveTo(IDirection dir, IVehicle vehicle);
+    public abstract void Leave(IVehicle vehicle);
+    public INavigable(Field f):base(f)
+    {}
 }

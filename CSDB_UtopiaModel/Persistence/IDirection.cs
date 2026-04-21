@@ -4,4 +4,5 @@ public interface IDirection
 {
     public abstract (int, int) Diff();
     public abstract IDirection Opposite();
+    //public abstract IDirection Instance()
 }

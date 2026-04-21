@@ -5,7 +5,7 @@ namespace CSDB_UtopiaModel.Model;
 public abstract class GoodsVehicle<TIndustrialResource> : Vehicle<TIndustrialResource>
     where TIndustrialResource : IIndustrialResource
 {
-    public GoodsVehicle() : base(default!, default, default, default, default!)
+    public GoodsVehicle(Map map, Model m) : base(map,m)
     {
     }
 }

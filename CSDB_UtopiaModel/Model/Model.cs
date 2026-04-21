@@ -20,11 +20,14 @@ public class Model : ITickable
     public EventHandler<EventArgs>? NewGame;
     public EventHandler<EventArgs>? GameOver;
     public EventHandler<EventArgs>? DateChanged;
+    private Map _map;
+
+    public Map GetMap() => _map;
 
     public Model(int width, int height)
     {
         _persistence = new Persistence.Persistence(width, height, true);
-
+        _map = new Map(new HashSet<Coordinate>());
         RegisterEvents();
 
         _timeControl = TimeControl.Instance();
@@ -99,6 +102,66 @@ public class Model : ITickable
         MoodChanged?.Invoke(this, new MoodChangedEventArgs(_persistence.CurrentMood));
     }
 
+    public bool PlaceBridge(Coordinate start, Coordinate end, Bridge bridge)
+    {
+        // Tengelyek meghat.
+        bool isVertical = start.X == end.X;
+        bool isHorizontal = start.Y == end.Y;
+
+        if (!isVertical && !isHorizontal)
+            return false; // Nem egy vonalban vannak
+
+        int minX = Math.Min(start.X, end.X);
+        int maxX = Math.Max(start.X, end.X);
+        int minY = Math.Min(start.Y, end.Y);
+        int maxY = Math.Max(start.Y, end.Y);
+
+        // Hossz ellenőrzése (mezők száma)
+        int length = isVertical ? (maxY - minY + 1) : (maxX - minX + 1);
+
+        if (length > bridge.MaxLength)
+            return false;
+
+        // Víz-e és üres-e minden mező
+        for (int x = minX; x <= maxX; x++)
+        {
+            for (int y = minY; y <= maxY; y++)
+            {
+                var field = GetField(x, y);
+                if (field is not Water || field.HasBuildable)
+                    return false;
+            }
+        }
+
+        // Tényleges lehelyezés
+        // Végigmegyünk a kijelölt szakaszon
+        for (int x = minX; x <= maxX; x++)
+        {
+            for (int y = minY; y <= maxY; y++)
+            {
+                Coordinate c = new(x, y);
+                Field f = GetField(c);
+                Bridge bPart = bridge.Clone(f);
+
+                // Költség levonása
+                _persistence.Budget -= bPart.placementCost;
+
+                // Buildable beállítása
+                f.Buildable = bPart;
+
+                // Jelezzük az úthálózatnak (ha kell)
+                _map.BuildRoad(c);
+
+                RefreshNeighbouringRoads(c);
+
+                // Frissítjük a View-t
+                OnFieldsUpdated(f);
+            }
+        }
+        BudgetChanged?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
     public bool PlaceRoad(Coordinate coord)
     {
         (bool IsCurved, int Quadrant, IDirection Direction, Intersection? Intersection) roadState;
@@ -122,7 +185,10 @@ public class Model : ITickable
 
         if (!Place(coord, newborn)) return false;
 
-        if (RefreshNeighbouringRoads(coord)) return true;
+        if (RefreshNeighbouringRoads(coord))
+        {
+            return true;
+        }
 
         // if the refreshing was not successful
         Demolish(coord);
@@ -132,7 +198,6 @@ public class Model : ITickable
 
     public bool Place(Coordinate coord, Buildable buildable)
     {
-
         // 1. Épület méretének lekérése
         int width = buildable.area.Width;
         int height = buildable.area.Height;
@@ -148,7 +213,7 @@ public class Model : ITickable
                 // Koordináta validáció (ne lógjon ki a pályáról)
                 if (coord.X + i >= _persistence.Width || coord.Y + j >= _persistence.Height) return false;
 
-                Field f = _persistence.Fields[coord.X + i][coord.Y + j];
+                Field f = _persistence.Fields[coord.X + j][coord.Y - i];
 
                 // Csak szabad Land mezőre építhetünk
                 if (f is Land land && !land.HasBuildable)
@@ -178,8 +243,8 @@ public class Model : ITickable
         foreach (var land in targetLands)
         {
             // Kiszámoljuk a relatív pozíciót a kezdőponthoz képest
-            land.RelativeX = land.Coordinates.X - coord.X;
-            land.RelativeY = land.Coordinates.Y - coord.Y;
+            land.RelativeY = land.Coordinates.X - coord.X;
+            land.RelativeX = Math.Abs(land.Coordinates.Y - coord.Y);
 
             land.Place(buildable); // Ez meghívja a Deforest()-et is az adott mezőn
         }
@@ -206,6 +271,16 @@ public class Model : ITickable
             _persistence.CurrentMood += residential.AffectMood;
             OnMoodChanged(_persistence.CurrentMood);
         }
+        else if (buildable is Garage garage)
+        {
+            _persistence.Garages.Add(garage);
+        }
+        
+        
+        if (buildable is INavigable stop)
+        {
+            _map.BuildRoad(stop.Owner.Coordinates);
+        }
 
         // Minden megváltozott mezőt elküldünk a View-nak
         foreach (var land in targetLands)
@@ -216,13 +291,65 @@ public class Model : ITickable
         return true;
     }
 
-    public void PlaceVehicle(Coordinate coord, Vehicle<IResource> vehicle)
+    public void PlaceVehicle(Coordinate start, Coordinate end, IVehicle vehicle) => PlaceVehicle([start, end], vehicle);
+    public void PlaceVehicle(Coordinate[] stops, IVehicle vehicle)
     {
-        if (_persistence.Fields[coord.X][coord.Y].Buildable is not Road road)
-            throw new InvalidOperationException("You can only place a vehicle to a road");
+        if (_persistence.Garages.Count == 0) 
+            throw new InvalidOperationException("You have to build a garage first");
 
-        throw new NotImplementedException();
+        foreach (var stopCoords in stops)
+        {
+            if (GetField(stopCoords).Buildable is not Stop stop)
+                throw new InvalidOperationException("You can only set path between stops");
+        }
+
+        try
+        {
+            vehicle.AssignNewPath(stops);
+            _persistence.VehiclesOnMap.Add(vehicle);
+
+            _persistence.Budget -= vehicle.placementCost;
+            BudgetChanged?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception e)
+        {
+
+        }
     }
+
+    // Járművek listázása a ViewModel számára
+    public List<IVehicle> GetVehiclesOnMap()
+    {
+        return _persistence.VehiclesOnMap.ToList();
+    }
+
+    // Jármű eladása
+    public void SellVehicle(IVehicle vehicle)
+    {
+        if (vehicle is null) return;
+
+        //Eltávolítás a TimeControl-ból (ne kapjon több Tick-et)
+        // 1. Kimentjük a példányt egy változóba
+        var tc = TimeControl.Instance();
+
+        // 2. A változón már elvégezhető a művelet
+        tc -= (vehicle as ITickable)!;
+
+        //Eltávolítás az útról (vizuálisan is eltűnik)
+        if (vehicle is Vehicle<IResource> v)
+        {
+            v.CurrentNavigable?.Leave(v);
+            OnFieldsUpdated(GetField(v.Position));
+        }
+
+        // Törlés a listából
+        _persistence.VehiclesOnMap.Remove(vehicle);
+
+        // Pénz visszatérítése, a vételi ár fele
+        _persistence.Budget += vehicle.placementCost / 2;
+        BudgetChanged?.Invoke(this, EventArgs.Empty);
+    }
+
 
     //nyersanyag friss�t�se miatt
     public int GetBudget() // should be a property
@@ -242,6 +369,11 @@ public class Model : ITickable
         return _persistence.CurrentMood;
     }
 
+    public HashSet<Garage> ListGarages()
+    {
+        return _persistence.Garages.ToHashSet();
+    }
+
     public int GetResourceCount(IResource resource)
     {
         return _persistence.Storage.ContainsKey(resource) ? _persistence.Storage[resource] : 0;
@@ -249,6 +381,8 @@ public class Model : ITickable
 
     public void AddVehicle(Vehicle<IResource> vehicle)
     {
+        _persistence.VehiclesOnMap.Add(vehicle);
+
     }
 
     public void Demolish(Coordinate coord)
@@ -257,7 +391,7 @@ public class Model : ITickable
         //     throw new Exception("ejnye-bejnye!");
         Buildable? onField = GetField(coord).Buildable;
         Field field = GetField(coord);
-        Field source = GetField(new Coordinate(coord.X - field.RelativeX, coord.Y - field.RelativeY));
+        Field source = GetField(new Coordinate(coord.X - field.RelativeY, coord.Y + field.RelativeX));
 
         if (onField is null) return;
 
@@ -265,17 +399,16 @@ public class Model : ITickable
         {
             for (int j = 0; j < onField.area.Height; j++)
             {
-                Coordinate currentCoord = new Coordinate(source.Coordinates.X + i, source.Coordinates.Y + j);
+                Coordinate currentCoord = new Coordinate(source.Coordinates.X + j, source.Coordinates.Y - i);
 
                 // Biztonsági ellenőrzés, ne lógjunk ki a pályáról
-                if (currentCoord.X < _persistence.Width && currentCoord.Y < _persistence.Height)
-                {
-                    Field f = GetField(currentCoord);
-                    f.Buildable = null;
-                    f.RelativeX = 0;
-                    f.RelativeY = 0;
-                    OnFieldsUpdated(f);
-                }
+                if (currentCoord.X >= _persistence.Width || currentCoord.Y >= _persistence.Height) continue;
+
+                Field f = GetField(currentCoord);
+                f.Buildable = null;
+                f.RelativeX = 0;
+                f.RelativeY = 0;
+                OnFieldsUpdated(f);
             }
         }
 
@@ -298,7 +431,10 @@ public class Model : ITickable
         }
 
         if (onField is Road)
+        {
             RefreshNeighbouringRoads(coord);
+            _map.DeleteRoad(coord);
+        }
     }
 
     public List<Type> ListBuildableFactories()
@@ -449,37 +585,34 @@ public class Model : ITickable
     {
         int tmp, roadCount = 0;
         Field?[] roads = [null, null, null, null];
+        IDirection[] roadDirections = [Up.Instance(), Right.Instance(), Down.Instance(), Left.Instance()];
 
-        if ((tmp = coord.X - 1) >= 0 && _persistence.Fields[tmp][coord.Y].Buildable is Road)
+        for (int i = 0; i < 4; i++)
         {
-            roads[0] = _persistence.Fields[tmp][coord.Y];
-            roadCount++;
-        }
+            IDirection d = roadDirections[i];
+            try
+            {
+                Field field = GetField(coord.Step(d));
+                if (field.Buildable is Road)
+                {
+                    roadCount++;
+                    roads[i] = field;
+                }
 
-        if ((tmp = coord.Y + 1) < _persistence.Fields[coord.X].Count &&
-            _persistence.Fields[coord.X][tmp].Buildable is Road)
-        {
-            roads[1] = _persistence.Fields[coord.X][tmp];
-            roadCount++;
-        }
-
-        if ((tmp = coord.X + 1) < _persistence.Fields.Count && _persistence.Fields[tmp][coord.Y].Buildable is Road)
-        {
-            roads[2] = _persistence.Fields[tmp][coord.Y];
-            roadCount++;
-        }
-
-        if ((tmp = coord.Y - 1) >= 0 && _persistence.Fields[coord.X][tmp].Buildable is Road)
-        {
-            roads[3] = _persistence.Fields[coord.X][tmp];
-            roadCount++;
+            }
+            catch (Exception e)
+            {
+            }
         }
 
         bool isCurved = false;
         int q = 0;
         IDirection dir = Up.Instance();
         Intersection? intersection = null;
-        Field f = _persistence.Fields[coord.X][coord.Y];
+        Field f = GetField(coord);
+
+        bool isBridge = f.Buildable is Bridge; // ELLENŐRZÉS: Híd-e
+        
         switch (roadCount)
         {
             case 0: // should be also included in case 'default' if we want to build only non-separated roads
@@ -516,6 +649,13 @@ public class Model : ITickable
 
                 break;
             case 3:
+                if (isBridge)
+                {
+                    // Ha híd, nem lehet T-elágazás. 
+                    // Ekkor válasszunk egy irányt az első két szomszéd alapján (egyenesnek mutatva)
+                    return (false, 0, roadDirections.First(d => roads[Array.IndexOf(roadDirections, d)] != null), null);
+                }
+
                 if (HasNeighbouringIntersection(coord))
                     throw new InvalidOperationException("can't place two intersections next to each other");
 
@@ -537,6 +677,12 @@ public class Model : ITickable
 
                 break;
             case 4:
+                if (isBridge)
+                {
+                    // Ha híd, nem lehet 4-es kereszteződés sem.
+                    return (false, 0, Up.Instance(), null);
+                }
+
                 if (HasNeighbouringIntersection(coord))
                     throw new InvalidOperationException("can't place two intersections next to each other");
 

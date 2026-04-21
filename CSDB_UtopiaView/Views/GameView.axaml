@@ -6,18 +6,24 @@
              xmlns:views="clr-namespace:CSDB_UtopiaView.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              xmlns:model="clr-namespace:CSDB_UtopiaModel.Model;assembly=CSDB_UtopiaModel"
+             xmlns:helpers="clr-namespace:CSDB_UtopiaView.Helpers"
              xmlns:conv="clr-namespace:CSDB_UtopiaView.Converters"
              x:Class="CSDB_UtopiaView.Views.GameView"
              x:DataType="vm:GameViewModel">
 
     <UserControl.Resources>
+        <conv:TypeNameConverter x:Key="TypeNameConverter"/>
+        <conv:CellToMinimapColorConverter x:Key="MinimapColorConverter"/>
         <conv:PauseIconConverter x:Key="PauseIconConverter"/>
         <conv:SpeedToColorConverter x:Key="SpeedToColorConverter"/>
         <conv:IconToImageConverter x:Key="IconToImageConverter"/>
     </UserControl.Resources>
 
     <Grid>
-        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Name="MainScroll" 
+                      HorizontalScrollBarVisibility="Auto" 
+                      VerticalScrollBarVisibility="Auto" 
+                      helpers:ScrollHelper.ScrollOffset="{Binding MapOffset, Mode=TwoWay}">
             <ItemsControl ItemsSource="{Binding Cells}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -40,6 +46,11 @@
                             
                             <Grid>
                                 <Image Stretch="Fill" Source="{Binding Image}"/>
+
+                                <Border BorderBrush="Yellow" 
+                                        BorderThickness="3" 
+                                        IsVisible="{Binding IsSelected}"
+                                        ZIndex="50"/>
 
                                 <Image Stretch="Uniform" 
                                        Width="25" Height="25"
@@ -72,7 +83,73 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
+            
+        <!-- MINIMAP -->
+        <Border HorizontalAlignment="Right" 
+            VerticalAlignment="Bottom" 
+            Margin="0,0,20,90" 
+            Background="#EEFFFFFF" 
+            BorderBrush="Black" BorderThickness="2" CornerRadius="5"
+            Width="200" Height="200"
+            ZIndex="500">
+            <ItemsControl ItemsSource="{Binding Cells}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="{Binding Height}" Columns="{Binding Width}"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:Cell">
+                        <Panel Width="4" Height="4">
+                            <Rectangle Fill="{Binding FileName, Converter={StaticResource MinimapColorConverter}}"
+                                        Stretch="Fill"/>
+                            <Button Background="Transparent" BorderThickness="0"
+                                    Command="{Binding $parent[ItemsControl].((vm:GameViewModel)DataContext).ClickMiniMapCommand}"
+                                    CommandParameter="{Binding}"/>
+                        </Panel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+                <!--  <ItemsControl.RenderTransform>
+                    <ScaleTransform ScaleY=""/>
+                </ItemsControl.RenderTransform>  -->
+            </ItemsControl>
+        </Border>
 
+        <!-- Megvett járművek panelje -->
+        <Border IsVisible="{Binding IsVehicleListVisible}"
+            HorizontalAlignment="Right" 
+            VerticalAlignment="Bottom"
+            Margin="0,0,20,330" 
+            Width="300" Height="400"
+            Background="White" BorderBrush="Black" BorderThickness="2"
+            CornerRadius="5" ZIndex="600">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <TextBlock Grid.Row="0" Text="Aktív járművek" FontWeight="Bold" Margin="10" HorizontalAlignment="Center"/>
+                <ScrollViewer Grid.Row="1">
+                    <ItemsControl ItemsSource="{Binding ActiveVehicles}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="LightGray" BorderThickness="0,0,0,1" Padding="5">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="{Binding Converter={StaticResource TypeNameConverter}}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding TraveledSinceBought, StringFormat='Megtett út: {0} km'}" FontSize="12" Foreground="Gray"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="Eladás" Background="OrangeRed" Foreground="White"
+                                                Command="{Binding $parent[UserControl].((vm:GameViewModel)DataContext).SellVehicleCommand}"
+                                                CommandParameter="{Binding}"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                <Button Grid.Row="2" Content="Bezárás" HorizontalContentAlignment="Center" HorizontalAlignment="Center"
+                                     Command="{Binding ToggleVehicleListCommand}" Margin="5"/>
+            </Grid>
+        </Border>
+
+        <!-- Építő panel -->
             <Border HorizontalAlignment="Left" 
             VerticalAlignment="Center" 
             Width="150" 
@@ -80,7 +157,7 @@
             BorderBrush="Black" 
             BorderThickness="2" 
             CornerRadius="5"
-            Margin="20,0,0,0"
+            Margin="10,0,0,0"
             Padding="10"
             IsVisible="{Binding IsBuildingPanelVisible}"
             ZIndex="100">
@@ -112,7 +189,8 @@
                                     <StackPanel IsVisible="{Binding IsVehicle}">
                                         <TextBlock Text="{Binding Speed, StringFormat='Sebesség: {0}'}" FontSize="10"/>
                                         <TextBlock Text="{Binding Capacity, StringFormat='Kapacitás: {0}'}" FontSize="10"/>
-                                        <TextBlock Text="{Binding Maintenance, StringFormat='Költség: {0}'}" Foreground="Red" FontSize="10"/>
+                                        <TextBlock Text="{Binding Maintenance, StringFormat='Karbantartás: {0}'}" Foreground="Red" FontSize="10"/>
+                                        <TextBlock Text="{Binding PlacementCost, StringFormat='Költség: {0}'}" Foreground="Red" FontSize="10"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Button>
@@ -234,12 +312,13 @@
             
         </StackPanel>
 
+        <!-- ALSO MENÜ -->
         <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Background="White" BorderBrush="Black" BorderThickness="1" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal" Spacing="5" Margin="5">
                 <Button Width="80" Height="40" Content="Út" Command="{Binding ListBuildableRoadsCommand}"
                         VerticalContentAlignment="Center"
                         HorizontalContentAlignment="Center"/>
-                <Button Width="80" Height="40" Content="Járművek" Command="{Binding ListBuyablePassengerVehiclesCommand}"
+                <Button Width="80" Height="40" Content="Autók" Command="{Binding ListBuyablePassengerVehiclesCommand}"
                         VerticalContentAlignment="Center"
                         HorizontalContentAlignment="Center"/>
                 <Button Width="80" Height="40" Content="Házak" Command="{Binding ListBuildableResidentialCommand}"
@@ -275,6 +354,15 @@
                         <Binding Path="IsDemolishMode"/>
                     </Button.Tag>
                 </Button>
+
+                <!-- Info jarmuvek -->
+                <Button Width="80" Height="40"
+                        Content="Info" 
+                        Command="{Binding ToggleVehicleListCommand}"
+                        VerticalAlignment="Center" 
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"/>
+
             </StackPanel>
         </Border>
         

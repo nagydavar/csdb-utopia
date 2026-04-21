@@ -1,10 +1,59 @@
 namespace CSDB_UtopiaModel.Model;
 
-public class Navigator : IEnumerator<INavigable>
+public class Navigator : IEnumerator<Coordinate>
 {
-    public INavigable Current => throw new NotImplementedException();
+    private List<Coordinate> stops;
+    private int stopIndex = 1;
+    private Coordinate Destination => TemporaryStop.HasValue ? TemporaryStop.Value : stops[stopIndex];
+    private int StepIndDiff => IsReversed ? -1 : 1;
+    
+    private bool IsReversed { get; set; } = false;
+    private Map map;
+    private Coordinate current;
+
+    public Coordinate? TemporaryStop { get; set; } = null;
+
+
+    public Coordinate Current => current;
+
     object System.Collections.IEnumerator.Current => Current; // explicit interface implementation, not to be modified
-    public bool MoveNext() => throw new NotImplementedException();
-    public void Reset() => throw new NotImplementedException();
-    public void Dispose() => throw new NotImplementedException();
+
+    private void StepNextStop()
+    {
+        if (TemporaryStop.HasValue) TemporaryStop = null;
+        else stopIndex += StepIndDiff;
+        
+    }
+    public bool MoveNext()
+    {
+        if (EndedSection) StepNextStop();
+        if (Ended) return false;
+        
+        Coordinate? step = map.Step(Current, Destination);
+        if (step is not null) current = step.Value;
+        return step is not null;
+    }
+
+    private bool EndedSection => Current == Destination;
+    public void Dispose(){}
+
+    public void Reset()
+    {
+        IsReversed = !IsReversed;
+        if (IsReversed) stopIndex = stops.Count - 2;
+        else stopIndex = 1;
+    }
+
+    public bool Ended => stops.Count <= stopIndex || stopIndex < 0;
+    
+
+    public Navigator(Coordinate start, Coordinate end, Map map) : this([start, end], map){}
+    public Navigator(IList<Coordinate> stops, Map map)
+    {
+        if (stops.Count < 2) throw new InvalidOperationException("A path should have at least two stops");
+        current = stops[0];
+        this.stops = stops.ToList();
+        this.map = map;
+
+    }
 }

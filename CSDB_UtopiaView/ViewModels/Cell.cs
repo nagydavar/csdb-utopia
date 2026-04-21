@@ -22,7 +22,9 @@ public partial class Cell : ObservableObject
     
     [ObservableProperty]
     private IImage? image;
-    private string _fileName;
+
+    [ObservableProperty]
+    private string? _fileName;
 
     public int X => _x;
     public int Y => _y;
@@ -45,6 +47,9 @@ public partial class Cell : ObservableObject
     [ObservableProperty]
     private double _vehicle2Rotation;
 
+    [ObservableProperty]
+    private bool _isSelected;
+
     public Cell(int x, int y)
     {
         _x = x;
@@ -64,14 +69,14 @@ public partial class Cell : ObservableObject
             {
                 if (field.Buildable is ResourceExtractor)
                 {
-                    _fileName = $"Buildings/ResourceExtractors/{typeName}_{field.RelativeX}_{field.RelativeY}.PNG";
+                    FileName = $"Buildings/ResourceExtractors/{typeName}_{field.RelativeX}_{field.RelativeY}.PNG";
                 }
                 else if (field.Buildable is Decoration)
                 {
-                    _fileName = $"Buildings/Decorations/{typeName}_{field.RelativeX}_{field.RelativeY}.png";
+                    FileName = $"Buildings/Decorations/{typeName}_{field.RelativeX}_{field.RelativeY}.png";
                 }
                 else if (field.Buildable is Factory) {
-                    _fileName = $"Buildings/Factories/{ typeName}_{ field.RelativeX}_{ field.RelativeY}.PNG";
+                    FileName = $"Buildings/Factories/{ typeName}_{ field.RelativeX}_{ field.RelativeY}.PNG";
                 }
             }
             else
@@ -79,14 +84,30 @@ public partial class Cell : ObservableObject
                 //1x1-es mezők
 
                 if (field.Buildable is ApartmentBlock)
-                    _fileName = $"Buildings/ResidentialBuilding/{typeName}.PNG";
+                    FileName = $"Buildings/ResidentialBuilding/{typeName}.PNG";
                 else if (field.Buildable is DetachedHouse)
-                    _fileName = $"Buildings/ResidentialBuilding/{typeName}.jpg";
+                    FileName = $"Buildings/ResidentialBuilding/{typeName}.jpg";
                 else if (field.Buildable is Decoration)
-                    _fileName = $"Buildings/Decorations/{typeName}.png";
+                    FileName = $"Buildings/Decorations/{typeName}.png";
                 else if (field.Buildable is Garage || field.Buildable is Stop)
                 {
-                    _fileName = $"Buildings/OtherBuildings/{typeName}.PNG";
+                    FileName = $"Buildings/OtherBuildings/{typeName}.PNG";
+                }
+                else if (field.Buildable is Bridge bridge)
+                {
+                    if (bridge.IsCurved)
+                    {
+                        FileName = $"Roads/{typeName}_Curve_{bridge.Quadrant}.PNG";
+                    }
+                    else
+                    {
+                        // A hidak alapvetően egyenesek (Direction alapján)
+                        // dType: V (Vertical) vagy H (Horizontal)
+                        bool isVertical = bridge.Direction is Up || bridge.Direction is Down;
+                        string dirType = isVertical ? "V" : "H";
+
+                        FileName = $"Roads/{typeName}_{dirType}.PNG";
+                    }
                 }
                 else if (field.Buildable is Road road)
                 {
@@ -95,27 +116,27 @@ public partial class Cell : ObservableObject
                         var intersection = motorway.GetIntersection();
                         if (intersection is FourWayIntersection)
                         {
-                            _fileName = "Roads/Intersection_4.PNG";
+                            FileName = "Roads/Intersection_4.PNG";
                         }
                         else if (intersection is ThreeWayIntersection tWay)
                         {
                             // A Direction adja meg, merre néz a T-elágazás szára (Up, Down, Left, Right)
                             string dirSuffix = GetDirectionSuffix(tWay.TrafficLightIDirection);
-                            _fileName = $"Roads/Intersection_3_{dirSuffix}.PNG";
+                            FileName = $"Roads/Intersection_3_{dirSuffix}.PNG";
                         }
                     }
                     else if (road.IsCurved)
                     {
                         // A Modell Quadrant értéke alapján (1, 2, 3, 4)
                         // 1: Jobb-Fel, 2: Bal-Fel, 3: Bal-Le, 4: Jobb-Le
-                        _fileName = $"Roads/{typeName}_Curve_{road.Quadrant}.PNG";
+                        FileName = $"Roads/{typeName}_Curve_{road.Quadrant}.PNG";
                     }
                     else
                     {
                         // Egyenes út: Ha a Direction Up vagy Down, akkor V (Vertical), különben H
                         bool isVertical = road.Direction is Up || road.Direction is Down;
                         string dirType = isVertical ? "V" : "H";
-                        _fileName = $"Roads/{typeName}_{dirType}.PNG";
+                        FileName = $"Roads/{typeName}_{dirType}.PNG";
                     }
                 }
             }
@@ -124,22 +145,22 @@ public partial class Cell : ObservableObject
         {
             if (field is Land land)
             {
-                _fileName = $"Fields/{land.LevelOfForest}trees.PNG";
+                FileName = $"Fields/{land.LevelOfForest}trees.PNG";
             }
             else if (field is Mountain)
             {
-                _fileName = "Fields/Mountain.PNG";
+                FileName = "Fields/Mountain.PNG";
             }
             else if (field is Water)
             {
-                _fileName = "Fields/Water.PNG";
+                FileName = "Fields/Water.PNG";
             }
             else
             {
-                _fileName = "Fields/0trees.PNG";
+                FileName = "Fields/0trees.PNG";
             }
         }
-        Image = ImageLoader.Get(_fileName);
+        Image = ImageLoader.Get(FileName);
 
 
         UpdateVehicles(field);
@@ -162,7 +183,7 @@ public partial class Cell : ObservableObject
             if (road.RightSide != null)
             {
                 HasVehicle1 = true;
-                Vehicle1Rotation = GetRotationAngle(road.RightSide.CurrentDirection);
+                Vehicle1Rotation = GetRotationAngle(road.RightSide.Intention.To);
 
                 // Kinyerjük a típusnevet és levágjuk a generikus jelölőt ha van
                 string vType = road.RightSide.GetType().Name.Split('`')[0];
@@ -178,7 +199,7 @@ public partial class Cell : ObservableObject
             if (road.LeftSide != null)
             {
                 HasVehicle2 = true;
-                Vehicle2Rotation = GetRotationAngle(road.LeftSide.CurrentDirection);
+                Vehicle2Rotation = GetRotationAngle(road.LeftSide.Intention.To);
 
                 string vType = road.LeftSide.GetType().Name.Split('`')[0];
                 VehicleImage2 = ImageLoader.Get($"Vehicles/{vType}.png");
