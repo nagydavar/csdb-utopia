@@ -16,7 +16,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     private Map map;
     private Model model;
     protected Coordinate position;
-    protected Field currentField;
+    protected Field? currentField;
     protected int garageLimit = 30;
    
 
@@ -40,7 +40,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
 
     public INavigable? CurrentNavigable { get; protected set; }
 
-    public int TraveledSinceBought { get; set; }
+    public int TraveledSinceBought { get; protected set; }
     public GoingIntention Intention { get; private set; }
 
     protected INavigable getRoad(Coordinate c)
@@ -76,7 +76,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     {
 
         CurrentNavigable?.Leave(this);
-        Field oldField = currentField;
+        Field? oldField = currentField;
         
         navigation = map.GetNavigation(stops);
         navi = (Navigator)navigation.GetEnumerator();
@@ -88,12 +88,13 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
 
         Intention = new GoingIntention(d, d);
 
-
+        
         model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, currentField]));
     }
 
     private void GoToGarage()
     {
+        TraveledSinceBought = 0;
         List<Coordinate> garages = model.ListGarages().Select(g => g.Owner.Coordinates).ToList();
         Coordinate nearestGarage = map.GetNearest(Position, garages);
         navi.TemporaryStop = nearestGarage;
@@ -103,7 +104,8 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
 
     public Task Tick()
     {
-        if (navi is not null && navi.MoveNext())
+        if (navi is null) return Task.CompletedTask;
+        if (navi.MoveNext())
         {
             IDirection d = Position / navi.Current;
 
@@ -124,11 +126,9 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
             TraveledSinceBought++;
 
         }
-        else if (navi is not null && navi.Ended)
-        {
-            if (TraveledSinceBought > garageLimit) GoToGarage();
-            else navi.Reset();
-        }
+        else if (TraveledSinceBought > garageLimit) GoToGarage();
+        else navi.Reset();
+        
 
         return Task.CompletedTask;
     }
