@@ -34,6 +34,10 @@ public partial class GameViewModel : ViewModelBase
     [ObservableProperty]
     private string _currentDateString = string.Empty;
 
+    //MINIMAPNAK
+    [ObservableProperty]
+    private Avalonia.Vector _mapOffset;
+
     public Dictionary<IResource, int> DisplayStorage { get; } = new();
 
     public ObservableCollection<KeyValuePair<IResource, int>> StorageList { get; } = new();
@@ -428,9 +432,6 @@ public partial class GameViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand]
-    public void ClickMiniMap(Coordinate coords) { }
-
     // Listázó parancsok
     [RelayCommand]
     public void ListBuildableFactories() {
@@ -705,6 +706,26 @@ public partial class GameViewModel : ViewModelBase
     {
         throw new NotImplementedException();
     }
+
+
+    //MINIMAP
+    [RelayCommand]
+    public void ClickMiniMap(Cell cell)
+    {
+        // X az oszlop (vízszintes)
+        double xPixel = cell.X * 50.0;
+        double targetX = xPixel - 960; // Középre igazítás 1920-as szélességnél
+
+        // Y a sor (függőleges)
+        // Ezért itt is a (Height - 1 - Y) képlet kell, hogy megkapjuk a fentről vett pixel távolságot.
+        double targetY = (Height - 1 - cell.Y) * 50.0 - 540; // 540 a 1080 fele
+
+        // Értékek korlátozása (0 alá nem mehet az Offset)
+        MapOffset = new Avalonia.Vector(Math.Max(0, targetX), Math.Max(0, targetY));
+
+        System.Diagnostics.Debug.WriteLine($"Minimap -> Cella: {cell.X},{cell.Y} | Görgetés ide: {MapOffset}");
+    }
+
 }
 
 public class BuildableInfo
