@@ -2,11 +2,11 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-class Van<TIndustrialResource> : GoodsVehicle<TIndustrialResource> where TIndustrialResource : IIndustrialResource
+public class IndustrialVan<TIndustrialResource> : GoodsVehicle<TIndustrialResource> where TIndustrialResource : IIndustrialResource
 {
     public override int placementCost { get; } = 200;
     
-    public Van(Map map, Model m, Coordinate start, Coordinate end) : base(map,m)
+    public IndustrialVan(Map map, Model m) : base(map,m)
     {
         maintenanceCost = 50;
         speed = 90;
@@ -16,3 +16,5 @@ class Van<TIndustrialResource> : GoodsVehicle<TIndustrialResource> where TIndust
     // private override int maintenanceCost;
     // private override int speed;
 }
+
+public class Van : IndustrialVan<IIndustrialResource> { public Van(Map m, Model mo) : base(m, mo) { } }
