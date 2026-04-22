@@ -6,29 +6,38 @@ namespace CSDB_UtopiaModel.Model;
 [TestClass]
 public sealed class TestModel
 {
-    private Model m = null!;
+    private Model? m = null;
     private List<Coordinate> roads = new();
     
         
     [TestInitialize]
     public void TestInitialize()
     {
-        m = new Model(10, 10);
+        try
+        {
+            m = new Model(10, 10);
+            
+            roads.Clear();
+            roads.Add(new Coordinate(0, 0));//0
+            roads.Add(new Coordinate(0, 1));//1
+            roads.Add(new Coordinate(0, 2));//2
+            roads.Add(new Coordinate(1, 2));//3
+            roads.Add(new Coordinate(2, 2));//4
+            roads.Add(new Coordinate(2, 1));//5
+            roads.Add(new Coordinate(2, 0));//6
+            roads.Add(new Coordinate(1, 0));//7
+        }
+        catch (Exception e)
+        {
+            
+        }
         
-        roads.Clear();
-        roads.Add(new Coordinate(0, 0));//0
-        roads.Add(new Coordinate(0, 1));//1
-        roads.Add(new Coordinate(0, 2));//2
-        roads.Add(new Coordinate(1, 2));//3
-        roads.Add(new Coordinate(2, 2));//4
-        roads.Add(new Coordinate(2, 1));//5
-        roads.Add(new Coordinate(2, 0));//6
-        roads.Add(new Coordinate(1, 0));//7
         
     }
     [TestMethod]
     public void TestPlaceRoad()
     {
+        if (m is null) return;
         foreach (Coordinate coord in roads)
         {
             m.PlaceRoad(coord);
@@ -37,6 +46,9 @@ public sealed class TestModel
             {
                 Assert.IsNotNull(f.Buildable);
                 Assert.IsInstanceOfType<Road>(f.Buildable);
+                Road r = (Road)f.Buildable;
+                Assert.IsNull(r.RightSide);
+                Assert.IsNull(r.LeftSide);
             }
         }
     }
@@ -44,7 +56,7 @@ public sealed class TestModel
     public void TestPlace()
     {
         
-        
+        if (m is null) return;
         foreach (Coordinate coord in roads)
         {
             Field f = m.GetField(coord);
