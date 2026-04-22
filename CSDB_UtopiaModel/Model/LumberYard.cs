@@ -10,6 +10,8 @@ class LumberYard : ResourceExtractor
 
     public override int ProducedAmount => 8;
 
+    public override int placementCost => 1001;
+
     public LumberYard(Field f, int yield, Model model) : base(f, yield, model)
     {
     }

@@ -11,6 +11,8 @@ class Jewellery : Factory
     
     public override int ProducedAmount => 1;
 
+    public override int placementCost => 2831;
+
     public Jewellery(Field f, int yield, Model model) : base(f, yield, model)
     {
     }

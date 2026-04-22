@@ -10,6 +10,8 @@ class DiamondMine : ResourceExtractor
 
     public override int ProducedAmount => 1;
 
+    public override int placementCost => 2000;
+
     public DiamondMine(Field f, int yield, Model model) : base(f, yield, model)
     {
     }

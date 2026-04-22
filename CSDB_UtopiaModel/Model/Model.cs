@@ -35,10 +35,7 @@ public class Model : ITickable
         _timeControl = TimeControl.Instance();
         _timeControl += (this, 1);
 
-        IResource[] a =
-        [
-            Gold.Instance(), Diamond.Instance(), Wood.Instance(), IronOre.Instance(), Coal.Instance(), Oil.Instance()
-        ];
+       
         foreach (var list in _persistence.Fields)
         {
             foreach (var field in list)
@@ -47,8 +44,6 @@ public class Model : ITickable
 
                 if (land.LevelOfForest > 0)
                     _persistence.Forests.Add(land);
-                land.Resource = a[_rnd.Next(0, a.Length)];
-                land.DepletionLevel = _rnd.Next(1, 101);
             }
         }
     }
@@ -522,13 +517,15 @@ public class Model : ITickable
     {
         string targetNamespace = typeof(CSDB_UtopiaModel.Model.Model).Namespace;
 
-        return Assembly.GetExecutingAssembly()
+        var x = Assembly.GetExecutingAssembly()
             .GetTypes()
             .Where(t => t.IsClass &&
                         !t.IsAbstract &&
                         t.IsAssignableTo(typeof(T)) &&
                         t.Namespace == targetNamespace)
             .ToList();
+        
+        return x;
     }
 
     //Szükséges új játék kezdetekor hogy a legfrissebb persistence objektum feliratkozzon az eseményekre

@@ -392,8 +392,6 @@ public partial class GameViewModel : ViewModelBase
                 var flags = BindingFlags.NonPublic | BindingFlags.Instance;
 
                 // Adatok kinyerése Reflection-nel (mivel protected-ek)
-                var res = field.GetType().GetField("resource", flags)?.GetValue(field) as IResource;
-                var depl = (int)(field.GetType().GetField("depletionLevel", flags)?.GetValue(field) ?? 0);
                 var townObj = field.GetType().GetField("town", flags)?.GetValue(field);
                 string townName = townObj?.GetType().GetProperty("Name")?.GetValue(townObj)?.ToString() ?? "Vadon";
 
@@ -402,8 +400,8 @@ public partial class GameViewModel : ViewModelBase
                     Coordinates = $"[{field.Coordinates.X}, {field.Coordinates.Y}]",
                     BuildingName = field.HasBuildable ? field.Buildable!.GetType().Name : "Üres mező",
                     TownName = townName,
-                    ResourceType = res?.GetType().Name ?? "Ismeretlen",
-                    Depletion = depl
+                    ResourceType = field.Resource.GetType().Name,
+                    Depletion = field.DepletionLevel,
                 };
 
                 IsFieldDetailsVisible = true;
@@ -679,9 +677,9 @@ public partial class GameViewModel : ViewModelBase
                     Buildable? bDummy = null;
 
                     if (type.IsAssignableTo(typeof(ResourceExtractor)))
-                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 10);
+                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 10, _model);
                     else if (type.IsAssignableTo(typeof(Factory)))
-                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 30);
+                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 30, _model);
                     else if (type.IsAssignableTo(typeof(Road)))
                     {
                         // PRÓBÁLKOZÁS SORRENDJE FONTOS

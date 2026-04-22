@@ -10,6 +10,8 @@ class OilRig : ResourceExtractor
 
     public override int ProducedAmount => 5;
 
+    public override int placementCost => 666;
+
     public OilRig(Field f, int yield, Model model) : base(f, yield, model)
     {
     }

@@ -13,4 +13,6 @@ class Press : Factory
 
     public override int RequiredAmount => 10;
     public override int ProducedAmount => 1;
+
+    public override int placementCost => 1888;
 }

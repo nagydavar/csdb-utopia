@@ -10,6 +10,8 @@ class SawMill : Factory
     public override int RequiredAmount => 1;
     public override int ProducedAmount => 1;
 
+    public override int placementCost => 1722;
+
     public SawMill(Field f, int yield, Model model) : base(f, yield, model)
     {
     }

@@ -11,6 +11,8 @@ class IronFurnace : Factory
 
     public override int ProducedAmount => 3;
 
+    public override int placementCost => 2254;
+
     public IronFurnace(Field f, int yield, Model model) : base(f, yield, model)
     {
     }

@@ -10,6 +10,8 @@ class IronMine : ResourceExtractor
 
     public override int ProducedAmount => 18;
 
+    public override int placementCost => 1526;
+
     public IronMine(Field f, int yield, Model model) : base(f, yield, model)
     {
     }

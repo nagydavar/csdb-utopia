@@ -13,4 +13,6 @@ class Refinery : Factory
 
     public override int RequiredAmount => 5;
     public override int ProducedAmount => 2;
+
+    public override int placementCost => 2026;
 }

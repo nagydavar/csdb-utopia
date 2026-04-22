@@ -9,6 +9,8 @@ class CoalMine : ResourceExtractor
     public override int RequiredAmount => 0;
 
     public override int ProducedAmount => 20;
+    
+    public override int placementCost => 800;
 
     public CoalMine(Field f, int yield, Model model) : base(f, yield, model)
     {

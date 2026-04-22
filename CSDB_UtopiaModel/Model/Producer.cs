@@ -29,13 +29,26 @@ public abstract class Producer : Building, ITickable
 
     public Task Tick()
     {
+        if (Owner is null)
+            return Task.CompletedTask;
+        
         if (stop is null)
         {
             for (int i = 0; i <= area.Width; i++)
             {
                 for (int k = 0; k <= area.Height; k++)
                 {
-                    Coordinate c = new(Owner.Coordinates.X + i, Owner.Coordinates.Y - k);
+                    Coordinate c;
+
+                    try
+                    {
+                       c = new(Owner.Coordinates.X + i, Owner.Coordinates.Y - k);
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+                    
                     Field? f=null;
 
                     foreach (var p in c.GetAllNeighbors())
@@ -67,7 +80,17 @@ public abstract class Producer : Building, ITickable
             {
                 for (int k = 0; k <= area.Height; k++)
                 {
-                    Coordinate c = new(Owner.Coordinates.X + i, Owner.Coordinates.Y - k);
+                    Coordinate c;
+
+                    try
+                    {
+                       c = new(Owner.Coordinates.X + i, Owner.Coordinates.Y - k);
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+                    
                     Field? f = null;
                     
                     try

@@ -11,6 +11,8 @@ class PaperFactory : Factory
     
     public override  int ProducedAmount => 2;
 
+    public override int placementCost => 1698;
+
     public PaperFactory(Field f, int yield, Model model) : base(f, yield, model)
     {
     }
