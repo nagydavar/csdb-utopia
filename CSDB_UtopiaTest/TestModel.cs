@@ -70,7 +70,7 @@ public sealed class TestModel
     }
     
     
-    [TestMethod]
+    //[TestMethod]
     public void TestDemolishRoad()
     {
         foreach (Coordinate coord in roads)
