@@ -5,5 +5,7 @@ public interface IResidentialBuilding
 {
     int givePeople { get; }
     int AffectMood { get; }
+    
+    public Stop ConnectsTo { get; set; }
 
 };

@@ -1,8 +1,18 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
+
 class IronMine : ResourceExtractor
 {
-        public override IronOre Produce() => IronOre.Instance();
-        public IronMine(Field f, int yield): base(f,  yield) {}
-    };
+    public override IronOre Produce() => IronOre.Instance();
+
+    public override int RequiredAmount => 0;
+
+    public override int ProducedAmount => 18;
+
+    public override int placementCost => 1526;
+
+    public IronMine(Field f, int yield, Model model) : base(f, yield, model)
+    {
+    }
+}

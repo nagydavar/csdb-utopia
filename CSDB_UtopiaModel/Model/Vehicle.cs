@@ -11,14 +11,25 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     protected readonly int tickInterval = 1;
     protected Navigation? navigation;
     protected Navigator? navi;
-   
+    protected R? carriedResource = default;
 
     private Map map;
     private Model model;
     protected Coordinate position;
     protected Field? currentField;
     protected int garageLimit = 100;
-   
+
+    public int carriedAmount { get; set; } = 0;
+
+    public int CarriedAmount
+    {
+        get => carriedAmount;
+        set
+        {
+            if (carriedAmount > Capacity) throw new InvalidOperationException("CarriedAmount cannot be more than Capacity");
+            carriedAmount = value;
+        }
+    }
 
     public int Capacity => capacity;
     public int MaintenanceCost => maintenanceCost;
@@ -106,6 +117,8 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
 
     public int Sell() => throw new NotImplementedException();
 
+   
+
     public Task Tick()
     {
         if (navi is null) return Task.CompletedTask;
@@ -124,9 +137,18 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
             Intention = Intention.NewIntention(d);
 
             Field to = model.GetField(Position);
+            currentField = to;
+
+            if (currentField.HasBuildable && currentField.Buildable is Stop stop && carriedResource is not null)
+            {
+                stop.Load(carriedResource, Capacity);
+                CarriedAmount = 0;
+                
+                carriedAmount = stop.Unload(carriedResource, CarriedAmount);
+
+            }
 
             model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, to]));
-            currentField = to;
             TraveledSinceBought++;
 
         }

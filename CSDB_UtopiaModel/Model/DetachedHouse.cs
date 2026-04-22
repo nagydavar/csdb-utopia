@@ -13,6 +13,8 @@ public class DetachedHouse : Building, IResidentialBuilding
     public int givePeople => 5;
 
     public int AffectMood => -2;
+    public Stop ConnectsTo { get; set; }
+    
 
     // A Buildable-b�l �r�k�lt k�telez� elem
     public override int placementCost => 500;

@@ -22,6 +22,8 @@ public class Model : ITickable
     public EventHandler<EventArgs>? DateChanged;
     private Map _map;
 
+    public int Mood => _persistence.CurrentMood;
+
     public Map GetMap() => _map;
 
     public Model(int width, int height)
@@ -33,10 +35,17 @@ public class Model : ITickable
         _timeControl = TimeControl.Instance();
         _timeControl += (this, 1);
 
+       
         foreach (var list in _persistence.Fields)
-        foreach (var field in list)
-            if (field is Land land)
-                _persistence.Forests.Add(land);
+        {
+            foreach (var field in list)
+            {
+                if (field is not Land land) continue;
+
+                if (land.LevelOfForest > 0)
+                    _persistence.Forests.Add(land);
+            }
+        }
     }
 
     #region Time
@@ -158,6 +167,7 @@ public class Model : ITickable
                 OnFieldsUpdated(f);
             }
         }
+
         BudgetChanged?.Invoke(this, EventArgs.Empty);
         return true;
     }
@@ -204,6 +214,7 @@ public class Model : ITickable
         List<Land> targetLands = new List<Land>();
         float totalForestFactor = 0;
         (IResource?, int) resource = (null, 0);
+        
 
         // 2. Ellenőrzés, elfér-e és minden mező Land-e?
         for (int i = 0; i < width; i++)
@@ -275,8 +286,8 @@ public class Model : ITickable
         {
             _persistence.Garages.Add(garage);
         }
-        
-        
+
+
         if (buildable is INavigable stop)
         {
             _map.BuildRoad(stop.Owner.Coordinates);
@@ -292,9 +303,10 @@ public class Model : ITickable
     }
 
     public void PlaceVehicle(Coordinate start, Coordinate end, IVehicle vehicle) => PlaceVehicle([start, end], vehicle);
+
     public void PlaceVehicle(Coordinate[] stops, IVehicle vehicle)
     {
-        if (_persistence.Garages.Count == 0) 
+        if (_persistence.Garages.Count == 0)
             throw new InvalidOperationException("You have to build a garage first");
 
         foreach (var stopCoords in stops)
@@ -440,6 +452,8 @@ public class Model : ITickable
             RefreshNeighbouringRoads(coord);
             _map.DeleteRoad(coord);
         }
+        
+            
     }
 
     public List<Type> ListBuildableFactories()
@@ -514,13 +528,15 @@ public class Model : ITickable
     {
         string targetNamespace = typeof(CSDB_UtopiaModel.Model.Model).Namespace;
 
-        return Assembly.GetExecutingAssembly()
+        var x = Assembly.GetExecutingAssembly()
             .GetTypes()
             .Where(t => t.IsClass &&
                         !t.IsAbstract &&
                         t.IsAssignableTo(typeof(T)) &&
                         t.Namespace == targetNamespace)
             .ToList();
+        
+        return x;
     }
 
     //Szükséges új játék kezdetekor hogy a legfrissebb persistence objektum feliratkozzon az eseményekre
@@ -620,7 +636,7 @@ public class Model : ITickable
         Field f = GetField(coord);
 
         bool isBridge = f.Buildable is Bridge; // ELLENŐRZÉS: Híd-e
-        
+
         switch (roadCount)
         {
             case 0: // should be also included in case 'default' if we want to build only non-separated roads
