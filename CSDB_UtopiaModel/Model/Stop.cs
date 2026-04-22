@@ -4,7 +4,7 @@ namespace CSDB_UtopiaModel.Model;
 
 public class Stop : INavigable
 {
-    private List<Building> connectsTo = new List<Building>();
+    private List<Buildable> connectsTo = new List<Buildable>();
     private HashSet<IVehicle> vehicles = new HashSet<IVehicle>();
     public HashSet<IResource> Accept = new HashSet<IResource>();
 
@@ -23,12 +23,13 @@ public class Stop : INavigable
         area = (1, 1);
     }
 
-    public void AddNewConnection(Building b)
+    public void AddNewConnection(Buildable b)
     {
-        if (b is IResidentialBuilding)
+        if (b is IResidentialBuilding rb)
         {
             Accept.Add(HumanResource.Instance());
             connectsTo.Add(b);
+            rb.ConnectsTo = this;
         }
 
         if (b is Producer p)
@@ -36,9 +37,22 @@ public class Stop : INavigable
             connectsTo.Add(p);
             Accept.Add(HumanResource.Instance());
             Accept.Add(p.Produce());
+            p.ConnectsTo = this;
+            
             if (p.Require() is not Environmental)
                 Accept.Add(p.Require());
         }
+
+    }
+
+    public void RemoveConnection(Buildable b)
+    {
+        connectsTo.Remove(b);
+        if (b is IResidentialBuilding rb)
+            rb.ConnectsTo = null;
+
+        if (b is Producer p)
+            p.ConnectsTo = null;
 
     }
 

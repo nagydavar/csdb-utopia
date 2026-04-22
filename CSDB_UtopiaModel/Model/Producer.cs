@@ -13,7 +13,7 @@ public abstract class Producer : Building, Tickable
     {
         this.yield = yield;
     }
-
+    public Stop ConnectsTo { get; set; }
     public abstract IResource Produce();
     public abstract IResource Require();
     public virtual void Tick() { }

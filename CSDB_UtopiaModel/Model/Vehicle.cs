@@ -18,8 +18,9 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     protected Coordinate position;
     protected Field? currentField;
     protected int garageLimit = 100;
-   
-    private int carriedAmount = 0;
+
+    public int carriedAmount { get; set; } = 0;
+
     public int CarriedAmount
     {
         get => carriedAmount;

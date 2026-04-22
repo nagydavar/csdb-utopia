@@ -204,6 +204,7 @@ public class Model : ITickable
         List<Land> targetLands = new List<Land>();
         float totalForestFactor = 0;
         (IResource?, int) resource = (null, 0);
+        
 
         // 2. Ellenőrzés, elfér-e és minden mező Land-e?
         for (int i = 0; i < width; i++)
@@ -223,6 +224,70 @@ public class Model : ITickable
                 }
                 else return false; // Ha csak egyetlen mező is foglalt vagy nem Land, megállunk
             }
+        }
+        //stop ellenőrzés
+        Coordinate stopAround;
+        if (buildable is Producer || buildable is IResidentialBuilding)
+        {
+            bool hasStop = false;
+            Coordinate upperleftCorner = new Coordinate(coord.X - 2, coord.Y + 2);
+            for (int i = 0; i < width + 2 && !hasStop; i++)
+            {
+                for (int j = 0; j < height + 2 && !hasStop; j++)
+                {
+                    // sarokszomszédok
+                    if (upperleftCorner.X + j >= _persistence.Width ||
+                        upperleftCorner.Y - i >= _persistence.Height) continue;
+
+                    if (i == 0 && j == 0) continue;
+                    if (i == width + 1 && j == 0) continue;
+                    if (i == 0 && j == height + 1) continue;
+                    if (i == width + 1 && j == height + 1) continue;
+
+                    Field f = _persistence.Fields[upperleftCorner.X + j][upperleftCorner.Y - i];
+                    if (f.Buildable is Stop)
+                    {
+                        hasStop = true;
+                        stopAround = new Coordinate(upperleftCorner.X + j, upperleftCorner.Y - i);
+                    }
+                }
+            }
+
+            /*IDirection[] dirs = [Up.Instance(), Right.Instance(), Down.Instance(), Left.Instance()];
+            for (int i = 0; i < dirs.Length && !hasStop; i++)
+            {
+                IDirection d = dirs[i];
+
+                IDirection nextDir = dirs[(i + 1) % 4];
+                int dimStep = nextDir is IHorizontalDirection ? width : height;
+                int dim = nextDir is IHorizontalDirection ? width : height;
+                Coordinate stepOne;
+                if (nextDir is IHorizontalDirection)
+                    stepOne = new Coordinate(coord.X, coord.Y + dim);
+                else
+                    stepOne = new Coordinate(coord.X + dim, coord.Y);
+
+                for (int j = 0; j < dimStep && !hasStop;  j++)
+                {
+                    try
+                    {
+                        if (GetField(stepOne).Buildable is Stop)
+                        {
+                            stops.Add(stepOne);
+                            hasStop = true;
+                        }
+                        stepOne = stepOne.Step(nextDir);
+                    }
+                    catch (Exception e)
+                    {}
+                }
+
+            }
+            */
+            if (!hasStop) return false;
+            
+            Stop s = (Stop) GetField(coord).Buildable;
+            s.AddNewConnection(buildable);
         }
 
         //3. költség
@@ -436,6 +501,12 @@ public class Model : ITickable
             RefreshNeighbouringRoads(coord);
             _map.DeleteRoad(coord);
         }
+        
+        if (onField is IResidentialBuilding rb)
+            rb.ConnectsTo.RemoveConnection(onField);
+        if (onField is Producer p)
+            p.ConnectsTo.RemoveConnection(onField);
+            
     }
 
     public List<Type> ListBuildableFactories()

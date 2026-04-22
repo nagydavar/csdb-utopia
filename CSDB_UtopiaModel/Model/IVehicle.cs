@@ -2,7 +2,7 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-public abstract class IVehicle : ITickable, Buyable
+public interface IVehicle : ITickable, Buyable
 {
     // TODO
 
