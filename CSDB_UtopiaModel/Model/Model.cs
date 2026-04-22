@@ -5,9 +5,11 @@ namespace CSDB_UtopiaModel.Model;
 
 public class Model : ITickable
 {
+    private const int _secondsToGrowTrees = 180;
     private TimeControl _timeControl;
     private Persistence.Persistence _persistence;
     private uint _totalSeconds = 0; // Az eltelt összes másodperc
+    private readonly Random _rnd = new();
 
     public EventHandler<EventArgs>? GameTicked;
     public EventHandler<FieldEventArgs>? FieldsUpdated;
@@ -20,6 +22,8 @@ public class Model : ITickable
     public EventHandler<EventArgs>? DateChanged;
     private Map _map;
 
+    public int Mood => _persistence.CurrentMood;
+
     public Map GetMap() => _map;
 
     public Model(int width, int height)
@@ -28,11 +32,20 @@ public class Model : ITickable
         _map = new Map(new HashSet<Coordinate>());
         RegisterEvents();
 
-        // 1. Lekérjük a példányt egy változóba
-        var timer = TimeControl.Instance();
+        _timeControl = TimeControl.Instance();
+        _timeControl += (this, 1);
 
-        // 2. A változón már elvégezhető az operátor-művelet
-        timer += (this, 1);
+       
+        foreach (var list in _persistence.Fields)
+        {
+            foreach (var field in list)
+            {
+                if (field is not Land land) continue;
+
+                if (land.LevelOfForest > 0)
+                    _persistence.Forests.Add(land);
+            }
+        }
     }
 
     #region Time
@@ -41,7 +54,18 @@ public class Model : ITickable
     {
         _totalSeconds++;
 
-        // Kiváltjuk az eseményt a View felé
+        if (_totalSeconds % _secondsToGrowTrees == 0)
+        {
+            try
+            {
+                GrowTrees();
+            }
+            catch (InvalidOperationException e)
+            {
+                Console.Error.WriteLine("\nGrowing trees was not successful: \n" + e.Message);
+            }
+        }
+
         DateChanged?.Invoke(this, EventArgs.Empty);
 
         return Task.CompletedTask;
@@ -56,26 +80,13 @@ public class Model : ITickable
         return $"{hours:D2}:{minutes:D2}:{seconds:D2}";
     }
 
-    // Vezérlő metódusok a TimeControl-hoz
-    public void TogglePause()
-    {
-        var timer = TimeControl.Instance();
-        _ = !timer; // A '!' operátor meghívása
-    }
+    public void TogglePause() => _ = !_timeControl;
 
-    public void SpeedUp()
-    {
-        var timer = TimeControl.Instance();
-        _ = ++timer;
-    }
+    public void SpeedUp() => ++_timeControl;
 
-    public void SlowDown()
-    {
-        var timer = TimeControl.Instance();
-        _ = --timer;
-    }
+    public void SlowDown() => --_timeControl;
 
-    public bool IsPaused() => !TimeControl.Instance().IsStopped;
+    public bool IsPaused() => !_timeControl.IsStopped;
 
     #endregion
 
@@ -98,6 +109,67 @@ public class Model : ITickable
 
         BudgetChanged?.Invoke(this, EventArgs.Empty);
         MoodChanged?.Invoke(this, new MoodChangedEventArgs(_persistence.CurrentMood));
+    }
+
+    public bool PlaceBridge(Coordinate start, Coordinate end, Bridge bridge)
+    {
+        // Tengelyek meghat.
+        bool isVertical = start.X == end.X;
+        bool isHorizontal = start.Y == end.Y;
+
+        if (!isVertical && !isHorizontal)
+            return false; // Nem egy vonalban vannak
+
+        int minX = Math.Min(start.X, end.X);
+        int maxX = Math.Max(start.X, end.X);
+        int minY = Math.Min(start.Y, end.Y);
+        int maxY = Math.Max(start.Y, end.Y);
+
+        // Hossz ellenőrzése (mezők száma)
+        int length = isVertical ? (maxY - minY + 1) : (maxX - minX + 1);
+
+        if (length > bridge.MaxLength)
+            return false;
+
+        // Víz-e és üres-e minden mező
+        for (int x = minX; x <= maxX; x++)
+        {
+            for (int y = minY; y <= maxY; y++)
+            {
+                var field = GetField(x, y);
+                if (field is not Water || field.HasBuildable)
+                    return false;
+            }
+        }
+
+        // Tényleges lehelyezés
+        // Végigmegyünk a kijelölt szakaszon
+        for (int x = minX; x <= maxX; x++)
+        {
+            for (int y = minY; y <= maxY; y++)
+            {
+                Coordinate c = new(x, y);
+                Field f = GetField(c);
+                Bridge bPart = bridge.Clone(f);
+
+                // Költség levonása
+                _persistence.Budget -= bPart.placementCost;
+
+                // Buildable beállítása
+                f.Buildable = bPart;
+
+                // Jelezzük az úthálózatnak (ha kell)
+                _map.BuildRoad(c);
+
+                RefreshNeighbouringRoads(c);
+
+                // Frissítjük a View-t
+                OnFieldsUpdated(f);
+            }
+        }
+
+        BudgetChanged?.Invoke(this, EventArgs.Empty);
+        return true;
     }
 
     public bool PlaceRoad(Coordinate coord)
@@ -125,7 +197,6 @@ public class Model : ITickable
 
         if (RefreshNeighbouringRoads(coord))
         {
-            _map.BuildRoad(coord);
             return true;
         }
 
@@ -143,6 +214,7 @@ public class Model : ITickable
         List<Land> targetLands = new List<Land>();
         float totalForestFactor = 0;
         (IResource?, int) resource = (null, 0);
+        
 
         // 2. Ellenőrzés, elfér-e és minden mező Land-e?
         for (int i = 0; i < width; i++)
@@ -210,7 +282,13 @@ public class Model : ITickable
             _persistence.CurrentMood += residential.AffectMood;
             OnMoodChanged(_persistence.CurrentMood);
         }
-        else if (buildable is Stop stop)
+        else if (buildable is Garage garage)
+        {
+            _persistence.Garages.Add(garage);
+        }
+
+
+        if (buildable is INavigable stop)
         {
             _map.BuildRoad(stop.Owner.Coordinates);
         }
@@ -224,14 +302,22 @@ public class Model : ITickable
         return true;
     }
 
-    public void PlaceVehicle(Coordinate start, Coordinate end, IVehicle vehicle)
+    public void PlaceVehicle(Coordinate start, Coordinate end, IVehicle vehicle) => PlaceVehicle([start, end], vehicle);
+
+    public void PlaceVehicle(Coordinate[] stops, IVehicle vehicle)
     {
-        if (_persistence.Fields[end.X][end.Y].Buildable is not Stop stop)
-            throw new InvalidOperationException("You can only place a vehicle to a road");
+        if (_persistence.Garages.Count == 0)
+            throw new InvalidOperationException("You have to build a garage first");
+
+        foreach (var stopCoords in stops)
+        {
+            if (GetField(stopCoords).Buildable is not Stop stop)
+                throw new InvalidOperationException("You can only set path between stops");
+        }
 
         try
         {
-            vehicle.AssignNewPath(start, end);
+            vehicle.AssignNewPath(stops);
             _persistence.VehiclesOnMap.Add(vehicle);
 
             _persistence.Budget -= vehicle.placementCost;
@@ -242,6 +328,44 @@ public class Model : ITickable
 
         }
     }
+
+    // Járművek listázása a ViewModel számára
+    public List<IVehicle> GetVehiclesOnMap()
+    {
+        return _persistence.VehiclesOnMap.ToList();
+    }
+
+    // Jármű eladása
+    public void SellVehicle(IVehicle vehicle)
+    {
+        if (vehicle is null) return;
+
+        // Megállítás a TimeControl-ban
+        var tc = TimeControl.Instance();
+        tc -= (vehicle as ITickable)!;
+
+        // Generikus korlátozás NÉLKÜL
+        // Keressük meg a mezőt a jármű pozíciója alapján
+        Field fieldOnMap = GetField(vehicle.Position);
+
+        if (fieldOnMap.Buildable is Road road)
+        {
+            // A Road.Leave(IVehicle) metódust hívjuk, ami interfészt vár, 
+            // így minden típussal működni fog (Car, Bus, stb.)
+            road.Leave(vehicle);
+        }
+
+        // Vizuális frissítés kiváltása
+        OnFieldsUpdated(fieldOnMap);
+
+        // Törlés a listából
+        _persistence.VehiclesOnMap.Remove(vehicle);
+
+        // Pénz visszatérítése
+        _persistence.Budget += vehicle.placementCost / 2;
+        BudgetChanged?.Invoke(this, EventArgs.Empty);
+    }
+
 
     //nyersanyag friss�t�se miatt
     public int GetBudget() // should be a property
@@ -282,6 +406,7 @@ public class Model : ITickable
         // if (/*undemolishable*/)
         //     throw new Exception("ejnye-bejnye!");
         Buildable? onField = GetField(coord).Buildable;
+        if (onField is Garage && ListGarages().Count == 1) return; 
         Field field = GetField(coord);
         Field source = GetField(new Coordinate(coord.X - field.RelativeY, coord.Y + field.RelativeX));
 
@@ -322,11 +447,13 @@ public class Model : ITickable
             OnMoodChanged(_persistence.CurrentMood);
         }
 
-        if (onField is Road)
+        if (onField is INavigable)
         {
             RefreshNeighbouringRoads(coord);
             _map.DeleteRoad(coord);
         }
+        
+            
     }
 
     public List<Type> ListBuildableFactories()
@@ -387,10 +514,13 @@ public class Model : ITickable
         return Assembly.GetExecutingAssembly()
             .GetTypes()
             .Where(t => t.IsClass &&
-                        !t.IsAbstract &&
-                        (t.IsAssignableTo(typeof(IVehicle))) && // Minden ami jármű
-                        !t.IsAssignableTo(typeof(PassengerVehicle)) && // De nem utas-szállító
-                        t.Namespace == targetNamespace)
+                    !t.IsAbstract &&
+                    // Ne legyen generikus definíció (pl. Van<T> kizárva)
+                    !t.IsGenericTypeDefinition &&
+                    t.IsAssignableTo(typeof(IVehicle)) &&
+                    !t.IsAssignableTo(typeof(PassengerVehicle)) &&
+                    // Csak a megadott névtérben lévő, vagy speciális nevű konkrét osztályok
+                    (t.Namespace == targetNamespace || t.Name.Contains("Industrial") || t.Name.Contains("Treasure")))
             .ToList();
     }
 
@@ -398,13 +528,15 @@ public class Model : ITickable
     {
         string targetNamespace = typeof(CSDB_UtopiaModel.Model.Model).Namespace;
 
-        return Assembly.GetExecutingAssembly()
+        var x = Assembly.GetExecutingAssembly()
             .GetTypes()
             .Where(t => t.IsClass &&
                         !t.IsAbstract &&
                         t.IsAssignableTo(typeof(T)) &&
                         t.Namespace == targetNamespace)
             .ToList();
+        
+        return x;
     }
 
     //Szükséges új játék kezdetekor hogy a legfrissebb persistence objektum feliratkozzon az eseményekre
@@ -412,6 +544,64 @@ public class Model : ITickable
     {
         // Mindig a jelenlegi _persistence objektumra iratkozunk fel
         _persistence.GameOver += (_, e) => GameOver?.Invoke(this, e);
+    }
+
+    private void GrowTrees()
+    {
+        List<Land> toBeAdded = new();
+
+        foreach (var forest in _persistence.Forests)
+        {
+            switch (forest.LevelOfForest)
+            {
+                case 3:
+                    if (_rnd.Next(0, 101) == 0)
+                    {
+                        var tmp = TrySpreadForest(forest.Coordinates);
+                        if (tmp is not null)
+                            toBeAdded.Add(tmp);
+                    }
+
+                    break;
+                case 4:
+                    if (_rnd.Next(0, 51) == 0)
+                    {
+                        var tmp = TrySpreadForest(forest.Coordinates);
+                        if (tmp is not null)
+                            toBeAdded.Add(tmp);
+                    }
+
+                    break;
+            }
+
+            if (!forest.CanGrow || _rnd.Next(0, 11) != 0) continue;
+
+
+            forest.ForestSpread();
+            OnFieldsUpdated(forest);
+        }
+
+        foreach (var land in toBeAdded)
+            _persistence.Forests.Add(land);
+    }
+
+    private Land? TrySpreadForest(Coordinate coord)
+    {
+        IDirection[] directions = [Up.Instance(), Right.Instance(), Down.Instance(), Left.Instance()];
+
+        int ind = _rnd.Next(0, directions.Length),
+            newx = coord.X + directions[ind].Diff().Item1,
+            newy = coord.Y + directions[ind].Diff().Item2;
+
+        if (0 > newx || newx >= _persistence.Width || 0 > newy || newy >= _persistence.Height) return null;
+
+        Coordinate newPlace = new(newx, newy);
+
+        if (GetField(newPlace) is not Land { HasBuildable: false } land) return null;
+
+        land.ForestSpread();
+        OnFieldsUpdated(land);
+        return land;
     }
 
     private (bool IsCurved, int Quadrant, IDirection Direction, Intersection? Intersection) DetermineRoadState(
@@ -444,6 +634,9 @@ public class Model : ITickable
         IDirection dir = Up.Instance();
         Intersection? intersection = null;
         Field f = GetField(coord);
+
+        bool isBridge = f.Buildable is Bridge; // ELLENŐRZÉS: Híd-e
+
         switch (roadCount)
         {
             case 0: // should be also included in case 'default' if we want to build only non-separated roads
@@ -480,6 +673,13 @@ public class Model : ITickable
 
                 break;
             case 3:
+                if (isBridge)
+                {
+                    // Ha híd, nem lehet T-elágazás. 
+                    // Ekkor válasszunk egy irányt az első két szomszéd alapján (egyenesnek mutatva)
+                    return (false, 0, roadDirections.First(d => roads[Array.IndexOf(roadDirections, d)] != null), null);
+                }
+
                 if (HasNeighbouringIntersection(coord))
                     throw new InvalidOperationException("can't place two intersections next to each other");
 
@@ -501,6 +701,12 @@ public class Model : ITickable
 
                 break;
             case 4:
+                if (isBridge)
+                {
+                    // Ha híd, nem lehet 4-es kereszteződés sem.
+                    return (false, 0, Up.Instance(), null);
+                }
+
                 if (HasNeighbouringIntersection(coord))
                     throw new InvalidOperationException("can't place two intersections next to each other");
 

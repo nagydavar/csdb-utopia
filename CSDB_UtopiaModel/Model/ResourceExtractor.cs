@@ -1,8 +1,13 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-abstract public class ResourceExtractor : Producer
+
+public abstract class ResourceExtractor : Producer
 {
-    public ResourceExtractor(Field field, int yield): base(field, yield) { area = (2, 2); }
-    public override Environmental Require()  => Environmental.Instance(); 
-};
+    public ResourceExtractor(Field field, int yield, Model model) : base(field, yield, model)
+    {
+        area = (2, 2);
+    }
+
+    public sealed override Environmental Require() => Environmental.Instance();
+}

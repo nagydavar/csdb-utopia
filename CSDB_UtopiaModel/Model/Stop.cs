@@ -1,29 +1,62 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-public class Stop: Buildable, INavigable
+
+public class Stop : INavigable
 {
-        public List<Building> connectsTo = new List<Building>();
-        public HashSet<IVehicle> vehicles = new HashSet<IVehicle>();
-        public List<IResource> accept = new List<IResource>();
-        public Dictionary<IResource, int> Resource;
-        //Valahogy a Resourcenak egy megszorításnak kellene lennie, jó esetben statikus;
-        public override int placementCost => 200;
+    private readonly HashSet<IVehicle> _vehicles = new HashSet<IVehicle>();
+    private readonly Dictionary<IResource, int> _storage = new();
 
-        public Stop(Field f) : base(f)
-        {
-            area = (1, 1);
-        }
+    public override int placementCost => 200;
 
-        public bool TryMoveTo(IDirection dir, IVehicle vehicle)
-        {
-            vehicles.Add(vehicle);
-            return true;
-        }
-        public void Leave(IVehicle vehicle) => vehicles.Remove(vehicle);
-
-        public void Load(IResource r, int amount) => throw new NotImplementedException();
-        public int Unload(IResource r, int amount) => throw new NotImplementedException();
-        public void AddBuildingsInRange() => throw new NotImplementedException();
-    
+    public int this[IResource resource] => resource switch
+    {
+        Environmental => int.MaxValue,
+        _ => _storage[resource]
     };
+
+    public Stop(Field f) : base(f)
+    {
+        area = (1, 1);
+    }
+
+    public override bool TryMoveTo(IDirection dir, IVehicle vehicle)
+    {
+        _vehicles.Add(vehicle);
+        return true;
+    }
+
+    public override void Leave(IVehicle vehicle) => _vehicles.Remove(vehicle);
+
+    public void Load(IResource resource, int amount)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(amount);
+
+        if (resource is Environmental) return;
+
+        if (_storage.TryGetValue(resource, out int value))
+            _storage[resource] = amount + value;
+        else
+            _storage.Add(resource, amount);
+    }
+
+    public int Unload(IResource resource, int amount)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(amount);
+
+        if (resource is Environmental) return amount;
+
+        if (!_storage.TryGetValue(resource, out int value))
+            throw new ArgumentException("The stop does not contain this type of resource.", nameof(resource));
+
+        if (value >= amount)
+        {
+            _storage.Remove(resource);
+            return value;
+        }
+
+        // else
+        _storage[resource] -= amount;
+        return amount;
+    }
+}

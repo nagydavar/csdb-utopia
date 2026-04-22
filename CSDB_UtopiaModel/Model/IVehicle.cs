@@ -8,7 +8,20 @@ public interface IVehicle : ITickable, Buyable
 
     // A ford�t� csak akkor engedi a road.RightSide.Intention h�v�st,
     // ha ez szerepel itt:
+
+    Coordinate Position { get; }
     GoingIntention Intention { get; }
     public IDirection CurrentDirection { get; protected set; }
-    public void AssignNewPath(Coordinate start, Coordinate end);
+
+    public abstract void AssignNewPath(Coordinate[] stops);
+    public abstract Task Tick();
+    
+    public abstract int placementCost { get; }
+
+    public int Speed { get; }
+    public int Capacity { get; }
+    int MaintenanceCost { get; }
+    public int carriedAmount { get; protected set; }
+
+    int TraveledSinceBought { get; }
 }

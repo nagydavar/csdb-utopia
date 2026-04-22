@@ -7,15 +7,36 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
     protected int capacity;
     protected int maintenanceCost;
     protected int speed;
-    public virtual int placementCost => 200;
-    protected int tickInterval = 1;
-    protected Navigation? navigation = null; 
-    protected Navigator? navi = null;
-    protected readonly Map map;
-    private readonly Model model;
+    public abstract int placementCost { get; }
+    protected readonly int tickInterval = 1;
+    protected Navigation? navigation;
+    protected Navigator? navi;
+    protected R? carriedResource = default;
+
+    private Map map;
+    private Model model;
     protected Coordinate position;
-    protected Field currentField;
-    protected int garageLimit = 1000;
+    protected Field? currentField;
+    protected int garageLimit = 100;
+
+    public int carriedAmount { get; set; } = 0;
+
+    public int CarriedAmount
+    {
+        get => carriedAmount;
+        set
+        {
+            if (carriedAmount > Capacity) throw new InvalidOperationException("CarriedAmount cannot be more than Capacity");
+            carriedAmount = value;
+        }
+    }
+
+    public int Capacity => capacity;
+    public int MaintenanceCost => maintenanceCost;
+    public int Speed => speed;
+
+    
+
 
     public Coordinate Position
     {
@@ -26,21 +47,21 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
             CurrentNavigable = getRoad(position);
             currentField = model.GetField(position);
 
-            
+
             CurrentDirection = CurrentNavigable is Road road ? road.Direction : Up.Instance();
-                
+
         }
     }
 
-    public INavigable CurrentNavigable { get; protected set; }
-    
-    public int TraveledSinceBought { get; set; }
+    public INavigable? CurrentNavigable { get; protected set; }
+
+    public int TraveledSinceBought { get; protected set; }
     public GoingIntention Intention { get; private set; }
 
     protected INavigable getRoad(Coordinate c)
     {
         Field f = model.GetField(c);
-        if (f.Buildable is INavigable a) 
+        if (f.Buildable is INavigable a)
             return a;
         throw new InvalidDataException("The specified coordinate is not navigable");
     }
@@ -53,6 +74,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         tc += (this, tickInterval);
         
     }
+    /*
     public Vehicle(Map map, Model m, Coordinate start, Coordinate end)
     {
         TimeControl tc = TimeControl.Instance();
@@ -62,64 +84,80 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         Position = start;
         AssignNewPath(start, end);
     }
+    */
     public IDirection CurrentDirection { get; set; } = Up.Instance();
 
-    public void AssignNewPath(Coordinate start, Coordinate end)
+    public void AssignNewPath(Coordinate[]  stops)
     {
-        CurrentNavigable.Leave(this);
-        Field oldField = currentField;
+
+        CurrentNavigable?.Leave(this);
+        Field? oldField = currentField;
         
-        Position = start;
-        navigation = map.GetNavigation(start, end);
+        navigation = map.GetNavigation(stops);
         navi = (Navigator)navigation.GetEnumerator();
+
+        Position = navi.Current;
 
 
         IDirection d = (CurrentNavigable is Road road) ? road.Direction : Up.Instance();
-        
+
         Intention = new GoingIntention(d, d);
 
         
         model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, currentField]));
     }
 
-    public void GoToGarage()
+    private void GoToGarage()
     {
-        HashSet<Garage> garages = model.ListGarages();
-        Coordinate garagePos = map.GetNearest(Position, garages.Select(garage => garage.Owner.Coordinates).ToList());
-        AssignNewPath(Position, garagePos);
-
+        TraveledSinceBought = 0;
+        List<Coordinate> garages = model.ListGarages().Select(g => g.Owner.Coordinates).ToList();
+        Coordinate nearestGarage = map.GetNearest(Position, garages);
+        navi.TemporaryStop = nearestGarage;
     }
+
     public int Sell() => throw new NotImplementedException();
+
+   
 
     public Task Tick()
     {
-        if (navi is not null && navi.MoveNext())
+        if (navi is null) return Task.CompletedTask;
+        if (navi.MoveNext())
         {
-            IDirection d = Position/navi.Current;
-            
+            IDirection d = Position / navi.Current;
+
             if (!getRoad(navi.Current).TryMoveTo(d, this)) return Task.CompletedTask;
-            
-            CurrentNavigable.Leave(this);
-            
+
+            CurrentNavigable?.Leave(this);
+
             Field oldField = currentField;
 
             Position = navi.Current;
-            
-            Intention = Intention.newIntention(d);
-            
+
+            Intention = Intention.NewIntention(d);
+
             Field to = model.GetField(Position);
-            
-            model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, to]));
             currentField = to;
+
+            if (currentField.HasBuildable && currentField.Buildable is Stop stop && carriedResource is not null)
+            {
+                stop.Load(carriedResource, Capacity);
+                CarriedAmount = 0;
+                
+                carriedAmount = stop.Unload(carriedResource, CarriedAmount);
+
+            }
+
+            model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, to]));
             TraveledSinceBought++;
-            
+
         }
-        else if (navi is not null && navi.Ended)
-        { 
-            if (TraveledSinceBought > garageLimit) GoToGarage();
-            else navi.Reset();
-        }
+        else if (TraveledSinceBought > garageLimit) GoToGarage();
+        else navi.Reset();
+        
+
         return Task.CompletedTask;
     }
+
     public int GetPositionInField() => throw new NotImplementedException();
 }

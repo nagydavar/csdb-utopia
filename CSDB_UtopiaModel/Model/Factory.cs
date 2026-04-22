@@ -1,8 +1,12 @@
 using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
-abstract public class Factory : Producer
-{
-    public Factory(Field field, int yield) : base(field, yield) { area = (2, 2); }
 
-};
+public abstract class Factory : Producer
+{
+    public Factory(Field field, int yield, Model model) : base(field, yield, model)
+    {
+        area = (2, 2);
+    }
+
+}

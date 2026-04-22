@@ -2,7 +2,7 @@ using CSDB_UtopiaModel.Persistence;
 
 namespace CSDB_UtopiaModel.Model;
 
-public abstract class Road : Buildable, INavigable
+public abstract class Road : INavigable
 {
     private IVehicle? _leftSide;
     private IVehicle? _rightSide;
@@ -69,7 +69,7 @@ public abstract class Road : Buildable, INavigable
         return (isRs && IsRightSideFree()) || (!isRs && IsLeftSideFree());
     }
 
-    public void Leave(IVehicle vehicle)
+    public override void Leave(IVehicle vehicle)
     {
         if (LeftSide == vehicle)
             LeftSide = null;
@@ -77,7 +77,7 @@ public abstract class Road : Buildable, INavigable
             RightSide = null;
     }
 
-    public bool TryMoveTo(IDirection dir, IVehicle vehicle)
+    public override bool TryMoveTo(IDirection dir, IVehicle vehicle)
     {
         try
         {

@@ -28,6 +28,10 @@ public partial class GameViewModel : ViewModelBase
 
     [ObservableProperty] private string _currentDateString = string.Empty;
 
+    //MINIMAPNAK
+    [ObservableProperty]
+    private Avalonia.Vector _mapOffset;
+
     public Dictionary<IResource, int> DisplayStorage { get; } = new();
 
     public ObservableCollection<KeyValuePair<IResource, int>> StorageList { get; } = new();
@@ -59,9 +63,17 @@ public partial class GameViewModel : ViewModelBase
     private Cell? _secondSelectedCell; // A második sárga keretes cella
     private bool _isSelectingStops; // Jelzi, hogy éppen megállókat válogatunk
 
+    //Híd építése
+    private bool _isSelectingBridgePoints;
+    private Cell? _bridgeStartCell;
+
     // Cella állopta
     [ObservableProperty] private FieldDetails? _selectedFieldDetails;
     [ObservableProperty] private bool _isFieldDetailsVisible;
+
+    // Járművek eladásához
+    [ObservableProperty] private bool _isVehicleListVisible;
+    public ObservableCollection<IVehicle> ActiveVehicles { get; } = new();
 
     // Események
     public event EventHandler? NewGame;
@@ -105,6 +117,7 @@ public partial class GameViewModel : ViewModelBase
         }
     }
 
+    #region Inventory
     private void InitializeDisplayStorage()
     {
         // Listába gyűjtjük az összes Singleton erőforrást
@@ -137,6 +150,8 @@ public partial class GameViewModel : ViewModelBase
             StorageList.Add(entry);
         }
     }
+
+#endregion
 
     // Parancsok (RelayCommands)
     [RelayCommand]
@@ -173,6 +188,8 @@ public partial class GameViewModel : ViewModelBase
         // Újratöltjük a nyersanyagokat a kijelzőn
         InitializeDisplayStorage();
     }
+
+    #region Time
 
     [RelayCommand]
     public void IncreaseSpeed()
@@ -221,19 +238,27 @@ public partial class GameViewModel : ViewModelBase
     {
     }
 
+#endregion
+
     [RelayCommand]
     public void SelectBuildable(Type selectedType)
     {
-        if (_isSelectingStops)
-        {
-            ResetStopSelection();
-        }
+        ResetStopSelection();
+
+        _isSelectingBridgePoints = false;
+        _bridgeStartCell = null;
 
         // Eltároljuk a választott típust
         _selectedType = selectedType;
         IsDemolishMode = false;
         // Opcionális: a panelt nyitva hagyjuk, ha többet akarunk építeni egymás után
         IsBuildingPanelVisible = false;
+
+        if (selectedType.IsAssignableTo(typeof(Bridge)))
+        {
+            _isSelectingBridgePoints = true;
+            System.Diagnostics.Debug.WriteLine("Válassz ki két pontot a hídnak!");
+        }
     }
 
     [RelayCommand]
@@ -254,6 +279,53 @@ public partial class GameViewModel : ViewModelBase
     {
         try
         {
+            // --- HÍD ÉPÍTÉSI LOGIKA ---
+            if (_isSelectingBridgePoints && _selectedType != null)
+            {
+                if (_bridgeStartCell == null)
+                {
+                    // Első kattintás: kezdőpont kijelölése
+                    _bridgeStartCell = cell;
+                    _bridgeStartCell.IsSelected = true;
+                    return; // Megállunk, várjuk a második kattintást
+                }
+                else
+                {
+                    // Második kattintás: végpont
+                    try
+                    {
+                        Coordinate start = new Coordinate(_bridgeStartCell.X, _bridgeStartCell.Y);
+                        Coordinate end = new Coordinate(cell.X, cell.Y);
+
+                        // 1. Meghatározzuk az irányt a két pont alapján
+                        IDirection bridgeDir;
+                        if (start.X == end.X) bridgeDir = Up.Instance();    // Függőleges híd
+                        else if (start.Y == end.Y) bridgeDir = Right.Instance(); // Vízszintes híd
+                        else return; // Nem egy vonalban vannak, a modell úgyis false-t adna
+
+                        // 2. Létrehozunk egy VALÓDI példányt a kezdőmezőre (ez lesz a "template")
+                        // A modell GetField-jét használjuk, hogy érvényes Field objektumot kapjon
+                        var bridgeInstance = (Bridge)Activator.CreateInstance(_selectedType,
+                            new object[] { _model.GetField(start.X, start.Y), bridgeDir })!;
+
+                        // 3. Meghívjuk a modellt a kész objektummal
+                        if (_model.PlaceBridge(start, end, bridgeInstance))
+                        {
+                            System.Diagnostics.Debug.WriteLine("Híd sikeresen megépült.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Bridge építési hiba: {ex.Message}");
+                    }
+                    finally
+                    {
+                        ResetBridgeSelection();
+                    }
+                    return;
+                }
+            }
+
             // Megálló kiválasztási logika járművásárláshoz
             if (_isSelectingStops && _selectedType != null)
             {
@@ -320,8 +392,6 @@ public partial class GameViewModel : ViewModelBase
                 var flags = BindingFlags.NonPublic | BindingFlags.Instance;
 
                 // Adatok kinyerése Reflection-nel (mivel protected-ek)
-                var res = field.GetType().GetField("resource", flags)?.GetValue(field) as IResource;
-                var depl = (int)(field.GetType().GetField("depletionLevel", flags)?.GetValue(field) ?? 0);
                 var townObj = field.GetType().GetField("town", flags)?.GetValue(field);
                 string townName = townObj?.GetType().GetProperty("Name")?.GetValue(townObj)?.ToString() ?? "Vadon";
 
@@ -330,8 +400,8 @@ public partial class GameViewModel : ViewModelBase
                     Coordinates = $"[{field.Coordinates.X}, {field.Coordinates.Y}]",
                     BuildingName = field.HasBuildable ? field.Buildable!.GetType().Name : "Üres mező",
                     TownName = townName,
-                    ResourceType = res?.GetType().Name ?? "Ismeretlen",
-                    Depletion = depl
+                    ResourceType = field.Resource.GetType().Name,
+                    Depletion = field.DepletionLevel,
                 };
 
                 IsFieldDetailsVisible = true;
@@ -368,11 +438,11 @@ public partial class GameViewModel : ViewModelBase
                 if (_selectedType.IsAssignableTo(typeof(ResourceExtractor)))
                 {
                     // Itt meg kell adni egy alapértelmezett yield értéket (pl. 10)
-                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 10);
+                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 10, _model);
                 }
                 else if (_selectedType.IsAssignableTo(typeof(Factory)))
                 {
-                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 30);
+                    instance = (Buildable?)Activator.CreateInstance(_selectedType, targetField, 30, _model);
                 }
 
                 else
@@ -400,7 +470,20 @@ public partial class GameViewModel : ViewModelBase
         {
             // Minden más váratlan hiba elkapása
             System.Diagnostics.Debug.WriteLine($"Váratlan hiba: {ex.Message}");
+            ResetBridgeSelection();
         }
+    }
+
+    // Segédmetódus a takarításhoz
+    private void ResetBridgeSelection()
+    {
+        if (_bridgeStartCell != null)
+        {
+            _bridgeStartCell.IsSelected = false;
+        }
+        _bridgeStartCell = null;
+        _isSelectingBridgePoints = false;
+        _selectedType = null;
     }
 
     private void CreateAndPlaceVehicle(Type vehicleType, Stop startStop, Stop endStop)
@@ -415,16 +498,14 @@ public partial class GameViewModel : ViewModelBase
             object[] parameters = new object[]
             {
                 map,
-                _model,
-                startStop.Owner.Coordinates,
-                endStop.Owner.Coordinates
+                _model
             };
 
             // Példányosítás
             var vehicle = (IVehicle)Activator.CreateInstance(vehicleType, parameters)!;
 
             // Lehelyezés a modellbe (a modell PlaceVehicle metódusa már kezeli a Budget-et és a listát)
-            _model.PlaceVehicle(startStop.Owner.Coordinates, endStop.Owner.Coordinates, (Vehicle<IResource>)vehicle);
+            _model.PlaceVehicle(startStop.Owner.Coordinates, endStop.Owner.Coordinates, vehicle);
 
         }
         catch (Exception ex)
@@ -434,12 +515,7 @@ public partial class GameViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand]
-    public void ClickMiniMap(Coordinate coords)
-    {
-    }
-
-    // Listázó parancsok
+    #region ListCommands
     [RelayCommand]
     public void ListBuildableFactories()
     {
@@ -493,6 +569,8 @@ public partial class GameViewModel : ViewModelBase
     {
         UpdateAvailableBuildables(_model.ListBuildableOtherBuildings());
     }
+
+    #endregion
 
     [RelayCommand]
     public void CloseBuildingPanel()
@@ -553,10 +631,45 @@ public partial class GameViewModel : ViewModelBase
                 if (type.IsAssignableTo(typeof(IVehicle)))
                 {
                     info.IsVehicle = true;
-                    info.Speed = 60;
-                    info.Maintenance = 200;
-                    info.Capacity = 40;
-                    // Itt NEM hívunk Activator-t, amíg a modellben throw new NotImplementedException() van!
+
+                    //// Megpróbáljuk kinyerni a placementCost-ot (mivel az property)
+                    //// Létrehozunk egy uninitialized (nyers) objektumot, ami nem futtatja le a konstruktort
+                    //try
+                    //{
+                    //    var dummy = (IVehicle)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
+                    //    info.PlacementCost = dummy.placementCost;
+                    //}
+                    //catch { info.PlacementCost = 200; }
+
+                    // ivel a statisztikák (Speed, Capacity) a konstruktorban állítódnak be, 
+                    // példányosítás nélkül 0-k maradnak. 
+                    // Hard-code-oljuk az alapértékeket a típus neve alapján
+                    if (type.Name.Contains("Armored")) { info.Speed = 100; info.Capacity = 40; info.Maintenance = 100; info.PlacementCost = 300; }
+                    else if (type.Name.Contains("Car")) { info.Speed = 120; info.Capacity = 5; info.Maintenance = 20; info.PlacementCost = 100; }
+                    else if (type.Name.Contains("Bus")) { info.Speed = 90; info.Capacity = 50; info.Maintenance = 60; info.PlacementCost = 300; }
+                    else if (type.Name.Contains("Logging")) { info.Speed = 70; info.Capacity = 30; info.Maintenance = 70; info.PlacementCost = 250; }
+                    else if (type.Name.Contains("Dump")) { info.Speed = 70; info.Capacity = 50; info.Maintenance = 100; info.PlacementCost = 300; }
+                    else if (type.Name.Contains("Van")) { info.Speed = 90; info.Capacity = 20; info.Maintenance = 50; info.PlacementCost = 200; }
+                    else if (type.Name.Contains("Taxi")) { info.Speed = 120; info.Capacity = 3; info.Maintenance = 30; info.PlacementCost = 150; }
+                    else { info.Speed = 60; info.Capacity = 10; info.Maintenance = 50; }
+                }
+
+                // --- HIDAK ---
+                else if (type.IsAssignableTo(typeof(Bridge)))
+                {
+                    info.IsVehicle = false;
+                    try
+                    {
+                        var dummy = (Bridge)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
+                        info.PlacementCost = dummy.placementCost;
+                    }
+                    catch
+                    {
+                        // Ha a fenti trükk nem megy, használjuk a típusnevet:
+                        if (type.Name.Contains("Wooden")) info.PlacementCost = 120;
+                        else if (type.Name.Contains("Stone")) info.PlacementCost = 150;
+                        else if (type.Name.Contains("Steel")) info.PlacementCost = 200;
+                    }
                 }
                 // ÉPÜLETEK ÉS UTAK
                 else
@@ -564,9 +677,9 @@ public partial class GameViewModel : ViewModelBase
                     Buildable? bDummy = null;
 
                     if (type.IsAssignableTo(typeof(ResourceExtractor)))
-                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 10);
+                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 10, _model);
                     else if (type.IsAssignableTo(typeof(Factory)))
-                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 30);
+                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 30, _model);
                     else if (type.IsAssignableTo(typeof(Road)))
                     {
                         // PRÓBÁLKOZÁS SORRENDJE FONTOS
@@ -623,6 +736,39 @@ public partial class GameViewModel : ViewModelBase
         IsBuildingPanelVisible = AvailableBuildables.Count > 0;
     }
 
+    #region Vehicles
+
+    [RelayCommand]
+    public void ToggleVehicleList()
+    {
+        IsVehicleListVisible = !IsVehicleListVisible;
+        if (IsVehicleListVisible)
+        {
+            RefreshVehicleList();
+        }
+    }
+
+    private void RefreshVehicleList()
+    {
+        ActiveVehicles.Clear();
+        foreach (var v in _model.GetVehiclesOnMap())
+        {
+            ActiveVehicles.Add(v);
+        }
+    }
+
+    // Eladás parancs
+    [RelayCommand]
+    public void SellVehicle(IVehicle vehicle)
+    {
+        _model.SellVehicle(vehicle);
+        
+        ActiveVehicles.Remove(vehicle);
+        System.Diagnostics.Debug.WriteLine("Jármű eladva.");
+    }
+
+    #endregion
+
     private void ResetStopSelection()
     {
         _isSelectingStops = false;
@@ -654,12 +800,15 @@ public partial class GameViewModel : ViewModelBase
         // Amikor a Model jelzi, hogy bizonyos mezők megváltoztak (pl. építés történt)
         foreach (var field in e.Fields)
         {
-            // Megkeressük a megfelelő Cell objektumot az ObservableCollection-ben
-            var cell = Cells.FirstOrDefault(c => c.X == field.Coordinates.X && c.Y == field.Coordinates.Y);
-            if (cell != null)
+            if (field is not null)
             {
-                // Frissítjük a Cell nézetmodelljét a Field adatai alapján (pl. kép lecserélése)
-                cell.Update(field);
+                // Megkeressük a megfelelő Cell objektumot az ObservableCollection-ben
+                var cell = Cells.FirstOrDefault(c => c.X == field.Coordinates.X && c.Y == field.Coordinates.Y);
+                if (cell != null)
+                {
+                    // Frissítjük a Cell nézetmodelljét a Field adatai alapján (pl. kép lecserélése)
+                    cell.Update(field);
+                }
             }
         }
     }
@@ -720,6 +869,26 @@ public partial class GameViewModel : ViewModelBase
     {
         throw new NotImplementedException();
     }
+
+
+    //MINIMAP
+    [RelayCommand]
+    public void ClickMiniMap(Cell cell)
+    {
+        // X az oszlop (vízszintes)
+        double xPixel = cell.X * 50.0;
+        double targetX = xPixel - 960; // Középre igazítás 1920-as szélességnél
+
+        // Y a sor (függőleges)
+        // Ezért itt is a (Height - 1 - Y) képlet kell, hogy megkapjuk a fentről vett pixel távolságot.
+        double targetY = (Height - 1 - cell.Y) * 50.0 - 540; // 540 a 1080 fele
+
+        // Értékek korlátozása (0 alá nem mehet az Offset)
+        MapOffset = new Avalonia.Vector(Math.Max(0, targetX), Math.Max(0, targetY));
+
+        System.Diagnostics.Debug.WriteLine($"Minimap -> Cella: {cell.X},{cell.Y} | Görgetés ide: {MapOffset}");
+    }
+
 }
 
 public class BuildableInfo

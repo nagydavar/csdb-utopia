@@ -14,6 +14,10 @@ public class Map {
         {
                 return new Navigation(start, end, this);
         }
+        public Navigation GetNavigation(Coordinate[] stops)
+        {
+                return new Navigation(stops, this);
+        }
         private HashSet<Coordinate> getNeighbors(Coordinate coord)
         {
                 HashSet<Coordinate> n = coord.GetAllNeighbors().Values.ToHashSet();

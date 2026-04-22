@@ -25,6 +25,6 @@ public sealed class VehicleTest
     [TestMethod]
     public void Ctor()
     {
-
+        
     }
 }
