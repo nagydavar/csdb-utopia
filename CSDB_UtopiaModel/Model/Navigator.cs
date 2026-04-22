@@ -59,7 +59,7 @@ public class Navigator : IEnumerator<Coordinate>
     public Navigator(IList<Coordinate> stops, Map map)
     {
         if (stops.Count < 2) throw new InvalidOperationException("A path should have at least two stops");
-        current = stops[0];
+        current = stops[0]; 
         this.stops = stops.ToList();
         this.map = map;
 
