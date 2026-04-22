@@ -117,20 +117,7 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
 
     public int Sell() => throw new NotImplementedException();
 
-    private HashSet<R> getNextStopsResources()
-    {
-        HashSet<R> res = new HashSet<R>();
-
-        foreach (var coords in navigation?.stops)
-        {
-            if (coords == Position) continue;
-            INavigable n = model.GetField(coords).Buildable as INavigable;
-            if (n is Stop stop)
-                res.UnionWith((HashSet<R>)stop.Accept.Where(r => r is R));
-        }
-
-        return res;
-    }
+   
 
     public Task Tick()
     {
@@ -154,10 +141,11 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
 
             if (currentField.HasBuildable && currentField.Buildable is Stop stop && carriedResource is not null)
             {
-                stop.UnLoad(this, carriedResource, CarriedAmount);
-                carriedAmount = 0;
+                stop.Load(carriedResource, Capacity);
+                CarriedAmount = 0;
+                
+                carriedAmount = stop.Unload(carriedResource, CarriedAmount);
 
-                (carriedAmount, carriedResource) = stop.Load(this, getNextStopsResources(), Capacity);
             }
 
             model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, to]));
