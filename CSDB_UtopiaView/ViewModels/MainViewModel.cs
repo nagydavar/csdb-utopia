@@ -3,11 +3,13 @@ using CommunityToolkit.Mvvm.Input;
 using CSDB_UtopiaModel.Model;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using System.Threading.Tasks;
 
 namespace CSDB_UtopiaView.ViewModels;
 
 public partial class MainMenuViewModel : ViewModelBase { }
 public partial class CreateWorldViewModel : ViewModelBase { }
+public partial class LoadingViewModel : ViewModelBase { }
 
 public partial class MainViewModel : ViewModelBase
 {
@@ -26,17 +28,26 @@ public partial class MainViewModel : ViewModelBase
     // Parancsok az oldalak váltásához //TODO menteni világ nevét
     [RelayCommand]
     public void GoToCreateWorld() => CurrentPage = new CreateWorldViewModel();
-
+    
     [RelayCommand]
-    public void GoToGame() {
-        //teszthez kisebb tábla
+    public async Task GoToGame()
+    {
+        // Megjelenítjük a töltőképernyőt
+        CurrentPage = new LoadingViewModel();
+
+        // Beállítjuk a méreteket
         int w = 50;
         int h = 50;
 
-        _model = new Model(w, h);
+        _model = await Task.Run(() =>
+        {
+            var m = new Model(w, h);
+            return m;
+        });
 
+        // Átváltunk a tényleges játékra
         CurrentPage = new GameViewModel(w, h, _model);
-    } 
+    }
 
     [RelayCommand]
     public void GoToMainMenu() => CurrentPage = new MainMenuViewModel();

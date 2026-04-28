@@ -153,19 +153,6 @@ public partial class GameViewModel : ViewModelBase
 
 #endregion
 
-    // Parancsok (RelayCommands)
-    [RelayCommand]
-    public void SaveGame()
-    {
-        /* Mentés logika */
-    }
-
-    [RelayCommand]
-    public void LoadGame(string fileName)
-    {
-        /* Betöltés logika */
-    }
-
     [RelayCommand]
     public void ExitGame()
     {
@@ -434,7 +421,6 @@ public partial class GameViewModel : ViewModelBase
                 Buildable? instance = null;
 
                 // Ellenőrizzük, hogy ResourceExtractor-ról van-e szó
-                //TODO többi gyár
                 if (_selectedType.IsAssignableTo(typeof(ResourceExtractor)))
                 {
                     // Itt meg kell adni egy alapértelmezett yield értéket (pl. 10)

@@ -23,5 +23,7 @@ public interface IVehicle : ITickable, Buyable
     int MaintenanceCost { get; }
     public int carriedAmount { get; protected set; }
 
+    string CarriedResourceName { get; } // Ezt fogjuk megjeleníteni
+
     int TraveledSinceBought { get; }
 }

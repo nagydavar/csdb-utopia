@@ -133,6 +133,13 @@
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="{Binding Converter={StaticResource TypeNameConverter}}" FontWeight="SemiBold"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                                    <TextBlock Text="Raktér:" FontSize="12" Foreground="DarkSlateGray"/>
+                                                    <TextBlock Text="{Binding CarriedAmount}" FontSize="12" FontWeight="Bold"/>
+                                                    <TextBlock Text="/" FontSize="12"/>
+                                                    <TextBlock Text="{Binding Capacity}" FontSize="12"/>
+                                                    <TextBlock Text="{Binding CarriedResourceName}" FontSize="12" Foreground="SteelBlue" Margin="5,0,0,0"/>
+                                                </StackPanel>
                                             <TextBlock Text="{Binding TraveledSinceBought, StringFormat='Megtett út: {0} km'}" FontSize="12" Foreground="Gray"/>
                                         </StackPanel>
                                         <Button Grid.Column="1" Content="Eladás" Background="OrangeRed" Foreground="White"

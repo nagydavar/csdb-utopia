@@ -31,6 +31,19 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         }
     }
 
+    public string CarriedResourceName
+    {
+        get
+        {
+            // Ha éppen nem szállít semmit (carriedAmount == 0), írjunk ki mást
+            if (carriedAmount == 0 || carriedResource == null)
+                return "Üres";
+
+            // Visszaadjuk az erõforrás osztályának nevét (pl. Wood, IronOre)
+            return carriedResource.GetType().Name;
+        }
+    }
+
     public int Capacity => capacity;
     public int MaintenanceCost => maintenanceCost;
     public int Speed => speed;
