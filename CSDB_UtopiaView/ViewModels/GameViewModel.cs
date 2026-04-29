@@ -67,6 +67,9 @@ public partial class GameViewModel : ViewModelBase
     private bool _isSelectingBridgePoints;
     private Cell? _bridgeStartCell;
 
+    //Megjelnítés infohoz
+    private Cell? prevSelectedCell;
+
     // Cella állopta
     [ObservableProperty] private FieldDetails? _selectedFieldDetails;
     [ObservableProperty] private bool _isFieldDetailsVisible;
@@ -372,10 +375,28 @@ public partial class GameViewModel : ViewModelBase
                 return;
             }
 
-            // HA NINCS KIVÁLASZTVA SEMMI (Információs mód)
+            // INFORMACIOS MOD
             if (_selectedType == null && !IsDemolishMode && !_isSelectingStops)
             {
-                Field field = _model.GetField(cell.X, cell.Y);
+                if (prevSelectedCell is null)
+                {
+                    prevSelectedCell = cell;
+                    cell.IsSelected = true;
+                }
+                else if (prevSelectedCell is not null && prevSelectedCell == cell)
+                {
+                    prevSelectedCell.IsSelected = false;
+                    cell.IsSelected = false;
+                }
+                else
+                {
+                    if (prevSelectedCell is not null) prevSelectedCell.IsSelected = false;
+                    cell.IsSelected = true;
+                    prevSelectedCell = cell;
+                }
+
+
+                    Field field = _model.GetField(cell.X, cell.Y);
                 var flags = BindingFlags.NonPublic | BindingFlags.Instance;
 
                 // Adatok kinyerése Reflection-nel (mivel protected-ek)
@@ -583,6 +604,7 @@ public partial class GameViewModel : ViewModelBase
         if (!IsFieldDetailsVisible)
         {
             SelectedFieldDetails = null;
+            if ( prevSelectedCell is not null) prevSelectedCell.IsSelected = false;
         }
     }
 
@@ -663,9 +685,9 @@ public partial class GameViewModel : ViewModelBase
                     Buildable? bDummy = null;
 
                     if (type.IsAssignableTo(typeof(ResourceExtractor)))
-                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 10, _model);
+                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 50, _model);
                     else if (type.IsAssignableTo(typeof(Factory)))
-                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 30, _model);
+                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 100, _model);
                     else if (type.IsAssignableTo(typeof(Road)))
                     {
                         // PRÓBÁLKOZÁS SORRENDJE FONTOS
