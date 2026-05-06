@@ -681,7 +681,9 @@ public partial class GameViewModel : ViewModelBase
                     info.IsVehicle = false;
                     try
                     {
+#pragma warning disable SYSLIB0050
                         var dummy = (Bridge)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
+#pragma warning restore SYSLIB0050
                         info.PlacementCost = dummy.placementCost;
                     }
                     catch
