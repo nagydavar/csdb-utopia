@@ -287,7 +287,12 @@ public class Model : ITickable
         else if (buildable is IResidentialBuilding residential)
         {
             // N�pess�g n�vel�se
-            _persistence.Storage[HumanResource.Instance()] += residential.givePeople;
+            var hr = HumanResource.Instance();
+            if (!_persistence.Storage.ContainsKey(hr))
+            {
+                _persistence.Storage[hr] = 0; // Biztonsági okokból
+            }
+            _persistence.Storage[hr] += residential.givePeople;
             OnResourceChanged(HumanResource.Instance(), _persistence.Storage[HumanResource.Instance()]);
 
             // Hangulat csökkentése

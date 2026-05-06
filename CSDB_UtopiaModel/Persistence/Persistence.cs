@@ -50,20 +50,7 @@ class Persistence
         Budget = 100000;
         CurrentMood = 100;
 
-        if (generateMap)
-            GenerateMap(Width, Height);
-        else {
-            Fields = new List<List<Field>>();
-            for (int i = 0; i < Width; i++)
-            {
-
-                for (int j = 0; j < Height; j++)
-                {
-                    Fields[i][j] = new Land(new Coordinate(i, j), 0, false);
-                }
-            }
-        }
-
+        //először a nyersanyagokat inicializáljuk hogy lehessen hivatkozni a humanresource-ra
         Storage = new Dictionary<IResource, int>
         {
             { HumanResource.Instance(), 0 },
@@ -86,6 +73,22 @@ class Persistence
             { Paper.Instance(), 10000 },
             { Book.Instance(), 10000 }
         };
+
+        if (generateMap)
+            GenerateMap(Width, Height);
+        else {
+            Fields = new List<List<Field>>();
+            for (int i = 0; i < Width; i++)
+            {
+
+                for (int j = 0; j < Height; j++)
+                {
+                    Fields[i][j] = new Land(new Coordinate(i, j), 0, false);
+                }
+            }
+        }
+
+        
     }
 
     private void GenerateMap(int width, int height)
