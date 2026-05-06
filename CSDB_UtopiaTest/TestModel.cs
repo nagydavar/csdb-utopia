@@ -1,10 +1,11 @@
 
 using CSDB_UtopiaModel.Persistence;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace CSDB_UtopiaModel.Model;
 
 [TestClass]
-public sealed class TestModel
+public class TestModel
 {
     private Model? m = null;
     private static readonly List<Coordinate> roads = new()
