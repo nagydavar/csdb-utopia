@@ -14,9 +14,6 @@ public interface IVehicle : ITickable, Buyable
     public IDirection CurrentDirection { get; protected set; }
 
     public abstract void AssignNewPath(Coordinate[] stops);
-    public abstract Task Tick();
-    
-    public abstract int placementCost { get; }
 
     public int Speed { get; }
     public int Capacity { get; }

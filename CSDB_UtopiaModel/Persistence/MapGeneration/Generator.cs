@@ -54,7 +54,7 @@ namespace CSDB_UtopiaModel.Persistence.MapGeneration
                       bool modified = chosenField.Restrict(rule); 
                       if (modified) fieldStack.Push(chosenField);
                   }
-                  catch (ArgumentOutOfRangeException e)
+                  catch (ArgumentOutOfRangeException)
                   {
                   }
                 }

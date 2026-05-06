@@ -211,9 +211,7 @@ public class Map {
                         {
                                 Coordinate? parent;
                                 int dist;
-                                bool contains = false;
-                                
-                                
+                                                          
                                 if (neighbors.Values.Contains(j))
                                 {
                                         parent = j;

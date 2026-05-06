@@ -1,5 +1,6 @@
-using System.Reflection;
 using CSDB_UtopiaModel.Persistence;
+using System;
+using System.Reflection;
 
 namespace CSDB_UtopiaModel.Model;
 
@@ -129,7 +130,10 @@ public class Model : ITickable
         int length = isVertical ? (maxY - minY + 1) : (maxX - minX + 1);
 
         if (length > bridge.MaxLength)
+        {
+            NewLog?.Invoke(this, new LogEventArgs("Túl hosszú a kijelölt táv!"));
             return false;
+        }
 
         // Víz-e és üres-e minden mező
         for (int x = minX; x <= maxX; x++)
@@ -138,7 +142,10 @@ public class Model : ITickable
             {
                 var field = GetField(x, y);
                 if (field is not Water || field.HasBuildable)
+                {
+                    NewLog?.Invoke(this, new LogEventArgs("Minden mezőnek víznek kell lennie és üresnek!"));
                     return false;
+                }
             }
         }
 
@@ -232,7 +239,11 @@ public class Model : ITickable
                     targetLands.Add(land);
                     totalForestFactor += 0.05f * land.LevelOfForest;
                 }
-                else return false; // Ha csak egyetlen mező is foglalt vagy nem Land, megállunk
+                else
+                {
+                    NewLog?.Invoke(this, new LogEventArgs("Valamelyik mező foglalt vagy nem Land!"));
+                    return false; // Ha csak egyetlen mező is foglalt vagy nem Land, megállunk
+                }
             }
         }
 
@@ -246,6 +257,7 @@ public class Model : ITickable
             if (_persistence.Storage[decor.costResource.resource] < decor.costResource.cost)
             {
                 // hiba dobása? nincs elég nyersanyag
+                NewLog?.Invoke(this, new LogEventArgs("Nincs elég nyersanyag!"));
                 return false;
             }
         }
@@ -323,7 +335,7 @@ public class Model : ITickable
             _persistence.Budget -= vehicle.placementCost;
             BudgetChanged?.Invoke(this, EventArgs.Empty);
         }
-        catch (Exception e)
+        catch (Exception)
         {
 
         }
@@ -473,7 +485,7 @@ public class Model : ITickable
 
     public List<Type> ListBuildableOtherBuildings()
     {
-        string targetNamespace = typeof(CSDB_UtopiaModel.Model.Model).Namespace;
+        string? targetNamespace = typeof(CSDB_UtopiaModel.Model.Model).Namespace;
 
         return Assembly.GetExecutingAssembly()
             .GetTypes()
@@ -509,7 +521,7 @@ public class Model : ITickable
     {
         // Megkeressük az összes olyan osztályt, ami a GoodsVehicle-ből származik
         // Mivel a GoodsVehicle generikus, a Type-szintű ellenőrzés kicsit más
-        string targetNamespace = typeof(CSDB_UtopiaModel.Model.Model).Namespace;
+        string? targetNamespace = typeof(CSDB_UtopiaModel.Model.Model).Namespace;
 
         return Assembly.GetExecutingAssembly()
             .GetTypes()
@@ -526,7 +538,7 @@ public class Model : ITickable
 
     private List<Type> GetBuildableTypesInNamespace<T>()
     {
-        string targetNamespace = typeof(CSDB_UtopiaModel.Model.Model).Namespace;
+        string? targetNamespace = typeof(CSDB_UtopiaModel.Model.Model).Namespace;
 
         var x = Assembly.GetExecutingAssembly()
             .GetTypes()
@@ -607,7 +619,7 @@ public class Model : ITickable
     private (bool IsCurved, int Quadrant, IDirection Direction, Intersection? Intersection) DetermineRoadState(
         Coordinate coord)
     {
-        int tmp, roadCount = 0;
+        int roadCount = 0;
         Field?[] roads = [null, null, null, null];
         IDirection[] roadDirections = [Up.Instance(), Right.Instance(), Down.Instance(), Left.Instance()];
 
@@ -624,8 +636,9 @@ public class Model : ITickable
                 }
 
             }
-            catch (Exception e)
+            catch (Exception)
             {
+
             }
         }
 
@@ -681,7 +694,10 @@ public class Model : ITickable
                 }
 
                 if (HasNeighbouringIntersection(coord))
+                {
+                    NewLog?.Invoke(this, new LogEventArgs("Can't place two intersections next to each other!"));
                     throw new InvalidOperationException("can't place two intersections next to each other");
+                }
 
                 isCurved = false;
                 q = 0;
@@ -708,7 +724,10 @@ public class Model : ITickable
                 }
 
                 if (HasNeighbouringIntersection(coord))
+                {
+                    NewLog?.Invoke(this, new LogEventArgs("Can't place two intersections next to each other!"));
                     throw new InvalidOperationException("can't place two intersections next to each other");
+                }
 
                 isCurved = false;
                 intersection = new FourWayIntersection(f);

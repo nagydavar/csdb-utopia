@@ -78,6 +78,9 @@ public partial class GameViewModel : ViewModelBase
     [ObservableProperty] private bool _isVehicleListVisible;
     public ObservableCollection<IVehicle> ActiveVehicles { get; } = new();
 
+    // Súgó
+    [ObservableProperty] private string _gameLogs = "";
+
     // Események
     public event EventHandler? NewGame;
     public event EventHandler? GameOver;
@@ -228,7 +231,14 @@ public partial class GameViewModel : ViewModelBase
     {
     }
 
-#endregion
+    #endregion
+
+    //súgó
+    [RelayCommand]
+    public void ClearLogs()
+    {
+        GameLogs = string.Empty;
+    }
 
     [RelayCommand]
     public void SelectBuildable(Type selectedType)
@@ -307,6 +317,7 @@ public partial class GameViewModel : ViewModelBase
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"Bridge építési hiba: {ex.Message}");
+                        GameLogs = $"Bridge építési hiba: {ex.Message}";
                     }
                     finally
                     {
@@ -471,12 +482,13 @@ public partial class GameViewModel : ViewModelBase
             System.Diagnostics.Debug.WriteLine($"Építési hiba: {ex.Message}");
 
             // Ha van Log
-            // CurrentLogMessage = ex.Message; 
+            GameLogs = $"Építési hiba: {ex.Message}";
         }
         catch (Exception ex)
         {
             // Minden más váratlan hiba elkapása
             System.Diagnostics.Debug.WriteLine($"Váratlan hiba: {ex.Message}");
+            GameLogs = $"Váratlan hiba: {ex.Message}";
             ResetBridgeSelection();
         }
     }
@@ -519,6 +531,7 @@ public partial class GameViewModel : ViewModelBase
         {
             System.Diagnostics.Debug.WriteLine(
                 $"Jármű példányosítási hiba: {ex.InnerException?.Message ?? ex.Message}");
+            GameLogs = $"Jármű példányosítási hiba: {ex.InnerException?.Message ?? ex.Message}";
         }
     }
 
@@ -708,6 +721,7 @@ public partial class GameViewModel : ViewModelBase
                             catch (Exception ex)
                             {
                                 System.Diagnostics.Debug.WriteLine($"Road hiba ({type.Name}): {ex.Message}");
+                                GameLogs = $"Road hiba ({type.Name}): {ex.Message}";
                             }
                         }
                     }
@@ -737,6 +751,7 @@ public partial class GameViewModel : ViewModelBase
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Hiba a(z) {type.Name} feldolgozásakor: {ex.Message}");
+                GameLogs = $"Hiba a(z) {type.Name} feldolgozásakor: {ex.Message}";
             }
         }
 
@@ -850,7 +865,7 @@ public partial class GameViewModel : ViewModelBase
     private void Model_NewLog(object? sender, LogEventArgs e)
     {
         // Új üzenet érkezésekor (pl. "Nincs elég pénz") hozzáadjuk egy napló-listához
-        // GameLogs.Add(e.Message);
+        GameLogs = e.Message;
     }
 
     private void Model_NewGame(object? sender, EventArgs e)
