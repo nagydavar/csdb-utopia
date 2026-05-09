@@ -41,7 +41,7 @@ public partial class MainViewModel : ViewModelBase
 
         _model = await Task.Run(() =>
         {
-            var m = new Model(w, h);
+            var m = new Model(w, h, true);
             return m;
         });
 

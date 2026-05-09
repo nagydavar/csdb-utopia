@@ -18,7 +18,7 @@ public class TestModel
     public void TestInitialize()
     {
         TimeControl.ResetInstance();
-        m = new Model(10, 10);
+        m = new Model(10, 10,false);
     }
     [TestMethod]
     public void TestPlaceRoad()

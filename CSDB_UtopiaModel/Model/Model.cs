@@ -29,7 +29,7 @@ public class Model : ITickable
 
     public Map GetMap() => _map;
 
-    public Model(int width, int height)
+    public Model(int width, int height, bool generateTowns)
     {
         _persistence = new Persistence.Persistence(width, height, true);
         _map = new Map(new HashSet<Coordinate>());
@@ -38,7 +38,10 @@ public class Model : ITickable
         _timeControl = TimeControl.Instance();
         _timeControl += (this, 1);
 
-        GenerateInitialTowns(3);
+        if (generateTowns) // Csak akkor generálunk, ha nem tesztelünk
+        {
+            GenerateInitialTowns(3);
+        }
 
         foreach (var list in _persistence.Fields)
         {
