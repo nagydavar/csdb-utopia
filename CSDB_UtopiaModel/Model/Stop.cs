@@ -9,11 +9,14 @@ public class Stop : INavigable
 
     public override int placementCost => 200;
 
-    public int this[IResource resource] => resource switch
+    public int this[IResource resource]
     {
-        Environmental => int.MaxValue,
-        _ => _storage[resource]
-    };
+        get
+        {
+            if (resource is Environmental) return int.MaxValue;
+            return _storage.TryGetValue(resource, out int value) ? value : 0;
+        }
+    }
 
     public Stop(Field f) : base(f)
     {
@@ -60,18 +63,36 @@ public class Stop : INavigable
     public (IResource? resource, int amount) UnloadAnythingValid(IVehicle vehicle, int requestAmount)
     {
         // Végigpörgetjük a megálló raktárát
-        foreach (var entry in _storage)
+        foreach (var entry in _storage.ToList())
         {
             IResource availableResource = entry.Key;
 
-            // Megkérdezzük az autót: "Te el tudod vinni ezt?"
-            if (vehicle.CanCarry(availableResource))
+            // Csak akkor foglalkozzunk vele, ha van is benne valami (entry.Value > 0)
+            if (entry.Value > 0 && vehicle.CanCarry(availableResource))
             {
-                // Ha igen, az Unload metódusoddal kivesszük a raktárból
                 int taken = this.Unload(availableResource, requestAmount);
-                return (availableResource, taken);
+                if (taken > 0)
+                    return (availableResource, taken);
             }
         }
         return (null, 0);
     }
+
+    public IResource? GetAvailableResourceForFactory(Producer producer)
+    {
+        // Lekérjük, milyen típusú alapanyagot kér a gyár (pl. Treasure)
+        var requiredType = producer.Require().GetType();
+
+        foreach (var entry in _storage)
+        {
+            // Ha az alapanyag megegyezik a kért típussal vagy abból származik (pl. Gold : Treasure)
+            if (entry.Key.GetType().IsAssignableTo(requiredType) && entry.Value >= producer.RequiredAmount)
+            {
+                return entry.Key;
+            }
+        }
+        return null;
+    }
+
+    
 }

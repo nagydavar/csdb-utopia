@@ -38,54 +38,62 @@ public abstract class Producer : Building, ITickable
     {
         if (Owner is null) return Task.CompletedTask;
 
-        // 1. Megálló ellenõrzése (marad a régi, jól mûködõ logika)
         if (stop is null)
         {
             stop = FindAdjacentStop();
             if (stop is null) return Task.CompletedTask;
         }
 
-        // 2. Lelõhely frissítése: Ha nincs, vagy kimerült, keressünk újat a 2x2-es területen
-        if (location is null || location.DepletionLevel <= 0)
+        int ra = RequiredAmount;
+        bool isFactory = ra > 0;
+        IResource? actualInput = null; // Ezt fogjuk ténylegesen levonni
+
+        if (!isFactory)
         {
-            location = FindResourceLocation();
+            if (location is null || location.DepletionLevel <= 0)
+                location = FindResourceLocation();
+
+            if (location is null || location.DepletionLevel <= 0)
+                return Task.CompletedTask;
+        }
+        else
+        {
+            // GYÁR LOGIKA: Megnézzük, van-e a megállóban bármi, ami megfelel a Require() típusának
+            // A Jewellery esetén a Require() típusa Treasure (vagy ITreasureResource)
+            actualInput = stop.GetAvailableResourceForFactory(this);
+
+            if (actualInput == null || stop[actualInput] < ra)
+                return Task.CompletedTask;
         }
 
-        // Ha még így sincs (már mind a 4 mezõ kimerült), akkor leáll a termelés
-        if (location is null || location.DepletionLevel <= 0)
-            return Task.CompletedTask;
-
-        // 3. Mennyiség kiszámítása (Hangulat-módosítóval)
         int mood = _model.Mood;
         int pa = (int)(ProducedAmount * Math.Sqrt(Math.Abs(mood)) * Math.Sign(mood));
 
-        // 4. Termelés végrehajtása
         if (pa > 0)
         {
-            // Ne bányásszunk többet, mint amennyi az adott mezõn van
-            int actualProduced = Math.Min(pa, location.DepletionLevel);
-
-            if (actualProduced > 0)
+            if (isFactory && actualInput != null)
             {
-                // LEVONÁS a konkrét mezõrõl
-                location.DepletionLevel -= actualProduced;
+                // 1. Levonjuk a megállóból
+                stop.Unload(actualInput, ra);
 
-                // BETÖLTÉS a megállóba
-                stop.Load(_producedResourceCache!, actualProduced);
+                // 2. LEVONJUK A GLOBÁLISBÓL IS, hogy a UI frissüljön!
+                int globalInputAmount = _model.GetResourceCount(actualInput);
+                _model.SetResourceAmount(actualInput, globalInputAmount - ra);
 
-                // UI FRISSÍTÉS
-                _model.OnFieldsUpdated(location); // A mezõ kimerültsége miatt
-                _model.OnFieldsUpdated(stop.Owner); // A megálló raktára miatt
-
-                // GLOBÁLIS RAKTÁR FRISSÍTÉSE
-                // Lekérjük az adott típus aktuális mennyiségét a modell raktárából
-                int currentGlobalAmount = _model.GetResourceCount(_producedResourceCache!);
-                int newGlobalAmount = currentGlobalAmount + actualProduced;
-
-                // Frissítjük a modell raktárát
-                _model.SetResourceAmount(_producedResourceCache!, newGlobalAmount);
-
+                // 3. Hozzáadjuk a készterméket a megállóhoz
+                stop.Load(_producedResourceCache!, pa);
             }
+            else if (!isFactory)
+            {
+                int actualProduced = Math.Min(pa, location!.DepletionLevel);
+                location.DepletionLevel -= actualProduced;
+                stop.Load(_producedResourceCache!, actualProduced);
+                _model.OnFieldsUpdated(location);
+            }
+
+            _model.OnFieldsUpdated(stop.Owner);
+            int currentGlobalAmount = _model.GetResourceCount(_producedResourceCache!);
+            _model.SetResourceAmount(_producedResourceCache!, currentGlobalAmount + pa);
         }
 
         return Task.CompletedTask;

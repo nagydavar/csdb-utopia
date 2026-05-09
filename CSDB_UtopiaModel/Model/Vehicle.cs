@@ -156,13 +156,12 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
                 // FELVÉTEL: Ha üresek vagyunk, keresünk a megállóban olyat, amit elvihetünk
                 else if (CarriedAmount == 0)
                 {
-                    // A Stop-nak átadjuk magunkat (vagy a CanCarry-t), 
-                    // hogy keressen nekünk megfelelõ nyersanyagot
                     var (foundResource, takenAmount) = stop.UnloadAnythingValid(this, Capacity);
 
-                    if (foundResource != null && takenAmount > 0)
+                    // Csak akkor próbáljuk meg beállítani, ha kaptunk valamit ÉS az tényleg R típusú
+                    if (foundResource is R validResource && takenAmount > 0)
                     {
-                        this.carriedResource = (R)foundResource;
+                        this.carriedResource = validResource;
                         this.CarriedAmount = takenAmount;
                     }
                 }

@@ -15,7 +15,7 @@ public class TreasureArmoredCar<TTreasure> : GoodsVehicle<TTreasure> where TTrea
     public override bool CanCarry(IResource resource)
     {
         // Csak ha Gold VAGY Diamond
-        return resource is Gold || resource is Diamond;
+        return resource is Treasure;
     }
 }
 
