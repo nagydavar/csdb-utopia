@@ -9,5 +9,8 @@ public abstract class ResourceExtractor : Producer
         area = (2, 2);
     }
 
-    public sealed override Environmental Require() => Environmental.Instance();
+    // Ha a Produce() és Require() típusa megegyezik, az is okozhat zavart.
+    // A legjobb, ha egy bányának a Require() a saját termékét adja vissza, 
+    // de a RequiredAmount = 0 miatt a Tick átugorja.
+    public sealed override IResource Require() => Produce();
 }

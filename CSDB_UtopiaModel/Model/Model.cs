@@ -24,6 +24,8 @@ public class Model : ITickable
     private Map _map;
 
     public int Mood => _persistence.CurrentMood;
+    public int Width => _persistence.Width;
+    public int Height => _persistence.Height;
 
     public Map GetMap() => _map;
 
@@ -36,7 +38,8 @@ public class Model : ITickable
         _timeControl = TimeControl.Instance();
         _timeControl += (this, 1);
 
-       
+        GenerateInitialTowns(3);
+
         foreach (var list in _persistence.Fields)
         {
             foreach (var field in list)
@@ -47,6 +50,8 @@ public class Model : ITickable
                     _persistence.Forests.Add(land);
             }
         }
+
+
     }
 
     #region Time
@@ -232,6 +237,12 @@ public class Model : ITickable
                 if (coord.X + i >= _persistence.Width || coord.Y + j >= _persistence.Height) return false;
 
                 Field f = _persistence.Fields[coord.X + j][coord.Y - i];
+
+                if (f.IsPartOfTown)
+                {
+                    NewLog?.Invoke(this, new LogEventArgs("Városi területre nem építhetsz!"));
+                    return false;
+                }
 
                 // Csak szabad Land mezőre építhetünk
                 if (f is Land land && !land.HasBuildable)
@@ -420,12 +431,17 @@ public class Model : ITickable
 
     public void Demolish(Coordinate coord)
     {
-        // if (/*undemolishable*/)
-        //     throw new Exception("ejnye-bejnye!");
         Buildable? onField = GetField(coord).Buildable;
         if (onField is Garage && ListGarages().Count == 1) return; 
         Field field = GetField(coord);
         Field source = GetField(new Coordinate(coord.X - field.RelativeY, coord.Y + field.RelativeX));
+
+        // TILTÁS: Ha a mező egy város része, nem engedjük a bontást
+        if (field.IsPartOfTown)
+        {
+            NewLog?.Invoke(this, new LogEventArgs("Városi területen nem bonthatsz!"));
+            return;
+        }
 
         if (onField is null) return;
 
@@ -619,6 +635,93 @@ public class Model : ITickable
         land.ForestSpread();
         OnFieldsUpdated(land);
         return land;
+    }
+
+    // Városok generálása
+    private void GenerateInitialTowns(int count)
+    {
+        int attempts = 0;
+        int townsCreated = 0;
+
+        while (townsCreated < count && attempts < 1000)
+        {
+            attempts++;
+            // Random koordináta választása (hagyjunk helyet a 3x3-as rácsnak a széleken)
+            int x = _rnd.Next(1, _persistence.Width - 1);
+            int y = _rnd.Next(1, _persistence.Height - 1);
+
+            if (CanPlaceTownAt(x, y))
+            {
+                // Ellenőrizzük, hogy nincs-e túl közel egy már meglévő városhoz
+                // (Ez opcionális, de javítja a szóródást)
+                CreateStartingTown(x, y);
+                townsCreated++;
+            }
+        }
+    }
+
+    private bool CanPlaceTownAt(int centerX, int centerY)
+    {
+        // Ellenőrizzük a 3x3-as területet (középpont x,y)
+        for (int i = -1; i <= 1; i++)
+        {
+            for (int j = -1; j <= 1; j++)
+            {
+                Field f = _persistence.Fields[centerX + i][centerY + j];
+                // Csak üres Land mezőre építhetünk várost
+                if (f is not Land || f.HasBuildable || f.IsPartOfTown)
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    private void CreateStartingTown(int centerX, int centerY)
+    {
+        //visszatölt eredeti pénzt, hangulatot
+        int savedBudget = _persistence.Budget;
+        int savedMood = _persistence.CurrentMood;
+
+        Town newTown = new Town("Város");
+        _persistence.Towns.Add(newTown);
+
+
+        // Utak lehelyezése (+ alakban)
+        Coordinate center = new Coordinate(centerX, centerY);
+        PlaceRoad(center); // Közép
+        PlaceRoad(center.Step(Up.Instance()));
+        PlaceRoad(center.Step(Down.Instance()));
+        PlaceRoad(center.Step(Left.Instance()));
+        PlaceRoad(center.Step(Right.Instance()));
+
+        // Lakóház (Bal felső sarok: x-1, y-1)
+        Place(new Coordinate(centerX - 1, centerY - 1), new ApartmentBlock(_persistence.Fields[centerX - 1][centerY - 1]));
+        
+
+        // Családi ház (Jobb alsó sarok: x+1, y+1)
+        Place(new Coordinate(centerX + 1, centerY + 1), new DetachedHouse(_persistence.Fields[centerX + 1][centerY + 1]));
+
+        // Mezők hozzárendelése a városhoz
+        for (int i = -1; i <= 1; i++)
+        {
+            for (int j = -1; j <= 1; j++)
+            {
+                Field f = _persistence.Fields[centerX + i][centerY + j];
+
+                // Logikai összekötés oda-vissza
+                f.SetTown(newTown);
+                newTown.AddToTown(f);
+
+                OnFieldsUpdated(f);
+            }
+        }
+
+        _persistence.Budget = savedBudget;
+        _persistence.CurrentMood = savedMood;
+
+        // Jelzés a viewnak
+        BudgetChanged?.Invoke(this, EventArgs.Empty);
+        OnMoodChanged(_persistence.CurrentMood);
     }
 
     private (bool IsCurved, int Quadrant, IDirection Direction, Intersection? Intersection) DetermineRoadState(
@@ -832,8 +935,14 @@ public class Model : ITickable
 
         return true;
     }
+    public void SetResourceAmount(IResource resource, int amount)
+    {
+        // Fontos, hogy a kulcs a singleton legyen!
+        _persistence.Storage[resource] = amount;
+        OnResourceChanged(resource, amount);
+    }
 
-    protected virtual void OnResourceChanged(IResource resource, int newValue)
+    public virtual void OnResourceChanged(IResource resource, int newValue)
     {
         ResourceChanged?.Invoke(this, new ResourceChangedEventArgs(resource, newValue));
     }
@@ -843,7 +952,7 @@ public class Model : ITickable
         MoodChanged?.Invoke(this, new MoodChangedEventArgs(newValue));
     }
 
-    protected virtual void OnFieldsUpdated(Field field)
+    public virtual void OnFieldsUpdated(Field field)
     {
         FieldsUpdated?.Invoke(this, new FieldEventArgs(new List<Field> { field }));
     }

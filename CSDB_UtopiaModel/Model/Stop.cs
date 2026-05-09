@@ -40,23 +40,38 @@ public class Stop : INavigable
             _storage.Add(resource, amount);
     }
 
-    public int Unload(IResource resource, int amount)
+    public int Unload(IResource resource, int requestedAmount)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(amount);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(requestedAmount);
 
-        if (resource is Environmental) return amount;
+        if (resource is Environmental) return requestedAmount;
 
-        if (!_storage.TryGetValue(resource, out int value))
-            throw new ArgumentException("The stop does not contain this type of resource.", nameof(resource));
+        if (!_storage.TryGetValue(resource, out int availableAmount))
+            return 0; // Ne dobj hibát, ha nincs ott semmi, csak mondd meg, hogy 0-t tudtunk adni
 
-        if (value >= amount)
+        // Kiszámoljuk, mennyit tudunk ténylegesen átadni
+        int actualGiven = Math.Min(availableAmount, requestedAmount);
+
+        _storage[resource] -= actualGiven;
+
+        return actualGiven;
+    }
+
+    public (IResource? resource, int amount) UnloadAnythingValid(IVehicle vehicle, int requestAmount)
+    {
+        // Végigpörgetjük a megálló raktárát
+        foreach (var entry in _storage)
         {
-            _storage.Remove(resource);
-            return value;
-        }
+            IResource availableResource = entry.Key;
 
-        // else
-        _storage[resource] -= amount;
-        return amount;
+            // Megkérdezzük az autót: "Te el tudod vinni ezt?"
+            if (vehicle.CanCarry(availableResource))
+            {
+                // Ha igen, az Unload metódusoddal kivesszük a raktárból
+                int taken = this.Unload(availableResource, requestAmount);
+                return (availableResource, taken);
+            }
+        }
+        return (null, 0);
     }
 }

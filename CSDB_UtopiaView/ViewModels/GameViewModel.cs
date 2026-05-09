@@ -845,18 +845,35 @@ public partial class GameViewModel : ViewModelBase
 
     private void Model_ResourceChanged(object? sender, ResourceChangedEventArgs e)
     {
-        // Frissítjük a belső szótárat
-        DisplayStorage[e.Resource] = e.NewValue;
+        // 1. Keressük meg a meglévő kulcsot a szótárban TÍPUS alapján
+        var existingKey = DisplayStorage.Keys.FirstOrDefault(k => k.GetType() == e.Resource.GetType());
 
+        // Ha nem találtuk meg, az új erőforrást adjuk hozzá, különben a régit frissítjük
+        var finalKey = existingKey ?? e.Resource;
+        DisplayStorage[finalKey] = e.NewValue;
+
+        // 2. Frissítsük a konkrét lista elemet (ObservableCollection frissítése)
+        // Megkeressük a lista elemet, ahol a Key típusa egyezik
+        var listItem = StorageList.FirstOrDefault(i => i.Key.GetType() == e.Resource.GetType());
+
+        if (listItem.Key != null)
+        {
+            // Az ObservableCollection nem veszi észre, ha egy KeyValuePair belsejét módosítod,
+            // ezért az egész párt le kell cserélni az adott indexen.
+            int index = StorageList.IndexOf(listItem);
+            StorageList[index] = new KeyValuePair<IResource, int>(finalKey, e.NewValue);
+        }
+        else
+        {
+            // Ha még nincs benne, hozzáadjuk
+            StorageList.Add(new KeyValuePair<IResource, int>(finalKey, e.NewValue));
+        }
+
+        // Speciális kezelés a populációnak
         if (e.Resource is HumanResource)
         {
             Population = e.NewValue;
         }
-
-        // Jelezzük a UI-nak, hogy a szótár tartalma megváltozott
-        OnPropertyChanged(nameof(DisplayStorage));
-
-        RefreshStorageList();
     }
 
     private void Model_MoodChanged(object? sender, MoodChangedEventArgs e)
