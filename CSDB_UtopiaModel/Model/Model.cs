@@ -101,23 +101,40 @@ public class Model : ITickable
 
     public void Reset(int width, int height)
     {
+        // TAKARÍTÁS, Megállítjuk a régi járműveket
+        var tc = TimeControl.Instance();
+        if (_persistence != null)
+        {
+            foreach (var vehicle in _persistence.VehiclesOnMap)
+            {
+                // Eltávolítjuk az autót az időzítőből, hogy ne hívódjon több Tick()
+                tc -= (vehicle as ITickable)!;
+            }
+            _persistence.VehiclesOnMap.Clear();
+        }
+
         // Új perzisztencia réteg létrehozása
         _persistence = new Persistence.Persistence(width, height, true);
 
-        RegisterEvents();
+        // Térkép (útkereső) alaphelyzetbe állítása
+        _map = new Map(new HashSet<Coordinate>());
 
+        RegisterEvents();
         _totalSeconds = 0;
 
-        // Értesítjük a View-t, hogy minden adat (mezők, büdzsé) megváltozott
+        // Értesítjük a View-t
         NewGame?.Invoke(this, EventArgs.Empty);
 
         // Frissítjük az összes mezőt a UI-on
         for (int i = 0; i < width; i++)
-        for (int j = 0; j < height; j++)
-            OnFieldsUpdated(_persistence.Fields[i][j]);
+            for (int j = 0; j < height; j++)
+                OnFieldsUpdated(_persistence.Fields[i][j]);
 
         BudgetChanged?.Invoke(this, EventArgs.Empty);
         MoodChanged?.Invoke(this, new MoodChangedEventArgs(_persistence.CurrentMood));
+
+        // Új városok generálása
+        GenerateInitialTowns(3);
     }
 
     public bool PlaceBridge(Coordinate start, Coordinate end, Bridge bridge)
