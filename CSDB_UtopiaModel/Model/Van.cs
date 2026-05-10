@@ -12,9 +12,10 @@ public class IndustrialVan<TIndustrialResource> : GoodsVehicle<TIndustrialResour
         speed = 90;
         capacity = 20;
     }
-    // private override int capacity;
-    // private override int maintenanceCost;
-    // private override int speed;
+    public override bool CanCarry(IResource resource)
+    {
+        return resource is IIndustrialResource;
+    }
 }
 
 public class Van : IndustrialVan<IIndustrialResource> { public Van(Map m, Model mo) : base(m, mo) { } }

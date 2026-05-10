@@ -84,7 +84,7 @@ public abstract class Road : INavigable
             if (IsRightSide(dir)) RightSide = vehicle;
             else LeftSide = vehicle;
         }
-        catch (InvalidOperationException e)
+        catch (InvalidOperationException)
         {
             return false;
         }

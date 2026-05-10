@@ -13,9 +13,13 @@ public class IndustrialDumpTruck<TIndustrialResource> : GoodsVehicle<TIndustrial
         speed = 70;
         capacity = 50;
     }
-    // private override int capacity;
-    // private override int maintenanceCost;
-    // private override int speed;
+    public override bool CanCarry(IResource resource)
+    {
+        if (resource is Treasure || resource is Wood)
+            return false;
+        // Minden nyersanyagot elvisz (kivéve pl. az embereket vagy a környezetet)
+        return resource is IIndustrialResource;
+    }
 }
 
 public class DumpTruck : IndustrialDumpTruck<IIndustrialResource> { public DumpTruck(Map m, Model mo) : base(m, mo) { } }

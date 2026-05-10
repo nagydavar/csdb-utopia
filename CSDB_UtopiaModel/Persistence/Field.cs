@@ -48,4 +48,9 @@ public abstract class Field
     {
         return true;
     }
+
+    public void SetTown(Town t)
+    {
+        this.town = t;
+    }
 }

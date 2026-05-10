@@ -31,11 +31,27 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         }
     }
 
+    public string CarriedResourceName
+    {
+        get
+        {
+            // Ha éppen nem szállít semmit (carriedAmount == 0), írjunk ki mást
+            if (carriedAmount == 0 || carriedResource == null)
+                return "Üres";
+
+            // Visszaadjuk az erõforrás osztályának nevét (pl. Wood, IronOre)
+            return carriedResource.GetType().Name;
+        }
+    }
+
     public int Capacity => capacity;
     public int MaintenanceCost => maintenanceCost;
     public int Speed => speed;
 
-    
+    public virtual bool CanCarry(IResource resource)
+    {
+        return resource is R;
+    }
 
 
     public Coordinate Position
@@ -74,17 +90,6 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
         tc += (this, tickInterval);
         
     }
-    /*
-    public Vehicle(Map map, Model m, Coordinate start, Coordinate end)
-    {
-        TimeControl tc = TimeControl.Instance();
-        tc += (this, tickInterval);
-        model = m;
-        this.map = map;
-        Position = start;
-        AssignNewPath(start, end);
-    }
-    */
     public IDirection CurrentDirection { get; set; } = Up.Instance();
 
     public void AssignNewPath(Coordinate[]  stops)
@@ -139,13 +144,27 @@ public abstract class Vehicle<R> : IVehicle where R : IResource
             Field to = model.GetField(Position);
             currentField = to;
 
-            if (currentField.HasBuildable && currentField.Buildable is Stop stop && carriedResource is not null)
+            if (currentField.HasBuildable && currentField.Buildable is Stop stop)
             {
-                stop.Load(carriedResource, Capacity);
-                CarriedAmount = 0;
-                
-                carriedAmount = stop.Unload(carriedResource, CarriedAmount);
+                // LERAKODÁS: Ha van nálunk valami, azt lepakoljuk
+                if (CarriedAmount > 0 && carriedResource != null)
+                {
+                    stop.Load(carriedResource, CarriedAmount);
+                    CarriedAmount = 0;
+                    carriedResource = default;
+                }
+                // FELVÉTEL: Ha üresek vagyunk, keresünk a megállóban olyat, amit elvihetünk
+                else if (CarriedAmount == 0)
+                {
+                    var (foundResource, takenAmount) = stop.UnloadAnythingValid(this, Capacity);
 
+                    // Csak akkor próbáljuk meg beállítani, ha kaptunk valamit ÉS az tényleg R típusú
+                    if (foundResource is R validResource && takenAmount > 0)
+                    {
+                        this.carriedResource = validResource;
+                        this.CarriedAmount = takenAmount;
+                    }
+                }
             }
 
             model.FieldsUpdated?.Invoke(this, new FieldEventArgs([oldField, to]));

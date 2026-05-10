@@ -12,7 +12,8 @@ class LoggingTruck : GoodsVehicle<Wood>
         speed = 70;
         capacity = 30;
     }
-    // private override int capacity;
-    // private override int maintenanceCost;
-    // private override int speed;
+    public override bool CanCarry(IResource resource)
+    {
+        return resource is Wood;
+    }
 }

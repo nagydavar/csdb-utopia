@@ -36,20 +36,7 @@
                 </Button.Effect>
                 
             </Button>            
-            <Button Content="Load Game" 
-                    HorizontalAlignment="Stretch" 
-                    HorizontalContentAlignment="Center" 
-                    VerticalAlignment="Center"
-                    VerticalContentAlignment="Center"
-                    BorderBrush="Black" 
-                    BorderThickness="2"
-                    Foreground="White"
-                    Height="40" 
-                    CornerRadius="20">
-                <Button.Effect>
-                    <DropShadowEffect BlurRadius="5" Color="Black" Opacity="1" OffsetX="0" OffsetY="0"/>
-                </Button.Effect>
-            </Button>
+          
             <Button Content="Quit" 
                     Command="{Binding $parent[UserControl;1].((vm:MainViewModel)DataContext).QuitCommand}"
                     HorizontalAlignment="Stretch" 

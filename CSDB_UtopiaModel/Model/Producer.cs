@@ -8,7 +8,10 @@ public abstract class Producer : Building, ITickable
     private readonly Model _model;
     protected Stop? stop;
     protected Field? location;
-    
+
+    private IResource? _requiredResourceCache;
+    private IResource? _producedResourceCache;
+
     public abstract int RequiredAmount { get; }
     
     public abstract int ProducedAmount { get; }
@@ -21,6 +24,10 @@ public abstract class Producer : Building, ITickable
         var timeControl = TimeControl.Instance();
 
         timeControl += (this, yield);
+
+        // Elõre lekérjük a típusokat
+        _requiredResourceCache = Require();
+        _producedResourceCache = Produce();
     }
     public Stop ConnectsTo { get; set; }
     public abstract IResource Produce();
@@ -29,97 +36,120 @@ public abstract class Producer : Building, ITickable
 
     public Task Tick()
     {
-        if (Owner is null)
-            return Task.CompletedTask;
-        
+        if (Owner is null) return Task.CompletedTask;
+
         if (stop is null)
         {
-            for (int i = 0; i <= area.Width; i++)
-            {
-                for (int k = 0; k <= area.Height; k++)
-                {
-                    Coordinate c;
-
-                    try
-                    {
-                       c = new(Owner.Coordinates.X + i, Owner.Coordinates.Y - k);
-                    }
-                    catch (Exception)
-                    {
-                        continue;
-                    }
-                    
-                    Field? f=null;
-
-                    foreach (var p in c.GetAllNeighbors())
-                    {
-                        try
-                        {
-                            f = _model.GetField(p.Value);
-                        }
-                        catch (Exception)
-                        {
-                        }   
-                    }
-
-                    if (f?.Buildable is not Stop stop) continue;
-                    
-                    this.stop = stop;
-                    i = k = int.MaxValue;
-                    break;
-                }
-            }
-
-            if (stop is /*still*/ null)
-                return Task.CompletedTask;
-        }
-
-        if (location is null)
-        {
-            for (int i = 0; i <= area.Width; i++)
-            {
-                for (int k = 0; k <= area.Height; k++)
-                {
-                    Coordinate c;
-
-                    try
-                    {
-                       c = new(Owner.Coordinates.X + i, Owner.Coordinates.Y - k);
-                    }
-                    catch (Exception)
-                    {
-                        continue;
-                    }
-                    
-                    Field? f = null;
-                    
-                    try
-                    {
-                        f = _model.GetField(c);
-                    }
-                    catch (Exception)
-                    {
-                    }
-
-                    if (f?.Resource.GetType() == Require().GetType() && f.DepletionLevel > 0)
-                        location = f;
-                }
-            }
-            
-            if(location is /*still*/ null) return Task.CompletedTask;
+            stop = FindAdjacentStop();
+            if (stop is null) return Task.CompletedTask;
         }
 
         int ra = RequiredAmount;
-        
-        if (stop[Require()] < ra) return Task.CompletedTask;
+        bool isFactory = ra > 0;
+        IResource? actualInput = null; // Ezt fogjuk ténylegesen levonni
 
-        stop.Unload(Require(), ra);
-        
-        int pa = ProducedAmount;
-        pa *= (int)Math.Round(Math.Sqrt(Math.Abs(_model.Mood))) * Math.Sign(_model.Mood);
-        location.DepletionLevel -= pa;
-        stop.Load(Produce(), pa);
-        
+        if (!isFactory)
+        {
+            if (location is null || location.DepletionLevel <= 0)
+                location = FindResourceLocation();
+
+            if (location is null || location.DepletionLevel <= 0)
+                return Task.CompletedTask;
+        }
+        else
+        {
+            // GYÁR LOGIKA: Megnézzük, van-e a megállóban bármi, ami megfelel a Require() típusának
+            // A Jewellery esetén a Require() típusa Treasure (vagy ITreasureResource)
+            actualInput = stop.GetAvailableResourceForFactory(this);
+
+            if (actualInput == null || stop[actualInput] < ra)
+                return Task.CompletedTask;
+        }
+
+        int mood = _model.Mood;
+        int pa = (int)(ProducedAmount * Math.Sqrt(Math.Abs(mood)) * Math.Sign(mood));
+
+        if (pa > 0)
+        {
+            if (isFactory && actualInput != null)
+            {
+                // 1. Levonjuk a megállóból
+                stop.Unload(actualInput, ra);
+
+                // 2. LEVONJUK A GLOBÁLISBÓL IS, hogy a UI frissüljön!
+                int globalInputAmount = _model.GetResourceCount(actualInput);
+                _model.SetResourceAmount(actualInput, globalInputAmount - ra);
+
+                // 3. Hozzáadjuk a készterméket a megállóhoz
+                stop.Load(_producedResourceCache!, pa);
+            }
+            else if (!isFactory)
+            {
+                int actualProduced = Math.Min(pa, location!.DepletionLevel);
+                location.DepletionLevel -= actualProduced;
+                stop.Load(_producedResourceCache!, actualProduced);
+                _model.OnFieldsUpdated(location);
+            }
+
+            _model.OnFieldsUpdated(stop.Owner);
+            int currentGlobalAmount = _model.GetResourceCount(_producedResourceCache!);
+            _model.SetResourceAmount(_producedResourceCache!, currentGlobalAmount + pa);
+        }
+
         return Task.CompletedTask;
+    }
+
+    private Stop? FindAdjacentStop()
+    {
+        // 2x2-es épület esetén:
+        // i: -1-tõl 2-ig (szélesség)
+        // k: -1-tõl 2-ig (magasság)
+        // Ez egy 4x4-es gyûrût néz át az épület körül
+        for (int i = -1; i <= area.Width; i++)
+        {
+            for (int k = -1; k <= area.Height; k++)
+            {
+                // Kihagyjuk a belsõ részeket, ahol az épület maga áll (0,0-tól Width,Height-ig)
+                // Csak a széleken (a kerítésen) keresünk megállót
+                if (i >= 0 && i < area.Width && k >= 0 && k < area.Height) continue;
+
+                int nx = Owner.Coordinates.X + i;
+                int ny = Owner.Coordinates.Y - k; // Figyelj a jelre! Ha a modelledben Y felfelé nõ, legyen +, ha lefelé, akkor -
+
+                if (nx < 0 || nx >= _model.Width || ny < 0 || ny >= _model.Height) continue;
+
+                Field f = _model.GetField(nx, ny);
+                if (f.Buildable is Stop foundStop) return foundStop;
+            }
+        }
+        return null;
+    }
+
+    private Field? FindResourceLocation()
+    {
+        // A bánya azt termeli, amit PRODUCE-ol (pl. Diamond)
+        Type producedType = _producedResourceCache!.GetType();
+
+        // Végigkérdezzük a 2x2-es területet
+        for (int i = 0; i < area.Width; i++)
+        {
+            for (int k = 0; k < area.Height; k++)
+            {
+                int nx = Owner.Coordinates.X + i;
+                int ny = Owner.Coordinates.Y - k; // Y felfelé nõ, tehát +k
+
+                if (nx < 0 || nx >= _model.Width || ny < 0 || ny >= _model.Height) continue;
+
+                Field f = _model.GetField(nx, ny);
+
+                // CSAK akkor fogadjuk el, ha van is benne mit bányászni!
+                // Ha a DepletionLevel 0, akkor ez a mezõ már "kimerült"
+                if (f.Resource.GetType() == producedType && f.DepletionLevel > 0)
+                {
+                    return f;
+                }
+            }
+        }
+        return null; // Ha nincs alatta pozitív lelõhely, null-t adunk vissza
     }
 }
