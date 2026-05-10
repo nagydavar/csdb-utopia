@@ -1,5 +1,6 @@
 # CSDB UTOPIA
 
+[Link a videóra](https://youtu.be/pILcQm02PFg)
 
 
 ## Getting started
