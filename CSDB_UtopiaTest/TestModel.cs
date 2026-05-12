@@ -4,35 +4,21 @@ using CSDB_UtopiaModel.Persistence;
 namespace CSDB_UtopiaModel.Model;
 
 [TestClass]
-public sealed class TestModel
+public class TestModel
 {
     private Model? m = null;
-    private List<Coordinate> roads = new();
-    
-        
+    private static readonly List<Coordinate> roads = new()
+    {
+        new(0, 0), new(0, 1), new(0, 2), new(1, 2),
+        new(2, 2), new(2, 1), new(2, 0), new(1, 0)
+    };
+
+
     [TestInitialize]
     public void TestInitialize()
     {
-        try
-        {
-            m = new Model(10, 10);
-            
-            roads.Clear();
-            roads.Add(new Coordinate(0, 0));//0
-            roads.Add(new Coordinate(0, 1));//1
-            roads.Add(new Coordinate(0, 2));//2
-            roads.Add(new Coordinate(1, 2));//3
-            roads.Add(new Coordinate(2, 2));//4
-            roads.Add(new Coordinate(2, 1));//5
-            roads.Add(new Coordinate(2, 0));//6
-            roads.Add(new Coordinate(1, 0));//7
-        }
-        catch (Exception e)
-        {
-            
-        }
-        
-        
+        TimeControl.ResetInstance();
+        m = new Model(10, 10,false);
     }
     [TestMethod]
     public void TestPlaceRoad()
@@ -70,7 +56,7 @@ public sealed class TestModel
     }
     
     
-    //[TestMethod]
+    [TestMethod]
     public void TestDemolishRoad()
     {
         foreach (Coordinate coord in roads)

@@ -67,6 +67,9 @@ public partial class GameViewModel : ViewModelBase
     private bool _isSelectingBridgePoints;
     private Cell? _bridgeStartCell;
 
+    //Megjelnítés infohoz
+    private Cell? prevSelectedCell;
+
     // Cella állopta
     [ObservableProperty] private FieldDetails? _selectedFieldDetails;
     [ObservableProperty] private bool _isFieldDetailsVisible;
@@ -74,6 +77,9 @@ public partial class GameViewModel : ViewModelBase
     // Járművek eladásához
     [ObservableProperty] private bool _isVehicleListVisible;
     public ObservableCollection<IVehicle> ActiveVehicles { get; } = new();
+
+    // Súgó
+    [ObservableProperty] private string _gameLogs = "";
 
     // Események
     public event EventHandler? NewGame;
@@ -153,19 +159,6 @@ public partial class GameViewModel : ViewModelBase
 
 #endregion
 
-    // Parancsok (RelayCommands)
-    [RelayCommand]
-    public void SaveGame()
-    {
-        /* Mentés logika */
-    }
-
-    [RelayCommand]
-    public void LoadGame(string fileName)
-    {
-        /* Betöltés logika */
-    }
-
     [RelayCommand]
     public void ExitGame()
     {
@@ -238,7 +231,14 @@ public partial class GameViewModel : ViewModelBase
     {
     }
 
-#endregion
+    #endregion
+
+    //súgó
+    [RelayCommand]
+    public void ClearLogs()
+    {
+        GameLogs = string.Empty;
+    }
 
     [RelayCommand]
     public void SelectBuildable(Type selectedType)
@@ -317,6 +317,7 @@ public partial class GameViewModel : ViewModelBase
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"Bridge építési hiba: {ex.Message}");
+                        GameLogs = $"Bridge építési hiba: {ex.Message}";
                     }
                     finally
                     {
@@ -385,10 +386,28 @@ public partial class GameViewModel : ViewModelBase
                 return;
             }
 
-            // HA NINCS KIVÁLASZTVA SEMMI (Információs mód)
+            // INFORMACIOS MOD
             if (_selectedType == null && !IsDemolishMode && !_isSelectingStops)
             {
-                Field field = _model.GetField(cell.X, cell.Y);
+                if (prevSelectedCell is null)
+                {
+                    prevSelectedCell = cell;
+                    cell.IsSelected = true;
+                }
+                else if (prevSelectedCell is not null && prevSelectedCell == cell)
+                {
+                    prevSelectedCell.IsSelected = false;
+                    cell.IsSelected = false;
+                }
+                else
+                {
+                    if (prevSelectedCell is not null) prevSelectedCell.IsSelected = false;
+                    cell.IsSelected = true;
+                    prevSelectedCell = cell;
+                }
+
+
+                    Field field = _model.GetField(cell.X, cell.Y);
                 var flags = BindingFlags.NonPublic | BindingFlags.Instance;
 
                 // Adatok kinyerése Reflection-nel (mivel protected-ek)
@@ -434,7 +453,6 @@ public partial class GameViewModel : ViewModelBase
                 Buildable? instance = null;
 
                 // Ellenőrizzük, hogy ResourceExtractor-ról van-e szó
-                //TODO többi gyár
                 if (_selectedType.IsAssignableTo(typeof(ResourceExtractor)))
                 {
                     // Itt meg kell adni egy alapértelmezett yield értéket (pl. 10)
@@ -464,12 +482,13 @@ public partial class GameViewModel : ViewModelBase
             System.Diagnostics.Debug.WriteLine($"Építési hiba: {ex.Message}");
 
             // Ha van Log
-            // CurrentLogMessage = ex.Message; 
+            GameLogs = $"Építési hiba: {ex.Message}";
         }
         catch (Exception ex)
         {
             // Minden más váratlan hiba elkapása
             System.Diagnostics.Debug.WriteLine($"Váratlan hiba: {ex.Message}");
+            GameLogs = $"Váratlan hiba: {ex.Message}";
             ResetBridgeSelection();
         }
     }
@@ -512,6 +531,7 @@ public partial class GameViewModel : ViewModelBase
         {
             System.Diagnostics.Debug.WriteLine(
                 $"Jármű példányosítási hiba: {ex.InnerException?.Message ?? ex.Message}");
+            GameLogs = $"Jármű példányosítási hiba: {ex.InnerException?.Message ?? ex.Message}";
         }
     }
 
@@ -597,6 +617,7 @@ public partial class GameViewModel : ViewModelBase
         if (!IsFieldDetailsVisible)
         {
             SelectedFieldDetails = null;
+            if ( prevSelectedCell is not null) prevSelectedCell.IsSelected = false;
         }
     }
 
@@ -660,7 +681,9 @@ public partial class GameViewModel : ViewModelBase
                     info.IsVehicle = false;
                     try
                     {
+#pragma warning disable SYSLIB0050
                         var dummy = (Bridge)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
+#pragma warning restore SYSLIB0050
                         info.PlacementCost = dummy.placementCost;
                     }
                     catch
@@ -677,9 +700,9 @@ public partial class GameViewModel : ViewModelBase
                     Buildable? bDummy = null;
 
                     if (type.IsAssignableTo(typeof(ResourceExtractor)))
-                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 10, _model);
+                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 50, _model);
                     else if (type.IsAssignableTo(typeof(Factory)))
-                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 30, _model);
+                        bDummy = (Buildable?)Activator.CreateInstance(type, null, 100, _model);
                     else if (type.IsAssignableTo(typeof(Road)))
                     {
                         // PRÓBÁLKOZÁS SORRENDJE FONTOS
@@ -700,6 +723,7 @@ public partial class GameViewModel : ViewModelBase
                             catch (Exception ex)
                             {
                                 System.Diagnostics.Debug.WriteLine($"Road hiba ({type.Name}): {ex.Message}");
+                                GameLogs = $"Road hiba ({type.Name}): {ex.Message}";
                             }
                         }
                     }
@@ -729,6 +753,7 @@ public partial class GameViewModel : ViewModelBase
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Hiba a(z) {type.Name} feldolgozásakor: {ex.Message}");
+                GameLogs = $"Hiba a(z) {type.Name} feldolgozásakor: {ex.Message}";
             }
         }
 
@@ -820,18 +845,35 @@ public partial class GameViewModel : ViewModelBase
 
     private void Model_ResourceChanged(object? sender, ResourceChangedEventArgs e)
     {
-        // Frissítjük a belső szótárat
-        DisplayStorage[e.Resource] = e.NewValue;
+        // 1. Keressük meg a meglévő kulcsot a szótárban TÍPUS alapján
+        var existingKey = DisplayStorage.Keys.FirstOrDefault(k => k.GetType() == e.Resource.GetType());
 
+        // Ha nem találtuk meg, az új erőforrást adjuk hozzá, különben a régit frissítjük
+        var finalKey = existingKey ?? e.Resource;
+        DisplayStorage[finalKey] = e.NewValue;
+
+        // 2. Frissítsük a konkrét lista elemet (ObservableCollection frissítése)
+        // Megkeressük a lista elemet, ahol a Key típusa egyezik
+        var listItem = StorageList.FirstOrDefault(i => i.Key.GetType() == e.Resource.GetType());
+
+        if (listItem.Key != null)
+        {
+            // Az ObservableCollection nem veszi észre, ha egy KeyValuePair belsejét módosítod,
+            // ezért az egész párt le kell cserélni az adott indexen.
+            int index = StorageList.IndexOf(listItem);
+            StorageList[index] = new KeyValuePair<IResource, int>(finalKey, e.NewValue);
+        }
+        else
+        {
+            // Ha még nincs benne, hozzáadjuk
+            StorageList.Add(new KeyValuePair<IResource, int>(finalKey, e.NewValue));
+        }
+
+        // Speciális kezelés a populációnak
         if (e.Resource is HumanResource)
         {
             Population = e.NewValue;
         }
-
-        // Jelezzük a UI-nak, hogy a szótár tartalma megváltozott
-        OnPropertyChanged(nameof(DisplayStorage));
-
-        RefreshStorageList();
     }
 
     private void Model_MoodChanged(object? sender, MoodChangedEventArgs e)
@@ -842,7 +884,7 @@ public partial class GameViewModel : ViewModelBase
     private void Model_NewLog(object? sender, LogEventArgs e)
     {
         // Új üzenet érkezésekor (pl. "Nincs elég pénz") hozzáadjuk egy napló-listához
-        // GameLogs.Add(e.Message);
+        GameLogs = e.Message;
     }
 
     private void Model_NewGame(object? sender, EventArgs e)

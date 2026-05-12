@@ -27,7 +27,12 @@ public class Map {
 
         public Coordinate? Step(Coordinate start, Coordinate end)
         {
-                return pathForAllPair[start][end].Item1;
+            // Ellenőrizzük, hogy mindkét kulcs létezik-e a szótárban
+            if (!pathForAllPair.ContainsKey(start) || !pathForAllPair[start].ContainsKey(end))
+            {
+                return null;
+            }
+            return pathForAllPair[start][end].Item1;
         }
 
         public void DeleteRoad(Coordinate c)
@@ -211,9 +216,7 @@ public class Map {
                         {
                                 Coordinate? parent;
                                 int dist;
-                                bool contains = false;
-                                
-                                
+                                                          
                                 if (neighbors.Values.Contains(j))
                                 {
                                         parent = j;

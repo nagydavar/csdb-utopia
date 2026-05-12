@@ -48,7 +48,7 @@ public readonly struct Coordinate
                 coordinates.Add(d, Step(d));
                                         
             }
-            catch (Exception e)
+            catch (Exception)
             {}
         }
         return coordinates;

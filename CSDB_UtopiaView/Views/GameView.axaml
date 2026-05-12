@@ -133,6 +133,13 @@
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="{Binding Converter={StaticResource TypeNameConverter}}" FontWeight="SemiBold"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                                    <TextBlock Text="Raktér:" FontSize="12" Foreground="DarkSlateGray"/>
+                                                    <TextBlock Text="{Binding carriedAmount}" FontSize="12" FontWeight="Bold"/>
+                                                    <TextBlock Text="/" FontSize="12"/>
+                                                    <TextBlock Text="{Binding Capacity}" FontSize="12"/>
+                                                    <TextBlock Text="{Binding CarriedResourceName}" FontSize="12" Foreground="SteelBlue" Margin="5,0,0,0"/>
+                                                </StackPanel>
                                             <TextBlock Text="{Binding TraveledSinceBought, StringFormat='Megtett út: {0} km'}" FontSize="12" Foreground="Gray"/>
                                         </StackPanel>
                                         <Button Grid.Column="1" Content="Eladás" Background="OrangeRed" Foreground="White"
@@ -441,5 +448,39 @@
             </StackPanel>
         </Border>
     </Panel>
+
+    <!-- SÚGÓ -->
+        <Panel IsVisible="{Binding GameLogs, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+           ZIndex="1000">
+    
+            <Border Background="{DynamicResource SystemRegionBrush}" 
+                    CornerRadius="10"
+                    BorderBrush="Gray"
+                    BorderThickness="1"
+                    Padding="25"
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Center"
+                    Margin="0,0,0,150">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="Értesítés" 
+                               FontSize="20" 
+                               FontWeight="Bold" 
+                               HorizontalAlignment="Center"/>
+            
+                    <TextBlock Text="{Binding GameLogs}" 
+                               TextWrapping="Wrap" 
+                               FontSize="16"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"/>
+            
+                    <Button Content="OK" 
+                            Command="{Binding ClearLogsCommand}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Padding="10"
+                            HotKey="Enter"/>
+                </StackPanel>
+            </Border>
+        </Panel>
     </Grid>
 </UserControl>

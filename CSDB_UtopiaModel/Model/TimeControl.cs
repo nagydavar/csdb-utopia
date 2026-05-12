@@ -100,6 +100,8 @@ public class TimeControl
 
     private readonly Dictionary<ITickable, int> _subscriptions = new();
 
+    private readonly object _lock = new();
+
     #endregion
 
     #region Properties
@@ -125,19 +127,22 @@ public class TimeControl
 
         _timer.Elapsed += async (_, _) =>
         {
-            //Biztons�gi ellen�rz�s, ha nincs feliratkoz� vagy az LCM 0, ne csin�ljunk semmit
-            if (_lcm <= 0 || _subscriptions.Count == 0) return;
+            List<KeyValuePair<ITickable, int>> subs;
+            int currentLcm;
 
-            List<Task> tasks = new(_subscriptions.Count);
-
-            //Index l�ptet�se 1-t�l LCM-ig p�r�gj�n (�gy az index sosem lesz 0)
-            // Az (index % lcm) 0-t�l (lcm-1)-ig adna �rt�ket, ez�rt adunk hozz� 1-et.
-            _index = (_index % _lcm) + 1;
-
-            foreach (var subscription in _subscriptions)
+            lock (_lock) // Zárolás az olvasáshoz
             {
-                //akkor tickeljen az objektum, ha az aktu�lis index 
-                // oszthat� az objektum saj�t feliratkoz�si �rt�k�vel.
+                if (_lcm <= 0 || _subscriptions.Count == 0) return;
+                // Készítünk egy másolatot a listáról, hogy az iterálás alatt ne zavarjon az új feliratkozó
+                subs = _subscriptions.ToList();
+                currentLcm = _lcm;
+            }
+
+            _index = (_index % currentLcm) + 1;
+
+            List<Task> tasks = new();
+            foreach (var subscription in subs)
+            {
                 if (_index % subscription.Value == 0)
                 {
                     tasks.Add(subscription.Key.Tick());
@@ -180,6 +185,11 @@ public class TimeControl
 
     protected static int LcmOf(IEnumerable<int> numbers)
     {
+        // Készítsünk egy listát belőle azonnal, hogy ne változhasson alólunk a gyűjtemény
+        var numList = numbers.ToList();
+
+        if (!numList.Any()) return 1;
+
         int? prev = null;
 
         foreach (int number in numbers)
@@ -223,23 +233,26 @@ public class TimeControl
     /// </summary>
     public static TimeControl operator +(TimeControl timeControl, (ITickable Key, int Value) subscriber)
     {
-        if (subscriber.Value < 1)
-            throw new ArgumentException("The subscriber's value must be greater than one.", nameof(subscriber.Value));
+        lock (timeControl._lock)
+        {
+            if (subscriber.Value < 1)
+                throw new ArgumentException("The subscriber's value must be greater than one.", nameof(subscriber.Value));
 
-        // ReferenceContains
-        foreach (var subscription in (timeControl._subscriptions))
-            if (ReferenceEquals(subscription.Key, subscriber.Key))
-                throw new AlreadySubscribedException();
+            // ReferenceContains
+            foreach (var subscription in (timeControl._subscriptions))
+                if (ReferenceEquals(subscription.Key, subscriber.Key))
+                    throw new AlreadySubscribedException();
 
-        if (timeControl._lcm % subscriber.Value != 0)
-            timeControl._lcm = LcmOf(timeControl._subscriptions.Values);
+            if (timeControl._lcm % subscriber.Value != 0)
+                timeControl._lcm = LcmOf(timeControl._subscriptions.Values);
 
-        timeControl._subscriptions.Add(subscriber.Key, subscriber.Value);
+            timeControl._subscriptions.Add(subscriber.Key, subscriber.Value);
 
-        // �jrasz�moljuk az LCM-et minden feliratkoz�sn�l
-        timeControl._lcm = LcmOf(timeControl._subscriptions.Values);
+            // �jrasz�moljuk az LCM-et minden feliratkoz�sn�l
+            timeControl._lcm = LcmOf(timeControl._subscriptions.Values.ToList());
 
-        return timeControl;
+            return timeControl;
+        }
     }
 
     /// <summary>
@@ -274,6 +287,12 @@ public class TimeControl
         timeControl._timer.Interval = IntervalFromTimerSpeed(--timeControl.Speed);
 
         return timeControl;
+    }
+
+    //teszthez
+    public static void ResetInstance()
+    {
+        _instance = null;
     }
 
     #endregion

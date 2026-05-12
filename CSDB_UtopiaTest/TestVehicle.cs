@@ -12,7 +12,7 @@ public class TestVehicle
     [TestInitialize]
     public void TestInitialize()
     {
-        m = new Model(10, 10);
+        m = new Model(10, 10, false);
         
         roads.Clear();
         roads.Add(new Coordinate(0, 0));//0

@@ -18,8 +18,6 @@ public partial class Cell : ObservableObject
     private readonly int _x;
     private readonly int _y;
 
-
-    private string imagePath;
     
     [ObservableProperty]
     private IImage? image;
@@ -161,7 +159,7 @@ public partial class Cell : ObservableObject
                 FileName = "Fields/0trees.PNG";
             }
         }
-        Image = ImageLoader.Get(FileName);
+        Image = ImageLoader.Get(FileName!);
 
 
         UpdateVehicles(field);

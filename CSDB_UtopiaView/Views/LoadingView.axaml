@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:vm="clr-namespace:CSDB_UtopiaView.ViewModels"
+             xmlns:views="clr-namespace:CSDB_UtopiaView.Views"
+             x:Class="CSDB_UtopiaView.Views.LoadingView">
+  <Grid Background="#2c3e50">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock Text="Generating world..." 
+                       FontSize="36" 
+                       Foreground="White" 
+                       Margin="0,0,0,20"
+                       HorizontalAlignment="Center"/>
+            
+            <ProgressBar IsIndeterminate="True" 
+                         Width="200" 
+                         Height="10" 
+                         Foreground="Orange"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

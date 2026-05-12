@@ -20,7 +20,7 @@ public sealed class VehicleTest
         roads.Add(new Coordinate(2, 0));
         roads.Add(new Coordinate(1, 0));
         //map = new Map(roads.ToHashSet());
-        m = new Model(4, 4);
+        m = new Model(4, 4, false);
     }
     [TestMethod]
     public void Ctor()

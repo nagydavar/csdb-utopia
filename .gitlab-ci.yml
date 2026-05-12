@@ -123,13 +123,43 @@ pages:
     - apt-get update -yqq
     - apt-get install -yqq doxygen graphviz
   script:
-    # Generate code documentation with Doxygen (see the Doxyfile for config)
+    # 1. Dokumentáció generálása
     - doxygen
     - mkdir -p public/docs/
     - cp -r doc/html/. public/docs/
-    # Add the code coverage web summary as well
-    - mkdir -p public/covergae
+    
+    # 2. Code coverage jelentés másolása
+    - mkdir -p public/coverage
     - cp -r report/html/. public/coverage/
+
+    # 3. Belépő oldal
+    - |
+      cat <<EOF > public/index.html
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>CSDB Utopia Project Pages</title>
+          <meta charset="UTF-8">
+          <style>
+              body { font-family: sans-serif; padding: 40px; line-height: 1.6; }
+              h1 { color: #2c3e50; }
+              ul { list-style-type: none; padding: 0; }
+              li { margin: 10px 0; }
+              a { text-decoration: none; color: #3498db; font-weight: bold; }
+              a:hover { text-decoration: underline; }
+          </style>
+      </head>
+      <body>
+          <h1>CSDB Utopia Projekt Portál</h1>
+          <p>Válassz az alábbi lehetőségek közül:</p>
+          <ul>
+              <li><a href="docs/index.html">Doxygen Kód Dokumentáció</a></li>
+              <li><a href="coverage/index.html">Kódlefedettségi Jelentés (Unit Tests)</a></li>
+          </ul>
+      </body>
+      </html>
+      EOF
+
   artifacts:
     paths:
       - public
