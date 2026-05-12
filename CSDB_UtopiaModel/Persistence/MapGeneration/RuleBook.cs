@@ -13,8 +13,8 @@ internal class RuleBook
     public RuleBook()
     { 
         proportions.Add(FieldTypes.Land, 200);
-        proportions.Add(FieldTypes.Forest, 170);
-        proportions.Add(FieldTypes.Water, 10);
+        proportions.Add(FieldTypes.Forest, 80);
+        proportions.Add(FieldTypes.Water, 15);
         proportions.Add(FieldTypes.Mountain, 10);
         proportions.Add(FieldTypes.RoadVer, 30);
         proportions.Add(FieldTypes.RoadHor, 30);
