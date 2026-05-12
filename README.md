@@ -2,8 +2,13 @@
 
 [Link a videóra](https://youtu.be/pILcQm02PFg)
 
+<iframe width="1732" height="710" src="https://www.youtube.com/embed/pILcQm02PFg" title="CSDB Utopia | Szoftvertechnológia" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ## Képernyőképek
+![Kezdőkép](readme/Screenshot1.png)
+![Lépés1](readme/Screenshot2.png)
+![Lépés2](readme/Screenshot3.png)
+![Lépés3](readme/Screenshot4.png)
 
 ## Leírás
 
